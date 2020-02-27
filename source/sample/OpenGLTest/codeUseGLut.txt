@@ -1,0 +1,140 @@
+
+void Idle(void)
+{
+	Sleep(10);
+	glutPostRedisplay();
+}
+
+
+
+HWND hWnd = NULL;
+DeviceWindow* pDeviceWindow = NULL;
+MouseEvent mouseEvent;
+KeyEvent keyEvent;
+
+
+void OnKeyDown(unsigned char key, int x, int y)
+{
+	if (key == ' ')
+	{
+		keyDown++;
+	}
+}
+
+void OnKeyUp(unsigned char key, int x, int y)
+{
+	int i = 0;
+	i++;
+}
+
+void OnMouseButton(int button, int state, int x, int y)
+{
+	mouseEvent.xPos = x;
+	mouseEvent.yPos = y;
+	mouseEvent.zDelta = 0;
+	mouseEvent.Type = 0;
+	mouseEvent.Param = 0;
+	mouseEvent.pWindow = pDeviceWindow;
+
+
+	if (button == GLUT_LEFT_BUTTON)
+	{
+		if (state == GLUT_DOWN)
+		{
+			mouseEvent.Type = MouseEvent::LButtonDown;
+			mouseEvent.Param |= MouseEvent::PM_LButton;
+		}
+		else if (state == GLUT_UP)
+		{
+			mouseEvent.Type = MouseEvent::LButtonUp;
+		}
+	}
+	else if (button == GLUT_MIDDLE_BUTTON)
+	{
+		if (state == GLUT_DOWN)
+		{
+			mouseEvent.Type = MouseEvent::MButtonDown;
+			mouseEvent.Param |= MouseEvent::PM_MButton;
+		}
+		else if (state == GLUT_UP)
+		{
+			mouseEvent.Type = MouseEvent::MButtonUp;
+		}
+	}
+
+
+	int keyModifier = glutGetModifiers();
+	if (keyModifier & GLUT_ACTIVE_ALT)
+	{
+		int i = 0;
+		i++;
+
+	}
+
+	if (keyModifier & GLUT_ACTIVE_CTRL)
+	{
+		mouseEvent.Param |= MouseEvent::PM_Control;
+	}
+
+	if (keyModifier & GLUT_ACTIVE_SHIFT)
+	{
+		mouseEvent.Param |= MouseEvent::PM_Shift;
+	}
+
+	gController.OnMouseEvent(mouseEvent);
+}
+
+void OnMouseMove(int x, int y)
+{
+	mouseEvent.xPos = x;
+	mouseEvent.yPos = y;
+	mouseEvent.Type = MouseEvent::MouseMove;
+
+	gController.OnMouseEvent(mouseEvent);
+
+}
+
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+	//glutInit(&argc, argv);
+	//glutInitDisplayMode(GLUT_RGBA);
+	//glutInitWindowSize(512, 512);
+	////glutInitContextFlags(GLUT_DEBUG);
+	////glutInitContextVersion(3, 3);
+	////glutInitContextProfile(GLUT_CORE_PROFILE);
+	//glutCreateWindow(argv[0]);
+
+
+	//hWnd = FindWindow("FREEGLUT", argv[0]);
+	//if(hWnd != NULL)
+	//{
+	//	pDeviceWindow = new DeviceWindowWinAPI(hWnd);
+	//}
+
+
+
+	if (glewInit()) {
+		cerr << "Unable to initialize GLEW ... exiting" << endl;
+		exit(EXIT_FAILURE);
+	}
+
+
+	PFNGLGENVERTEXARRAYSPROC a = glGenVertexArrays;
+
+	init();
+
+	app.Run();
+
+	//glutDisplayFunc(display);
+	//glutKeyboardFunc(OnKeyDown);
+	//glutKeyboardUpFunc(OnKeyUp);
+	//glutMouseFunc(OnMouseButton);
+	//glutMotionFunc(OnMouseMove);
+	//glutIdleFunc(Idle);
+	//glutMainLoop();
+
+
+	
+	return 0;
+}

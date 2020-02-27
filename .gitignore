@@ -1,0 +1,17 @@
+*.opensdf
+*.sdf
+*.user
+*.suo
+.DS_Store
+.vs
+bin/
+Binaries/
+build/
+dev/
+External/
+res/
+gen/
+source/ThirdParty/FCollada
+source/GaEditor/wxRes
+!dev/data
+!libs/win32

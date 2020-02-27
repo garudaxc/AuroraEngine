@@ -1,0 +1,110 @@
+--function name must be "VS" "PS"
+
+vs_in = [[
+struct VS_INPUT
+{
+    float4 pos		: POSITION;
+    float3 normal	: NORMAL;
+    float2 tex		: TEXCOORD0;
+
+};
+]]
+
+vs_out = [[
+struct VS_OUTPUT
+{
+	float4 pos		: POSITION;
+	float3 normal	: TEXCOORD0;
+    float2 tex		: TEXCOORD1;
+};
+]]
+
+vs_code = [[
+VS_OUTPUT VS( VS_INPUT input )
+{
+	VS_OUTPUT output;
+	output.pos = mul(float4(input.pos.xyz, 1.0), matWVP);
+	output.normal = mul(input.normal, (float3x3)matWorld);
+	output.tex = input.tex;
+		
+    return output;
+}
+]]
+
+
+sampler0 = {
+id = 12;
+AddressU = Wrap;
+AddressV = Clamp;
+MinFilter = Linear;
+MagFilter = Linear;
+MipFilter = Point;
+}
+
+
+sampler1 = {
+id = 54;
+AddressU = Border;
+AddressV = Clamp;
+MinFilter = Linear;
+MagFilter = Linear;
+MipFilter = None;
+}
+
+ps_code = [[
+float4 PS(VS_OUTPUT input) : COLOR
+{
+	float3 lightDir = float3(1, 1, 1);
+	lightDir = normalize(lightDir);
+	float3 normal = normalize(input.normal);
+	float dnl = saturate(dot(lightDir, normal));
+	return float4(dnl, dnl, dnl, 1);
+	//half4 tex0 = tex2D(sampler0, input.tex);
+
+    //return tex0;
+}
+]]
+
+color = {
+type = "float4";
+}
+
+matWorld = {
+type = "float4x4";
+id = MATRIX_WORLD;
+}
+
+matWVP = {
+type = "float4x4";
+id = MATRIX_WVP;
+}
+
+matViewProj = {
+type = "float4x4";
+id = MATRIX_VIEWPROJ;
+}
+
+
+vs = {
+variable = {matWorld, matWVP, matViewProj};
+code = vs_code;
+profile = "vs_2_0";
+vsin = vs_in;
+vsout = vs_out;
+}
+
+
+
+
+ps = {
+variable = {};
+sampler = {};
+code = ps_code;
+profile = "ps_2_0";
+psin = vs_out;
+}
+
+MaterialName = "test material"
+
+
+--print(vs.test)

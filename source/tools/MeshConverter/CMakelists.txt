@@ -1,0 +1,77 @@
+cmake_minimum_required(VERSION 3.15)
+# set(platform x86)
+set(PROJ_NAME MeshConverter)
+# set(PROJECT_BINARY_DIR ../Intermediate)
+
+project(${PROJ_NAME})
+
+# set(MSVC_TOOLSET_VERSION 142)
+message("MSVC_TOOLSET_VERSION " ${MSVC_TOOLSET_VERSION})
+message("CMAKE_VS_PLATFORM_TOOLSET " ${CMAKE_VS_PLATFORM_TOOLSET})
+message("CMAKE_GENERATOR " ${CMAKE_GENERATOR})
+message("CMAKE_VS_PLATFORM_NAME " ${CMAKE_VS_PLATFORM_NAME})
+message("CMAKE_HOST_WIN32 " ${CMAKE_HOST_WIN32})
+message("CMAKE_SIZEOF_VOID_P " ${CMAKE_SIZEOF_VOID_P})
+
+message("project name " ${CMAKE_PROJECT_NAME})
+message("project binary dir " ${PROJECT_BINARY_DIR})
+# message("CMAKE_CURRENT_SOURCE_DIR " ${CMAKE_CURRENT_SOURCE_DIR})
+
+
+include_directories(./DirectXMesh)
+include_directories($ENV{FBX_SDK}/include)
+
+
+aux_source_directory(. srcs)
+aux_source_directory(./DirectXMesh srcs)
+
+# add_subdirectory(../code/thirdParty ../Build/thirdParty)
+
+message("CMAKE_CXX_FLAGS_DEBUG " ${CMAKE_CXX_FLAGS_DEBUG})
+message("CMAKE_CXX_FLAGS " ${CMAKE_CXX_FLAGS})
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+
+message("CMAKE_CXX_FLAGS_DEBUG " ${CMAKE_CXX_FLAGS_DEBUG})
+
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+add_executable(${PROJ_NAME} ${srcs})
+
+
+
+if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
+    set(FBX_LIB_PATH $ENV{FBX_SDK}/lib/vs2017/x86/debug)
+endif()
+
+if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8")
+    set(FBX_LIB_PATH $ENV{FBX_SDK}/lib/vs2017/x64/debug)
+endif()
+
+
+set(FBX_LIB_PATH ${FBX_LIB_PATH})
+target_link_directories(${PROJ_NAME} PUBLIC ${FBX_LIB_PATH})
+target_link_libraries(${PROJ_NAME} libfbxsdk-mt.lib libxml2-mt.lib zlib-mt.lib)
+
+
+# set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+# set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+
+set(MY_OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../Binaries)
+
+
+set_target_properties(${PROJ_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${MY_OUTPUT_DIR})
+set_target_properties(${PROJ_NAME} PROPERTIES PDB_OUTPUT_DIRECTORY ${MY_OUTPUT_DIR})
+set_target_properties(${PROJ_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${MY_OUTPUT_DIR})
+
+
+#set_target_properties(${PROJ_NAME} PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
+
+# set_target_properties(${PROJ_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries/win)
+# set_target_properties(${PROJ_NAME} PROPERTIES PDB_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries/win)
+
+# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries/win)
+# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries/win)
+
+
+

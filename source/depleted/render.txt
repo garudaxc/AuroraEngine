@@ -1,0 +1,209 @@
+
+
+bool DX9Renderer::CreateVSShader(shared_ptr<MaterialScript> pScript,
+					ShaderPtr& pShader, 
+					uint& nNumVar, shared_array<ShaderVarDesc>& pVarDesc)
+{
+	string vsCode = pScript->MakeVSCode();
+
+	Global::GetLog()->Append(vsCode);
+
+	LPD3DXBUFFER			pCompiledShader			= NULL;
+	LPD3DXBUFFER			pErrorMsgs		= NULL;
+	LPD3DXCONSTANTTABLE		pConstantTable	= NULL;
+
+	HRESULT hr = D3DXCompileShader(vsCode.c_str(), (UINT)vsCode.length(), NULL, NULL, 
+		"VS", pScript->GetVSProfile().c_str(), 0,
+		&pCompiledShader, &pErrorMsgs, &pConstantTable);
+
+	if (FAILED(hr))
+	{
+		std::string msg = "compile shader error. material: ";
+		msg += '\n';
+		Console::AppendText(msg.c_str());
+		if (pErrorMsgs)
+		{
+			std::string strError = (char*)pErrorMsgs->GetBufferPointer();
+			Console::AppendText(strError.c_str());
+			pErrorMsgs->Release();
+		}
+
+		return false;
+	}
+
+	IDirect3DVertexShader9* pD3DShader = NULL;
+	hr = m_pd3dDevice9->CreateVertexShader((const DWORD*)pCompiledShader->GetBufferPointer(), &pD3DShader);
+	assert(SUCCEEDED(hr));
+
+	pShader.reset(new VertexShaderD3D9(pD3DShader));
+
+	vector<ShaderVarDesc>	shaderVar;
+	const map<string, MaterialScript::Variable>& vsVar = pScript->GetVSVariables();
+	for (map<string, MaterialScript::Variable>::const_iterator it = vsVar.begin();
+		it != vsVar.end(); ++it)
+	{
+		if (it->second.global)
+		{
+			continue;
+		}
+
+		D3DXHANDLE handle = pConstantTable->GetConstantByName(NULL, it->first.c_str());
+
+		// variable may not used in shader
+		if (handle == NULL)
+		{
+			continue;
+		}
+
+		D3DXCONSTANT_DESC desc;
+		UINT nNumDesc = 1;
+		pConstantTable->GetConstantDesc(handle, &desc, &nNumDesc);
+
+		if (desc.Type != D3DXPT_FLOAT)
+		{
+			continue;
+		}
+
+		ShaderVarDesc var;
+		var.id			= it->second.id;
+		var.strName		= it->first;
+		var.nStartReg	= desc.RegisterIndex;
+		var.nNumReg		= desc.RegisterCount;
+		var.nBufferOffset	= desc.RegisterIndex * 4;
+
+		shaderVar.push_back(var);
+	}
+
+	nNumVar = (uint)shaderVar.size();
+	if (nNumVar > 0)
+	{
+		pVarDesc.reset(new ShaderVarDesc[nNumVar]);
+	}
+
+	for (uint i = 0; i < nNumVar; i++)
+	{
+		pVarDesc[i] = shaderVar[i];
+	}
+
+	return true;
+}
+
+
+
+
+bool DX9Renderer::CreatePSShader(shared_ptr<MaterialScript> pScript,
+					ShaderPtr& pShader, 
+					uint& nNumVar, shared_array<ShaderVarDesc>& pVarDesc,
+					uint& nNumSamperState, shared_array<SamperState>& pSamperState)
+{
+	string psCode = pScript->MakePSCode();
+
+	Global::GetLog()->Append(psCode);
+
+	LPD3DXBUFFER			pCompiledShader			= NULL;
+	LPD3DXBUFFER			pErrorMsgs		= NULL;
+	LPD3DXCONSTANTTABLE		pConstantTable	= NULL;
+
+	HRESULT hr = D3DXCompileShader(psCode.c_str(), (UINT)psCode.length(), NULL, NULL, 
+		"PS", pScript->GetPSProfile().c_str(), 0,
+		&pCompiledShader, &pErrorMsgs, &pConstantTable);
+
+	if (FAILED(hr))
+	{
+		std::string msg = "compile shader error. material: ";
+		msg += '\n';
+		Console::AppendText(msg.c_str());
+		if (pErrorMsgs)
+		{
+			std::string strError = (char*)pErrorMsgs->GetBufferPointer();
+			Console::AppendText(strError.c_str());
+			pErrorMsgs->Release();
+		}
+
+		return false;
+	}
+
+	IDirect3DPixelShader9* pD3DShader = NULL;
+	hr =m_pd3dDevice9->CreatePixelShader((const DWORD*)pCompiledShader->GetBufferPointer(), &pD3DShader);
+	assert(SUCCEEDED(hr));
+
+	pShader.reset(new PixelShaderD3D9(pD3DShader));
+
+	vector<ShaderVarDesc>	shaderVar;
+	const map<string, MaterialScript::Variable>& vsVar = pScript->GetPSVariables();
+	for (map<string, MaterialScript::Variable>::const_iterator it = vsVar.begin();
+		it != vsVar.end(); ++it)
+	{
+		if (it->second.global)
+		{
+			continue;
+		}
+
+		D3DXHANDLE handle = pConstantTable->GetConstantByName(NULL, it->first.c_str());
+
+		// variable may not used in shader
+		if (handle == NULL)
+		{
+			continue;
+		}
+
+		D3DXCONSTANT_DESC desc;
+		UINT nNumDesc = 1;
+		pConstantTable->GetConstantDesc(handle, &desc, &nNumDesc);
+
+		// temporarily only support float variable
+		if (desc.Type != D3DXPT_FLOAT)
+		{
+			continue;
+		}
+
+		ShaderVarDesc var;
+		var.id			= it->second.id;
+		var.strName		= it->first;
+		var.nStartReg	= desc.RegisterIndex;
+		var.nNumReg		= desc.RegisterCount;
+		var.nBufferOffset	= desc.RegisterIndex * 4;
+
+		shaderVar.push_back(var);
+	}
+
+	nNumVar = (uint)shaderVar.size();
+	if (nNumVar > 0)
+	{
+		pVarDesc.reset(new ShaderVarDesc[nNumVar]);
+	}
+
+	for (uint i = 0; i < nNumVar; i++)
+	{
+		pVarDesc[i] = shaderVar[i];
+	}
+
+	nNumSamperState = pScript->GetNumSamperState();
+	pSamperState = pScript->GetSamperStates();
+	for (uint i = 0; i < nNumSamperState; i++)
+	{
+		D3DXHANDLE handle = pConstantTable->GetConstantByName(NULL, pSamperState[i].strName.c_str());
+
+		// variable may not used in shader
+		if (handle == NULL)
+		{
+			continue;
+		}
+
+		D3DXCONSTANT_DESC desc;
+		UINT nNumDesc = 1;
+		pConstantTable->GetConstantDesc(handle, &desc, &nNumDesc);
+
+		assert(desc.Type == D3DXPT_SAMPLER ||
+			desc.Type == D3DXPT_SAMPLER1D ||
+			desc.Type == D3DXPT_SAMPLER2D ||
+			desc.Type == D3DXPT_SAMPLER3D ||
+			desc.Type == D3DXPT_SAMPLERCUBE);
+
+		pSamperState[i].nRegister = desc.RegisterIndex;
+	}
+
+
+	return true;
+}
+

@@ -1,0 +1,789 @@
+
+
+
+
+
+
+
+
+
+
+
+
+using namespace ase;
+
+
+string StripName(const string& name)
+{
+	size_t start = name.find_first_not_of('\"');
+	size_t end = name.find_last_not_of('\"');
+	return name.substr(start, end - start + 1);
+}
+
+GeometryData* LoadAseMesh(geomobj* pGeomObj)
+{
+	stripobj* pStripObj = pGeomObj->strip;
+
+	int nMesh = 0;
+	uint nVert = 0;
+	uint nTri = 0;
+	std::vector<int> vNumMeshVert;
+	std::vector<int> vNumMeshTri;
+	for (uint j = 0; j < pStripObj->strip_mat.size(); j++)
+	{
+		t_strip_mat* pStripMat = pStripObj->strip_mat[j];
+
+		int t = 0;
+		for (uint k = 0; k < pStripMat->strips.size(); k++)
+		{
+			t_strip* pStrip = pStripMat->strips[k];
+			t += (int)pStrip->elems.size() - 2;
+		}
+
+		nVert += pStripMat->numVert;
+		nTri += t;
+		vNumMeshVert.push_back(pStripMat->numVert);
+		vNumMeshTri.push_back(t);
+		nMesh++;
+	}
+
+	GeometryData* pGeomData = new GeometryData(nVert, nTri);
+	int nBase = 0;
+
+	float* pPos = (float*)pGeomData->AddStream(GeometryData::USAGE_POSITION, GeometryData::TYPE_FLOAT3);
+	float* pNormal = NULL;
+	float* pUV = NULL;
+	if (pStripObj->hasNormal)
+	{
+		pNormal = (float*)pGeomData->AddStream(GeometryData::USAGE_NORMAL, GeometryData::TYPE_FLOAT3);
+	}
+	if (pStripObj->hasTvert)
+	{
+		pUV = (float*)pGeomData->AddStream(GeometryData::USAGE_TEXCOORD, GeometryData::TYPE_FLOAT2);
+	}
+	ushort* pIndex = (ushort*)pGeomData->AddStream(GeometryData::USAGE_INDEX, GeometryData::TYPE_USHORT);
+
+	Vector3f rotAxis(pGeomObj->rotaxis[0], pGeomObj->rotaxis[1], pGeomObj->rotaxis[2]);
+	Matrix3f matRot;
+	MatrixRotationAxis(matRot, rotAxis, -pGeomObj->rotangle);
+
+	for (uint j = 0; j < pStripObj->strip_mat.size(); j++)
+	{
+		t_strip_mat* pStripMat = pStripObj->strip_mat[j];
+
+		memcpy(pPos, pStripMat->v, sizeof(float) * 3 * vNumMeshVert[j]);
+		Vector3f* pp = (Vector3f*)pPos;
+		for (int k = 0; k < vNumMeshVert[j]; k++)
+		{
+			pp->x *= pGeomObj->scale[0];
+			pp->y *= pGeomObj->scale[1];
+			pp->z *= pGeomObj->scale[2];
+			pp++;
+		}
+		pPos += 3 * vNumMeshVert[j];
+
+
+		if (pStripObj->hasNormal)
+		{
+			for (int i = 0; i < vNumMeshVert[j]; i++)
+			{
+				Vector3f normal;
+				Vector3Transform(normal, *(Vector3f*)(pStripMat->n + 3 * i), matRot);
+				normal.Normalize();
+				*((Vector3f*)pNormal) = normal;
+				pNormal += 3;
+			}
+		}
+
+		if (pStripObj->hasTvert)
+		{
+			memcpy(pUV, pStripMat->t, sizeof(float) * 2 * vNumMeshVert[j]);
+			// flip y axis
+			Vector2f* p = (Vector2f*)pUV;
+			for (int k = 0; k < vNumMeshVert[j]; k++)
+			{
+				(p + k)->y = 1 - (p + k)->y;
+			}
+
+			pUV += 2 * vNumMeshVert[j];
+		}
+
+		for (uint k = 0; k < pStripMat->strips.size(); k++)
+		{
+			t_strip* pStrip = pStripMat->strips[k];
+			for (uint m = 0; m < pStrip->elems.size() - 2; m++)
+			{
+				if ((m % 2) == 0)
+				{
+					*pIndex++ = nBase + pStrip->elems[m];
+					*pIndex++ = nBase + pStrip->elems[m + 1];
+					*pIndex++ = nBase + pStrip->elems[m + 2];
+				}
+				else
+				{
+					*pIndex++ = nBase + pStrip->elems[m + 1];
+					*pIndex++ = nBase + pStrip->elems[m];
+					*pIndex++ = nBase + pStrip->elems[m + 2];
+				}
+			}
+		}
+
+		nBase += vNumMeshVert[j];
+	}
+
+
+	return pGeomData;
+
+	/*Vector3f* p = (Vector3f*)pGeomData->GetStreamBufferByUsage(GeometryData::EU_POSITION);
+	Vector2f* pTex = (Vector2f*)pGeomData->GetStreamBufferByUsage(GeometryData::EU_TEXCOORD, 0);
+	for (uint i = 0; i < nVert; i++)
+	{
+		p->x *= pGeomObj->scale[0];
+		p->y *= pGeomObj->scale[1];
+		p->z *= pGeomObj->scale[2];
+
+		p++;
+	}
+
+	Vector3f* n = (Vector3f*)pGeomData->GetNumStreamOfUsage(GeometryData::EU_NORMAL);
+
+	for (uint i = 0; i < nVert; i++)
+	{
+	Vector3f normal;
+	Vector3Transform(normal, *n, matRot);
+	normal.Normalize();
+	*n = normal;
+	n++;
+	}
+	*/
+
+}
+
+void LoadAsePointLight(lightobj* pLightObj)
+{
+	//ResourcePtr<GeometryData> pGeomData = Global::GetResourceManager()->GetGeometryData("PointLight");
+	//ResourcePtr<VertexDescription> pVertexDesc = Global::GetResourceManager()->GetVertexDesc(ResourceManager::LIGHTMESH_VEXDESC);
+
+	//LightObjectPtr pObject = LightObjectPtr(new LightObject(pVertexDesc.Get(), 
+	//	pGeomData->GetVertexBuffer(pVertexDesc.Get()), pGeomData->GetIndexBuffer()));
+	//pObject->BuildRenderOperator(pGeomData.Get());
+
+
+	//MaterialInstancePtr pMatInst = Global::GetResourceManager()->GetMaterial("MatPointLight")->CreateMaterialInstance();
+
+	//Vector3f param(pLightObj->attnstart, pLightObj->attnend, 0.0f);
+	//pMatInst->SetValueF("PointLightParam", param.Ptr(), 3);
+	//pMatInst->SetValueF("LightColor", &(pLightObj->r), 3);
+	//pObject->SetMaterialInst(pMatInst);
+
+	//pObject->SetLightType(LightObject::LT_POINT);
+	//pObject->SetRadius(pLightObj->attnend);
+	//Color c(pLightObj->r, pLightObj->g, pLightObj->b);
+	//pObject->SetColor(c);
+
+
+	//SceneNodePtr pNode = Global::GetSceneManager()->CreateSceneNode();
+
+	//pNode->Attach(pObject);
+
+	//pNode->SetName(StripName(pLightObj->name));
+	//pNode->SetTranslation(*((Vector3f*)pLightObj->pos));
+
+	//Global::GetSceneManager()->GetRootNode()->AddChildNode(pNode);
+}
+
+
+
+void LoadAseDirectionalLight(lightobj* pLightObj)
+{
+	//ResourcePtr<GeometryData> pGeomData = Global::GetResourceManager()->GetGeometryData("ScreenQuad");
+	//ResourcePtr<VertexDescription> pVertexDesc = Global::GetResourceManager()->GetVertexDesc(ResourceManager::LIGHTMESH_VEXDESC);
+
+	//LightObjectPtr pObject = LightObjectPtr(new LightObject(pVertexDesc.Get(), 
+	//	pGeomData->GetVertexBuffer(pVertexDesc.Get()), pGeomData->GetIndexBuffer()));
+	//pObject->BuildRenderOperator(pGeomData.Get());
+
+	//MaterialInstancePtr pMatInst = Global::GetResourceManager()->GetMaterial("MatDirectionalLight")->CreateMaterialInstance();
+
+
+	//pMatInst->SetValueF("LightColor", &(pLightObj->r), 3);
+	//pObject->SetMaterialInst(pMatInst);
+
+
+	//pObject->SetLightType(LightObject::LT_DIRECTIONAL);
+	//Color c(pLightObj->r, pLightObj->g, pLightObj->b);
+	//pObject->SetColor(c);
+
+
+
+	//SceneNodePtr pNode = Global::GetSceneManager()->CreateSceneNode();
+	//pNode->Attach(pObject);
+
+	//pNode->SetName(StripName(pLightObj->name));
+	//pNode->SetTranslation(Vector3f::ZERO);
+
+	//Matrix4f matTrans;
+	//memcpy(matTrans.Ptr(), pLightObj->tm, sizeof(Matrix4f));
+	//Quaternionf qRot;
+	//QuaternionFromRotationMatrix(qRot, matTrans);
+	//pNode->SetRotation(qRot);
+
+	//Global::GetSceneManager()->GetRootNode()->AddChildNode(pNode);
+}
+
+
+
+
+void LoadAseSpotLight(lightobj* pLightObj)
+{
+	//ResourcePtr<GeometryData> pGeomData = Global::GetResourceManager()->GetGeometryData("cone");
+	//ResourcePtr<VertexDescription> pVertexDesc = Global::GetResourceManager()->GetVertexDesc(ResourceManager::LIGHTMESH_VEXDESC);
+
+	//LightObjectPtr pObject = LightObjectPtr(new LightObject(pVertexDesc.Get(), 
+	//	pGeomData->GetVertexBuffer(pVertexDesc.Get()), pGeomData->GetIndexBuffer()));
+	//pObject->BuildRenderOperator(pGeomData.Get());
+
+	//MaterialInstancePtr pMatInst = Global::GetResourceManager()->GetMaterial("MatSpotLight")->CreateMaterialInstance();
+
+	//pMatInst->SetValueF("LightColor", &(pLightObj->r), 3);
+
+
+	//pObject->SetLightType(LightObject::LT_SPOT);
+	//Color c(pLightObj->r, pLightObj->g, pLightObj->b);
+	//pObject->SetColor(c);
+
+
+	//float param[4];
+	//float innerAngle = pLightObj->spot_hotspot * Mathf::DEG_TO_RAD * 0.5f;
+	//float outterAngle = pLightObj->spot_falloff * Mathf::DEG_TO_RAD * 0.5f;
+	//// x : tangent of half outter angle
+	//// y : cosine of half outter angle
+	//// z : cosine of half inner angle
+	//// w : 1 / (z - y)
+	//param[0] = Mathf::Tan(outterAngle);
+	//param[1] = Mathf::Cos(outterAngle);
+	//param[2] = Mathf::Cos(innerAngle);
+	//param[3] = 1.0f / (param[2] - param[1]);
+	//pMatInst->SetValueF("SpotLightParam", param, 4);
+
+	//pObject->SetMaterialInst(pMatInst);
+
+
+	//SceneNodePtr pNode = Global::GetSceneManager()->CreateSceneNode();
+	//pNode->Attach(pObject);
+
+	//pNode->SetName(StripName(pLightObj->name));
+	//pNode->SetTranslation(*((Vector3f*)pLightObj->pos));
+
+	//Matrix4f matTrans;
+	//memcpy(matTrans.Ptr(), pLightObj->tm, sizeof(Matrix4f));
+	//Quaternionf qRot;
+	//QuaternionFromRotationMatrix(qRot, matTrans);
+	//pNode->SetRotation(qRot);
+
+	//Global::GetSceneManager()->GetRootNode()->AddChildNode(pNode);
+}
+
+
+
+
+void ApplyMaterial(RenderableObject* pRenderable, matobj* pMatObj)
+{
+	MaterialInstancePtr pMatInst = Global::GetResourceManager()->GetMaterial("MatPreNormal")->CreateMaterialInstance();
+	pRenderable->SetMaterialInst(pMatInst);
+
+
+	pMatInst->SetValueF("Glossiness", &(pMatObj->shine), 1);
+
+
+	string filename = "../res/default_albedo.dds";
+	if (pMatObj->map_diffuse.size() > 0)
+	{
+		mapobj* pMapObj = pMatObj->map_diffuse[0];
+		if (pMapObj->bitmap)
+		{
+			filename = ConvertFileName(pMapObj->bitmap);
+		}
+	}
+	pMatInst->SetTexture("texAlbedo", Global::GetResourceManager()->GetTexture(filename));
+
+
+
+	filename = "../res/default_normal.dds";
+	float bumpniess = 1.0f;
+	if (pMatObj->map_bump.size() > 0)
+	{
+		mapobj* pMapObj = pMatObj->map_bump[0];
+		bumpniess = pMapObj->amount;
+
+		if (pMapObj->bitmap == NULL && pMapObj->map_generic.size() > 0)
+		{
+			pMapObj = pMapObj->map_generic[0];
+		}
+
+		if (pMapObj->bitmap)
+		{
+			filename = ConvertFileName(pMapObj->bitmap);
+		}
+	}
+	pMatInst->SetTexture("texNormal", Global::GetResourceManager()->GetTexture(filename));
+	pMatInst->SetValueF("Bumpniess", &bumpniess, 1);
+}
+
+
+
+
+void LoadAseCamera(camobj* pCamObj)
+{
+	CameraPtr pCamera(new CameraPerspectiveFov());
+
+	pCamera->SetNearFarPlane(pCamObj->near_plane, pCamObj->far_plane);
+
+
+	uint nWidth = 0, nHeight = 0;
+	Global::GetRenderer()->GetFrameBufferSize(nWidth, nHeight);
+	float aspect = nWidth / (float)nHeight;
+	pCamera->SetAspect(aspect);
+	pCamera->SetFov(pCamObj->fov / aspect);
+
+
+
+	SceneNodePtr pNode = Global::GetSceneManager()->CreateSceneNode();
+	pNode->Attach(pCamera);
+
+	pNode->SetName(StripName(pCamObj->name));
+
+
+	Vector3f pos;
+	pos.Set(pCamObj->pos);
+	pNode->SetTranslation(pos);
+
+
+	Quaternionf qRot;
+	Vector3f vRot;
+	vRot.Set(pCamObj->axis);
+	QuaternionRotationAxis(qRot, vRot, pCamObj->axisangle);
+	pNode->SetRotation(qRot);
+	pCamera->UpdateFromParentNode();
+
+	Global::GetSceneManager()->GetRootNode()->AddChildNode(pNode);
+}
+
+
+
+
+bool LoadAseScene(const std::string& pathname)
+{
+	boost::shared_ptr<ase::model> pModel(ase::load(pathname.c_str(), 1.0f));
+	if (pModel == NULL)
+	{
+		return false;
+	}
+
+	for (uint i = 0; i < pModel->geom.size(); i++)
+	{
+		geomobj* pGeomObj = pModel->geom[i];
+
+		// skip helper objects
+		if (pGeomObj->numv == 0 || pGeomObj->numf == 0 || pGeomObj->matidx < 0)
+		{
+			continue;
+		}
+
+		string name = StripName(pGeomObj->name);
+		GeometryData* pGeomData = LoadAseMesh(pGeomObj);
+		Global::GetResourceManager()->AddGeometryData(name, pGeomData);
+
+
+		ResourcePtr<VertexDescription> pVertexDesc = Global::GetResourceManager()->GetVertexDesc(ResourceManager::DEFAULT_VEXDESC);
+		RenderableObjectPtr pRenderable = RenderableObjectPtr(new RenderableObject(pVertexDesc.Get(), 
+			pGeomData->GetVertexBuffer(pVertexDesc.Get()), pGeomData->GetIndexBuffer()));
+		pRenderable->BuildRenderOperator(pGeomData);
+
+		int matIdx = pGeomObj->matidx;
+		ApplyMaterial(pRenderable.get(), pModel->mat[matIdx]);
+
+		SceneNodePtr pNode = Global::GetSceneManager()->CreateSceneNode();
+		pNode->SetName(name);
+		pNode->Attach(pRenderable);
+
+		pNode->SetTranslation(*((Vector3f*)pGeomObj->pos));
+
+		Vector3f rotAxis(pGeomObj->rotaxis[0], pGeomObj->rotaxis[1], pGeomObj->rotaxis[2]);
+
+		Quaternionf qRot;
+		QuaternionRotationAxis(qRot, rotAxis, pGeomObj->rotangle);
+
+		pNode->SetRotation(qRot);
+		Global::GetSceneManager()->GetRootNode()->AddChildNode(pNode);
+	}
+
+
+	for (uint i = 0; i < pModel->light.size(); i++)
+	{
+		lightobj* pLightObj = pModel->light[i];
+		if (pLightObj->type == LIGHT_OMNI)
+		{
+			LoadAsePointLight(pLightObj);
+		}
+		else if (pLightObj->type == LIGHT_TARGET)
+		{
+			LoadAseSpotLight(pLightObj);
+		}
+		else if (pLightObj->type == LIGHT_DIRECTIONAL)
+		{
+			LoadAseDirectionalLight(pLightObj);
+		}
+	}
+
+	for (uint i = 0; i < pModel->cam.size(); i++)
+	{
+		LoadAseCamera(pModel->cam[i]);		
+	}
+
+	return true;
+}
+
+
+
+void LoadAseAsset(const string& pathname)
+{
+	boost::shared_ptr<ase::model> pModel(ase::load(pathname.c_str(), 1.0f));
+	if (pModel == NULL)
+	{
+		return;
+	}
+
+	for (uint i = 0; i < pModel->geom.size(); i++)
+	{
+		geomobj* pGeomObj = pModel->geom[i];
+
+		// skip helper objects
+		if (pGeomObj->numv == 0 || pGeomObj->numf == 0)
+		{
+			continue;
+		}
+
+		GeometryData* pGeomData = LoadAseMesh(pGeomObj);
+
+		string name = StripName(pGeomObj->name);
+		Global::GetResourceManager()->AddGeometryData(name, pGeomData);
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//
+//
+//GeometryDataPtr CreateGeomtryData(domTrianglesRef triRef)
+//{
+//	float* pPos = NULL;
+//	float* pNormal = NULL;
+//	float* pUV = NULL;
+//
+//	uint nTri = (uint)triRef->getCount();
+//	uint nVert = 0;
+//
+//	uint nNumPos = 0;
+//	uint nNumNormal = 0;
+//
+//
+//	domPRef PRef = triRef->getP();
+//	domListOfUInts& pValues = PRef->getValue();
+//
+//
+//	domSourceRef normalRef;
+//	uint normalOffset = 0;
+//	domSourceRef uvRef;
+//	uint uvOffset = 0;
+//	domVerticesRef vertRef;
+//	uint vertOffset = 0;
+//
+//	domInputLocalOffset_Array& inputArray = triRef->getInput_array();
+//	uint nNumInput = (uint)inputArray.getCount();
+//	for (uint i = 0; i < nNumInput; i++)
+//	{
+//		domInputLocalOffsetRef inputRef = inputArray[i];
+//
+//		xsNMTOKEN sem = inputRef->getSemantic();
+//
+//		if (strcmp(sem, "VERTEX") == 0)
+//		{
+//			vertRef = (domVertices*)(inputRef->getSource().getElement().cast());
+//			vertOffset = (uint)inputRef->getOffset();
+//		}
+//		else if (strcmp(sem, "NORMAL") == 0)
+//		{
+//			normalRef = (domSource*)(inputRef->getSource().getElement().cast());
+//			normalOffset = (uint)inputRef->getOffset();
+//		}
+//		else if (strcmp(sem, "TEXCOORD") == 0)
+//		{
+//			uvRef = (domSource*)(inputRef->getSource().getElement().cast());
+//			uvOffset = (uint)inputRef->getOffset();
+//		}		
+//	}
+//
+//	domSourceRef posRef;
+//	domInputLocal_Array& vertInputArray = vertRef->getInput_array();
+//	for (uint i = 0; i < vertInputArray.getCount(); i++)
+//	{
+//		domInputLocalRef inputRef = vertInputArray[i];
+//
+//		xsNMTOKEN sem = inputRef->getSemantic();
+//
+//		if (strcmp(sem, "POSITION") == 0)
+//		{
+//			posRef = (domSource*)(inputRef->getSource().getElement().cast());
+//		}
+//	}
+//
+//	//assert(posRef->getFloat_array()->getCount() == normalRef->getFloat_array()->getCount());
+//	//nVert = posRef->getFloat_array()->getCount() / 3;
+//	nVert = nTri * 3;
+//
+//	GeometryDataPtr pGeomData(new GeometryData(nVert, nTri));
+//	pPos = (float*)pGeomData->AddStream(GeometryData::EU_POSITION, sizeof(Vector3f));
+//
+//	pNormal = (float*)pGeomData->AddStream(GeometryData::EU_NORMAL, sizeof(Vector3f));
+//
+//	pUV = (float*)pGeomData->AddStream(GeometryData::EU_TEXCOORD, sizeof(Vector2f));
+//
+//	ushort* pIndex = (ushort*)pGeomData->AddStream(GeometryData::EU_INDEX, 2);
+//
+//	domFloat* pDomPos = (domFloat*)posRef->getFloat_array()->getValue().getRawData();
+//	domFloat* pDomNormal = (domFloat*)normalRef->getFloat_array()->getValue().getRawData();
+//
+//
+//
+//	domUint idxPos, idxNormal;
+//	domUint* pPValue = (domUint*)pValues.getRawData();
+//	for (uint i = 0; i < nTri * 3; i++)
+//	{
+//		idxPos = pPValue[vertOffset];
+//		idxNormal = pPValue[normalOffset];
+//
+//
+//		domFloat* pP = pDomPos + idxPos * 3;
+//		domFloat* pN = pDomNormal + idxNormal * 3;
+//		for (int j = 0; j < 3; j++)
+//		{
+//			*pPos++ = (float)(*pP++);
+//			*pNormal++ = (float)(*pN++);
+//		}
+//
+//		pIndex[i] = (uint)i;
+//		pPValue += nNumInput;
+//	}
+//
+//	return pGeomData;
+//}
+//
+//
+//
+//bool Scene::LoadGeometries(domCOLLADA* root)
+//{
+//
+//	domLibrary_geometries* geomLib = (domLibrary_geometries*)root->getChild("library_geometries");
+//	if (geomLib == NULL)
+//	{
+//		return false;
+//	}
+//
+//	domGeometry_Array geomArray = geomLib->getGeometry_array();
+//	for (uint i = 0; i < geomArray.getCount(); i++)
+//	{
+//		std::string id = geomArray[i]->getID();
+//
+//		domMeshRef pMesh = geomArray[i]->getMesh();
+//
+//		GeometryDataPtr unwrapedGeom;
+//		domTriangles_Array triArray = pMesh->getTriangles_array();
+//		for (uint i = 0; i < triArray.getCount(); i++)
+//		{
+//			domTrianglesRef triRef = triArray[i];
+//
+//
+//			GeometryDataPtr geomData = CreateGeomtryData(triRef);
+//			unwrapedGeom = LightmapGenerator::UnwrapUV(geomData.get());
+//
+//
+//			VertexDeclarationPtr pVertDecl = VertexDeclaration::CreateInstance();
+//			if (!pVertDecl->Create(unwrapedGeom.get(), GetRenderer()))
+//				return false;
+//
+//			unwrapedGeom->SetVertexDecl(pVertDecl);
+//			if (!unwrapedGeom->CreateRendererObject(GetRenderer()))
+//				return false;
+//		}
+//		
+//		m_GeomLib.AddGeometry(id, unwrapedGeom);
+//
+//	}
+//
+//	return true;
+//}
+//
+//
+//
+//
+//bool ParseNode(SceneNode* pSceneNode, domNodeRef domNode, Scene* pScene)
+//{
+//	std::string name = domNode->getName();
+//	pSceneNode->SetName(name);
+//
+//	domTranslate_Array& translateArray = domNode->getTranslate_array();
+//	for (uint i = 0; i < translateArray.getCount(); i++)
+//	{
+//		domTranslateRef translate = translateArray[i];
+//		domFloat3& value = translate->getValue();
+//		domFloat x, y, z;
+//		value.get3at(0, x, y, z);
+//		pSceneNode->SetTranslation(Vector3f((float)x, (float)y, (float)z));
+//	}
+//
+//	domRotate_Array& rotateArray = domNode->getRotate_array();
+//	for (uint i = 0; i < rotateArray.getCount(); i++)
+//	{
+//		domRotateRef rotate = rotateArray[i];
+//		domFloat4 value = rotate->getValue();
+//
+//		domFloat x, y, z, angle;
+//		value.get4at(0, x, y, z, angle);
+//
+//		Quaternionf q;
+//		QuaternionRotationAxis(q, Vector3f((float)x, (float)y, (float)z), Mathf::DEG_TO_RAD * (float)angle);
+//
+//		pSceneNode->SetRotation(q);
+//	}
+//
+//
+//
+//	if (domNode->getInstance_geometry_array().getCount() > 0)
+//	{
+//		domInstance_geometry_Array& IGA = domNode->getInstance_geometry_array();
+//		//only support one geom instance
+//		domInstance_geometryRef instance = IGA[0];
+//		std:: string id = instance->getUrl().getID();
+//
+//		// ×¢ÊÍµôÁË
+//		GeometryDataPtr pGeomData = pScene->GetGeomLibrary()->FindGeomtry(id);
+//		assert(pGeomData);
+//		Geometry* pGeomNode = (Geometry*)pSceneNode;
+//		pGeomNode->SetGeometryData(pGeomData);
+//
+//	}
+//
+//	if (domNode->getInstance_light_array().getCount() > 0)
+//	{
+//	}
+//
+//
+//	domNode_Array& nodeArray = domNode->getNode_array();
+//	for (uint i = 0; i < nodeArray.getCount(); i++)
+//	{
+//		domNodeRef child = nodeArray[i];
+//		int nNumInstance = 0;
+//
+//		SceneNodePtr pSceneChild;
+//		if (child->getInstance_geometry_array().getCount() > 0)
+//		{
+//			pSceneChild = pScene->CreateGeometry();
+//			nNumInstance++;
+//		}
+//
+//		if (child->getInstance_light_array().getCount() > 0)
+//		{
+//			pSceneChild = pScene->CreateLightNode();
+//			nNumInstance++;
+//		}
+//
+//		assert(nNumInstance <= 1);
+//		if (nNumInstance == 0)
+//		{
+//			pSceneChild = pScene->CreateSceneNode();
+//		}
+//
+//		pSceneNode->AddChildNode(pSceneChild);
+//
+//		if (!ParseNode(pSceneChild.get(), child, pScene))
+//			return false;
+//	}
+//
+//	return true;
+//}
+//
+//
+//
+//bool Scene::LoadColladaScene(const std::string& pathname)
+//{
+//
+//	DAE dae;
+//	domCOLLADA* root = dae.open(pathname.c_str());
+//	if (!root) {
+//		return false;
+//	}
+//
+//	//×¢ÊÍµôÁË
+//	if (!LoadGeometries(root))
+//	{
+//		return false;
+//	}
+//
+//	domLibrary_visual_scenes* geomLib = (domLibrary_visual_scenes*)root->getChild("library_visual_scenes");
+//	if (geomLib == NULL)
+//	{
+//		return false;
+//	}
+//
+//	domVisual_scene_Array& VSA = geomLib->getVisual_scene_array();
+//	// get only first scene
+//	domVisual_sceneRef visualScene = VSA.get(0);
+//
+//	domNode_Array& nodeArray = visualScene->getNode_array();
+//
+//	// one root node
+//	assert(nodeArray.getCount() == 1);
+//
+//	domNodeRef nodeRef = nodeArray.get(0);
+//
+//	ParseNode(m_pRootNode.get(), nodeRef, this);
+//
+//	return true;
+//
+//}
+
+
+//////////////////////////////////////////////////////////////////////////
+
+
+
+
