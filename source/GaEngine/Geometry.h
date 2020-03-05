@@ -54,8 +54,17 @@ class Geometry;
 class VertexDeclaration;
 class VertexDescription;
 class VertexBuffer;
+class File;
 
 typedef map<VertexLayout, VertexBuffer*> VertexBufferPool;
+
+
+struct MeshElement
+{
+	int32	IndexStart = 0;
+	int32	IndexCount = 0;
+	int32	MaterialSlot = 0;
+};
 
 
 class Geometry : public Resource
@@ -110,28 +119,29 @@ public:
 	Geometry();
 	~Geometry() {}
 		
-	uint				GetNumVertex() const { return m_nNumVert; }
-	uint				GetNumTri() const { return m_nNumIndex / 3; }
+	uint		GetNumVertex() const { return m_nNumVert; }
+	uint		GetNumTri() const { return m_nNumIndex / 3; }
 
-	uint				GetNumStream() const { return (uint)m_Streams.size(); }
+	uint		GetNumStream() const { return (uint)m_Streams.size(); }
 
-	uint				GetNumStreamOfUsage(ElemUsage usage) const;
+	uint		GetNumStreamOfUsage(ElemUsage usage) const;
 
-	uint8*				AddStream(ElemUsage usage, VertexElemType type);
+	uint8*		AddStream(ElemUsage usage, VertexElemType type);
 
-	uint				GetNumElement() const		{	return 1;	}
+	uint		GetNumElement() const		{	return 1;	}
 
-	void				ComputeTangentSpace();
+	void		ComputeTangentSpace();
 
-	int					FindStream(ElemUsage usage, uint8 usageIndex) const;
+	int			FindStream(ElemUsage usage, uint8 usageIndex) const;
 	uint8*				GetStreamPointer(ElemUsage usage, uint8 usageIndex);
 	virtual void*		GetBindID() const		{	return NULL;	}
 	virtual void		OnReset();
 	virtual void		OnLost();
 
-	bool				Load(const TiXmlNode* pXmlMesh);
-	void				Save(TiXmlNode* pXmlMesh) const;
-	bool				CreateFromBuildData(MeshBuildData* pData);
+	bool		Load(const TiXmlNode* pXmlMesh);
+	void		Save(TiXmlNode* pXmlMesh) const;
+	bool		CreateFromBuildData(MeshBuildData* pData);
+	void		Load(File* file);
 
 
 	VertexBuffer*		GetVertexBuffer();
@@ -168,7 +178,7 @@ private:
 	VertexBufferPool		m_VertexBufferPool;
 
 	VertexBuffer*			m_pVertexBuffer;
-
+	vector<MeshElement>		Elements_;
 
 //
 //public:

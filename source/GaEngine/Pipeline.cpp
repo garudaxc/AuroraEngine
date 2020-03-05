@@ -74,14 +74,12 @@ Pipeline GPipeline;
 
 
 
-Pipeline::Pipeline(void):m_bOcclusionQuerying(false),m_pOcclusionQuery(NULL),m_pHelperRenderer(NULL)
+Pipeline::Pipeline(void):m_bOcclusionQuerying(false)
 {
 }
 
 Pipeline::~Pipeline(void)
 {
-	delete m_pOcclusionQuery;
-	delete m_pHelperRenderer;
 }
 
 void Pipeline::BeginPipe()
@@ -167,12 +165,12 @@ void Pipeline::Initialize(int width, int height)
 
 	pRT = ->CreateRenderTarget(desc);
 	Global::GetResourceManager()->AddRenderTarget("ShadowMapColorRT", pRT);*/
-
+	
 
 	//g_pPostProcessRendering.reset(new PostProcessRendering());
 	//g_pPostProcessRendering->Init();
 
-	//m_pHelperRenderer.reset(new HelperRenderer());
+	//m_pHelperRenderer = make_unique<HelperRenderer>();
 	//m_pHelperRenderer->Init();
 }
 

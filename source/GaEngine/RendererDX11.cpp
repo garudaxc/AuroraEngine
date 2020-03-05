@@ -28,6 +28,7 @@
 
 #include "stb/stb_image.h"
 #include "FileSystem.h"
+#include "DDSTextureLoader.h"
 
 #pragma comment (lib, "d3d11.lib") 
 #pragma comment (lib, "DXGI.lib") 
@@ -234,64 +235,58 @@ namespace Aurora
 	class RendererDx11 : public IRenderDevice
 	{
 	public:
-
-		uint32 CreateShader(ShaderCode code);
-
+		
 		RendererDx11();
 		~RendererDx11(void);
 
 
-		virtual uint32  CreateShader(const ShaderCode& code);
+		virtual Handle  CreateShader(const ShaderCode& code);
 
-		// resourec creation
-		Shader* CreateVertexShader(const string& pathname, const vector<pair<string, string>>& defines);
 
-		Shader* CreatePixelShader(const string& pathname, const vector<pair<string, string>>& defines);
+		virtual Texture* CreateTexture(File* file);
 
-		Texture* CreateTexture(File* file);
+		virtual Texture* CreateTexture(Texture::Type type, const Texture::Desc& desc);
 
-		Texture* CreateTexture(Texture::Type type, const Texture::Desc& desc);
+		virtual RenderTarget* CreateRenderTarget(const RenderTarget::Desc& desc);
 
-		RenderTarget* CreateRenderTarget(const RenderTarget::Desc& desc);
+		virtual VertexBuffer* CreateVertexBuffer(Geometry* pGeometry, VertexLayout layout, uint nVert);
 
-		VertexBuffer* CreateVertexBuffer(Geometry* pGeometry, VertexLayout layout, uint nVert);
+		virtual IndexBuffer* CreateIndexBuffer(Geometry* pGeometry, IndexBuffer::Format fmt, uint nNumIndex);
 
-		IndexBuffer* CreateIndexBuffer(Geometry* pGeometry, IndexBuffer::Format fmt, uint nNumIndex);
-
-		VertexBuffer* CreateDynamicVertexBuffer(int nStride, int nNumVert);
+		virtual VertexBuffer* CreateDynamicVertexBuffer(int nStride, int nNumVert);
 
 		//////////////////////////////////////////////////////////////////////////
 
 
-		void		Clear(int clearMask, const Color& clearColor = Color::BLUE, float fDepth = 1.0f, uint8 nStencil = 0);
-		void		BeginScene();
-		void		EndScene();
-		void		Present();
+		virtual void		Clear(int clearMask, const Color& clearColor = Color::BLUE, float fDepth = 1.0f, uint8 nStencil = 0);
+		virtual void		BeginScene();
+		virtual void		EndScene();
+		virtual void		Present();
 
 		RenderTarget* GetFrameBuffer();
 		RenderTarget* GetDepthStecil();
 
-		void		SetVertexDesc(VertexDescription* pVertDesc);
+		virtual void		SetVertexDesc(VertexDescription* pVertDesc);
 
-		void		SetVertexShader(Shader* pShader);
-		void		SetPixelShader(Shader* pShader);
+		virtual void		SetVertexShader(Shader* pShader);
+		virtual void		SetPixelShader(Shader* pShader);
 
-		void		SetIndexBuffer(IndexBuffer* pIndexBuffer);
-		void		SetVertexBuffer(VertexBuffer* pVertexBuffer);
+		virtual void		SetIndexBuffer(IndexBuffer* pIndexBuffer);
+		virtual void		SetVertexBuffer(VertexBuffer* pVertexBuffer);
 
-		void		SetRenderTarget(uint idx, RenderTarget* pRenderTarget);
-		void		SetDepthStencil(RenderTarget* pDepthStencil);
+		virtual void		SetRenderTarget(uint idx, RenderTarget* pRenderTarget);
+		virtual void		SetDepthStencil(RenderTarget* pDepthStencil);
 
-		void		SetRenderTarget(uint nRTs, RenderTarget** pRenderTargets, RenderTarget* pDepthStencil);
+		virtual void		SetRenderTarget(uint nRTs, RenderTarget** pRenderTargets, RenderTarget* pDepthStencil);
 
-		void		ExecuteOperator(const RenderOperator& op);
+		virtual void		ExecuteOperator(const RenderOperator& op);
 
-		void		OnReset();
-		void		OnLost();
-		void		GetFrameBufferSize(uint& nWidth, uint& nHeight);
+		virtual void		OnReset();
+		virtual void		OnLost();
+		virtual void		GetFrameBufferSize(uint& nWidth, uint& nHeight);
 
-		void		Reset(int nWidth, int nHeight);
-		void		RestoreFrameBuffer();
+		virtual void		Reset(int nWidth, int nHeight);
+		virtual void		RestoreFrameBuffer();
 
 
 		void		InitializeInputLayout();
@@ -461,6 +456,8 @@ namespace Aurora
 	}
 
 
+	void CreateGlobalParameterBuffer();
+
 	IRenderDevice* IRenderDevice::CreateDevice(HWND hWnd, int nWidth, int nHeight)
 	{
 		if (!CreateDX11Device(hWnd)) {
@@ -470,6 +467,7 @@ namespace Aurora
 		GRenderDevice = &GRendererDx11;
 
 		GRendererDx11.InitializeInputLayout();
+		CreateGlobalParameterBuffer();
 
 		return GRenderDevice;
 	}
@@ -503,7 +501,7 @@ namespace Aurora
 
 
 
-	uint32 RendererDx11::CreateShader(const ShaderCode& code)
+	Handle RendererDx11::CreateShader(const ShaderCode& code)
 	{
 		vector<D3D_SHADER_MACRO> macros;
 		for (auto it = code.defines.begin(); it != code.defines.end(); ++it) {
@@ -533,7 +531,6 @@ namespace Aurora
 
 		}
 
-
 		HRESULT hr = D3DCompile(code.text.c_str(), code.text.length(), code.name.c_str(),
 			&macros[0], D3D_COMPILE_STANDARD_FILE_INCLUDE, "Main",
 			target, flag, 0, &pCompiledShader, &pError);
@@ -551,7 +548,7 @@ namespace Aurora
 				pError->Release();
 			}
 
-			return NULL;
+			return -1;
 		}
 
 		auto obj = new ShaderObject();
@@ -625,6 +622,35 @@ namespace Aurora
 		vector<ShaderParameterBindInfo>	Bindings;
 	};
 
+	void CreateGlobalParameterBuffer()
+	{
+		ShaderCode code;
+		char* shaderCode = "                     \
+												 \
+		cbuffer GlobalParameter: register(b0)	 \
+		{										 \
+			float4x4 matView;					 \
+			float4x4 matProj;					 \
+			float4x4 matViewProj;				 \
+			float3	DirectionLight0;			 \
+			float4	LightColor0;				 \
+		};										 \
+		float4 Main(float4 pos : POSITION) : SV_POSITION		\
+		{														\
+			return pos + LightColor0;						\
+		}														\
+			";
+
+		code.name = "Global Buffer";
+		code.text = shaderCode;
+		code.type = Shader::Category::TYPE_VERTEX_SHADER;
+
+		Handle handle = GRendererDx11.CreateShader(code);
+
+		assert(handle == 0);
+	}
+
+
 
 	static vector<ShaderParameterBuffer*>  ShaderParameterBuffers_;
 
@@ -688,9 +714,9 @@ namespace Aurora
 				continue;
 			}
 
-			if (!(varDesc.uFlags & D3D_SVF_USED)) {
-				continue;
-			}
+			//if (!(varDesc.uFlags & D3D_SVF_USED)) {
+			//	continue;
+			//}
 
 			ShaderParameterBindInfo info{ it->Name, (int32)varDesc.StartOffset, (int32)varDesc.Size, it->Source };
 			newBuffer->Bindings.push_back(info);
@@ -699,14 +725,6 @@ namespace Aurora
 		ShaderParameterBuffers_[slot] = newBuffer;
 
 		shader->constBuffers.push_back(slot);
-
-		/*for (uint i = 0; i < shaderDesc.BoundResources; i++)
-		{
-			D3D10_SHADER_INPUT_BIND_DESC desc;
-			pReflector->GetResourceBindingDesc(i, &desc);
-
-			const char* pName = desc.Name;
-		}*/
 
 		return slot;
 	}
@@ -741,24 +759,6 @@ namespace Aurora
 		}
 
 		return handle;
-	}
-
-
-	void BindTexture(Handle binding, Texture* texture)
-	{
-		assert((binding & RESOURCE_FLAG_TEXTURE) == RESOURCE_FLAG_TEXTURE);
-		assert(texture);
-		int32 slot = binding & 0xffff;
-
-		ID3D11ShaderResourceView* resource = (ID3D11ShaderResourceView *)texture->HALHandle;
-
-		if (binding & SHADER_FLAG_VERTEX) {
-			ImmediateContext->VSSetShaderResources(slot, 1, &resource);
-		}
-
-		if (binding & SHADER_FLAG_PIXEL) {
-			ImmediateContext->PSSetShaderResources(slot, 1, &resource);
-		}
 	}
 
 
@@ -801,6 +801,14 @@ namespace Aurora
 		ImmediateContext->PSSetConstantBuffers(binding->Slot, 1, &binding->D3DBuffer);
 	}
 
+
+	void BindGlobalParameter(Handle handle)
+	{
+		auto binding = ShaderParameterBuffers_[handle];
+		ImmediateContext->VSSetConstantBuffers(binding->Slot, 1, &binding->D3DBuffer);
+		ImmediateContext->PSSetConstantBuffers(binding->Slot, 1, &binding->D3DBuffer);
+	}
+
 	void BindVertexShader(Handle shaderHandle)
 	{
 		assert(shaderHandle >= 0);
@@ -827,124 +835,30 @@ namespace Aurora
 		}
 	}
 
-	// resourec creation
-	Shader* RendererDx11::CreateVertexShader(const string& pathname, const vector<pair<string, string>>& defines)
+
+
+	struct TextureResourceInfo
 	{
-		return nullptr;
-	}
+		D3D11_SRV_DIMENSION ViewDimension;
 
-	Shader* RendererDx11::CreatePixelShader(const string& pathname, const vector<pair<string, string>>& defines)
-	{
-		return nullptr;
-	}
+		union
+		{
+			ID3D11Texture1D* d3DTexture1d = nullptr;
+			ID3D11Texture2D* d3DTexture2d;
+			ID3D11Texture3D*	d3DTexture3d;
+		};
 
-	//////////////////////////////////////////////////////////////////////////
-
-	class Texture2DDx11 : public Texture2D
-	{
-	public:
-		Texture2DDx11(const Texture::Desc& desc);
-		~Texture2DDx11();
-
-		virtual void Update(int nMip, const void* pData);
-
-		ID3D11Texture2D* m_pD3DTexture;
+		ID3D11ShaderResourceView* pResourceView = nullptr;
 	};
 
-	Texture2DDx11::Texture2DDx11(const Texture::Desc& desc):
-	Texture2D(desc),m_pD3DTexture(NULL)
-	{
-	}
-
-	Texture2DDx11::~Texture2DDx11()
-	{
-		if (HALHandle)
-		{
-			ID3D10ShaderResourceView* pView = (ID3D10ShaderResourceView*)HALHandle;
-			pView->Release();
-			HALHandle = NULL;
-		}
-
-		if (m_pD3DTexture)
-		{
-			m_pD3DTexture->Release();
-			m_pD3DTexture = NULL;
-		}
-	}
-
-	void Texture2DDx11::Update(int nMip, const void* pData)
-	{
-		UINT nSubResource = (UINT)nMip;
-		D3D11_BOX box;
-		box.left = 0;
-		box.right = m_Desc.nWidth;
-		box.top = 0;
-		box.bottom = m_Desc.nHeight;
-		box.front = 0;
-		box.back = 1;
-
-		uint stride = Surface::GetStride(m_Desc.nFormat);
-		UINT rowPitch = stride * m_Desc.nWidth;
-
-		ImmediateContext->UpdateSubresource(m_pD3DTexture, nSubResource,
-			&box, pData, rowPitch, 0);
-
-	}
 
 
-	class Texture3DDx11 : public Texture3D
-	{
-	public:
-		Texture3DDx11(const Texture::Desc& desc);
-		~Texture3DDx11();
-
-		virtual void Update(int nMip, const void* pData);
-
-		ID3D11Texture3D* m_pD3DTexture;
-	};
-
-	Texture3DDx11::Texture3DDx11(const Texture::Desc& desc):
-	Texture3D(desc),m_pD3DTexture(NULL)
-	{
-	}
-
-	Texture3DDx11::~Texture3DDx11()
-	{
-		if (HALHandle)
-		{
-			ID3D10ShaderResourceView* pView = (ID3D10ShaderResourceView*)HALHandle;
-			pView->Release();
-			HALHandle = NULL;
-		}
-
-		if (m_pD3DTexture)
-		{
-			m_pD3DTexture->Release();
-			m_pD3DTexture = NULL;
-		}
-	}
-
-	void Texture3DDx11::Update(int nMip, const void* pData)
-	{
-		UINT nSubResource = (UINT)nMip;
-		D3D11_BOX box;
-		box.left = 0;
-		box.right = m_Desc.nWidth;
-		box.top = 0;
-		box.bottom = m_Desc.nHeight;
-		box.front = 0;
-		box.back = m_Desc.nDepth;
-
-		uint stride = Surface::GetStride(m_Desc.nFormat);
-		UINT rowPitch = stride * m_Desc.nWidth;
-		UINT depthPitch = rowPitch * m_Desc.nHeight;
-
-		ImmediateContext->UpdateSubresource(m_pD3DTexture, nSubResource,
-			&box, pData, rowPitch, depthPitch);
-	}
 
 	Surface::Format FormatD3DToEngine(uint fmt);
 	DXGI_FORMAT FormatEngineToD3D(Surface::Format fmt);
+
+
+
 
 	Texture* RendererDx11::CreateTexture(File* file)
 	{
@@ -952,48 +866,67 @@ namespace Aurora
 		buffer.resize(file->Size());
 		file->Read(&buffer[0], file->Size());
 
-		int x = 0, y = 0, comp = 0;
-		uint8* texbuffer = stbi_load_from_memory(&buffer[0], buffer.size(), &x, &y, &comp, 4);
-
-		D3D11_TEXTURE2D_DESC texDesc = { 0 };
-		texDesc.Width		= x;
-		texDesc.Height		= y;
-		texDesc.MipLevels	= 1;
-		texDesc.ArraySize	= 1;
-		texDesc.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
-		texDesc.SampleDesc.Count	= 1;
-		texDesc.SampleDesc.Quality	= 0;
-		texDesc.Usage		= D3D11_USAGE_DEFAULT;
-		texDesc.BindFlags	= D3D11_BIND_SHADER_RESOURCE;
-		texDesc.CPUAccessFlags	= 0;
-		texDesc.MiscFlags		= 0;
-		
-		D3D11_SUBRESOURCE_DATA data = { texbuffer, (UINT)x * 4, 0 };
-		
 		HRESULT hr = S_FALSE;
-		ID3D11Texture2D* pTexture = nullptr;
-		hr = D3D11Device->CreateTexture2D(&texDesc, &data, &pTexture);
-		stbi_image_free(texbuffer);
-
-		if (FAILED(hr)) {
-			GLog->Error("create texture from %s failed!", file->Pathname().c_str());
-			return nullptr;
-		}
-
+		ID3D11Texture2D* d3dTexture = nullptr;
+		ID3D11Resource* pResource = nullptr;
 		ID3D11ShaderResourceView* pResourceView = nullptr;
-		hr = D3D11Device->CreateShaderResourceView(pTexture, NULL, &pResourceView);
-		if (FAILED(hr)) {
-			GLog->Error("create shader resource view from %s failed!", file->Pathname().c_str());
-			return nullptr;
-		}
 
-		ID3D11Resource* pResource = NULL;
+		string ext = Util::GetFileNameExt(file->Pathname());
+		if (ext == "dds") {
+			hr = DirectX::CreateDDSTextureFromMemory(D3D11Device, &buffer[0], buffer.size(), &pResource, &pResourceView, 0, nullptr);
+			if (FAILED(hr)) {
+				GLog->Error("create texture from %s failed!", file->Pathname().c_str());
+				return nullptr;
+			}
+
+		} else {
+			
+			int x = 0, y = 0, comp = 0;
+			uint8* texbuffer = stbi_load_from_memory(&buffer[0], buffer.size(), &x, &y, &comp, 4);
+
+			D3D11_TEXTURE2D_DESC texDesc = { 0 };
+			texDesc.Width = x;
+			texDesc.Height = y;
+			texDesc.MipLevels = 1;
+			texDesc.ArraySize = 1;
+			texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			texDesc.SampleDesc.Count = 1;
+			texDesc.SampleDesc.Quality = 0;
+			texDesc.Usage = D3D11_USAGE_DEFAULT;
+			texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+			texDesc.CPUAccessFlags = 0;
+			texDesc.MiscFlags = 0;
+
+			D3D11_SUBRESOURCE_DATA data = { texbuffer, (UINT)x * 4, 0 };
+
+			hr = D3D11Device->CreateTexture2D(&texDesc, &data, &d3dTexture);
+			stbi_image_free(texbuffer);
+
+			if (FAILED(hr)) {
+				GLog->Error("create texture from %s failed!", file->Pathname().c_str());
+				return nullptr;
+			}
+
+			hr = D3D11Device->CreateShaderResourceView(d3dTexture, NULL, &pResourceView);
+			if (FAILED(hr)) {
+				GLog->Error("create shader resource view from %s failed!", file->Pathname().c_str());
+				return nullptr;
+			}
+		}
+		
+		D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc = { 0 };
+		pResourceView->GetDesc(&viewDesc);
 		pResourceView->GetResource(&pResource);
 
 		D3D11_RESOURCE_DIMENSION resType;
 		pResource->GetType(&resType);
+			   
+		Texture* pTexture = nullptr;
 
 		if (resType == D3D11_RESOURCE_DIMENSION_TEXTURE2D) {
+			d3dTexture = (ID3D11Texture2D*)pResource;
+
+
 			ID3D11Texture2D* pD3DTex2d = (ID3D11Texture2D*)pResource;
 			D3D11_TEXTURE2D_DESC d3dDesc;
 			pD3DTex2d->GetDesc(&d3dDesc);
@@ -1009,75 +942,52 @@ namespace Aurora
 			desc.bMultiSample = d3dDesc.SampleDesc.Quality > 0;
 			desc.bDynamic = (d3dDesc.Usage == D3D10_USAGE_DYNAMIC);
 
-			bool bIsCube = (d3dDesc.MiscFlags & D3D10_RESOURCE_MISC_TEXTURECUBE) == D3D10_RESOURCE_MISC_TEXTURECUBE;
+			pTexture = new Texture(desc);
+			auto handle = new TextureResourceInfo();
+			handle->ViewDimension = viewDesc.ViewDimension;
+			handle->d3DTexture2d = d3dTexture;
+			handle->pResourceView = pResourceView;
 
-			if (bIsCube) {
-				Texture* pTexture = new TextureCube(desc);
-				pTexture->HALHandle = pResourceView;
-				pD3DTex2d->Release();
-				return pTexture;
-			} else {
-				Texture2DDx11* pTexture = new Texture2DDx11(desc);
-				pTexture->HALHandle = pResourceView;
-				pTexture->m_pD3DTexture = pD3DTex2d;
-				return pTexture;
+
+			if (viewDesc.ViewDimension == D3D11_SRV_DIMENSION_TEXTURE2D) {
+				pTexture->type_ = Texture::TP_2D;
+				pTexture->HALHandle = handle;
+			}
+
+			if (viewDesc.ViewDimension == D3D11_SRV_DIMENSION_TEXTURECUBE) {
+				pTexture->type_ = Texture::TP_CUBE;
+				pTexture->HALHandle = handle;
 			}
 		}
 
-		if (resType == D3D11_RESOURCE_DIMENSION_TEXTURE3D) {
-			ID3D11Texture3D* pD3DTex3d = (ID3D11Texture3D*)pResource;
-			D3D11_TEXTURE3D_DESC d3dDesc;
-			pD3DTex3d->GetDesc(&d3dDesc);
+		return pTexture;
+	}
 
-			Texture::Desc desc;
-			memset(&desc, 0, sizeof(desc));
-			desc.nWidth		= d3dDesc.Width;
-			desc.nHeight	= d3dDesc.Height;
-			desc.nDepth		= d3dDesc.Depth;
-			desc.nMipLevels	= d3dDesc.MipLevels;
-			desc.nFormat	= FormatD3DToEngine(d3dDesc.Format);
-			desc.nUsage		= Surface::USAGE_DEFAULT;
-			desc.bDynamic = (d3dDesc.Usage == D3D10_USAGE_DYNAMIC);
-			desc.bMultiSample = 0;
 
-			Texture3DDx11* pTexture = new Texture3DDx11(desc);
-			pTexture->HALHandle = pResourceView;
-			pTexture->m_pD3DTexture = pD3DTex3d;
-			return pTexture;
+
+
+	void BindTexture(Handle binding, Texture* texture)
+	{
+		assert((binding & RESOURCE_FLAG_TEXTURE) == RESOURCE_FLAG_TEXTURE);
+		assert(texture);
+		int32 slot = binding & 0xffff;
+
+		TextureResourceInfo* info = (TextureResourceInfo*)texture->HALHandle;
+
+		if (binding & SHADER_FLAG_VERTEX) {
+			ImmediateContext->VSSetShaderResources(slot, 1, &info->pResourceView);
 		}
 
-	/*	ID3D10Resource* pRes = NULL;
-		ID3D10Texture2D* pCubeTexture = NULL;
-		ID3D10ShaderResourceView* pCubeRV = NULL;
-
-		D3DX10_IMAGE_LOAD_INFO LoadInfo;
-		LoadInfo.MiscFlags = D3D10_RESOURCE_MISC_TEXTURECUBE;
-
-		hr = D3DX10CreateTextureFromFile(D3D9Device, name.c_str(), &LoadInfo, NULL, &pRes, NULL);
-		assert(SUCCEEDED(hr));
-		if( pRes )
-		{
-			D3D10_TEXTURE2D_DESC desc;
-			ZeroMemory( &desc, sizeof( D3D10_TEXTURE2D_DESC ) );
-			pRes->QueryInterface( __uuidof( ID3D10Texture2D ), ( LPVOID* )&pCubeTexture );
-			pCubeTexture->GetDesc( &desc );
-			SAFE_RELEASE( pRes );
-
-			D3D10_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-			ZeroMemory( &SRVDesc, sizeof( SRVDesc ) );
-			SRVDesc.Format = desc.Format;
-			SRVDesc.ViewDimension = D3D10_SRV_DIMENSION_TEXTURECUBE;
-			SRVDesc.TextureCube.MipLevels = desc.MipLevels;
-			SRVDesc.TextureCube.MostDetailedMip = 0;
-			V_RETURN( pd3dDevice->CreateShaderResourceView( pCubeTexture, &SRVDesc, &pCubeRV ) );
-		}*/
-
-		return NULL;
+		if (binding & SHADER_FLAG_PIXEL) {
+			ImmediateContext->PSSetShaderResources(slot, 1, &info->pResourceView);
+		}
 	}
+
+
 
 	Texture* RendererDx11::CreateTexture(Texture::Type type, const Texture::Desc& desc)
 	{
-		if (type == Texture::TP_2D)
+		/*if (type == Texture::TP_2D)
 		{
 			D3D11_TEXTURE2D_DESC d3dDesc;
 			d3dDesc.Width = (UINT)desc.nWidth;
@@ -1138,7 +1048,7 @@ namespace Aurora
 			pTexture->HALHandle = pD3DResView;
 
 			return pTexture;
-		}
+		}*/
 
 		assert(0);
 		return NULL;
@@ -1639,10 +1549,6 @@ namespace Aurora
 	{
 
 	}
-
-
-
-
 
 
 

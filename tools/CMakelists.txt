@@ -19,11 +19,13 @@ message("project binary dir " ${PROJECT_BINARY_DIR})
 include_directories(../source/GaEngine)
 include_directories(../source/ThirdParty)
 include_directories(../source/ThirdParty/TinyXml)
+include_directories(../source/ThirdParty/dxTools)
 
 aux_source_directory(../source/GaEngine srcs)
 aux_source_directory(../source/ThirdParty/TinyXml srcs)
 aux_source_directory(../source/ThirdParty/zip srcs)
 aux_source_directory(../source/ThirdParty/stb srcs)
+aux_source_directory(../source/ThirdParty/dxTools srcs)
 
 
 

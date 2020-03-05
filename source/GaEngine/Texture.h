@@ -57,26 +57,25 @@ public:
 
 	struct Desc
 	{
-		uint nWidth;
-
-		uint nHeight;
-
-		uint nDepth;
-
-		uint nMipLevels;
+		uint	 nWidth;
+		uint	 nHeight;
+		uint	 nDepth;
+		uint	 nMipLevels;
 
 		Surface::Format nFormat;
-
 		Surface::Usage nUsage;
 
 		uint bDynamic : 1;
 		uint bMultiSample : 1;
 	};
 
+
+	Texture::Type		type_ = Texture::TP_2D;
+
 	Texture(const Desc& desc);
 	virtual ~Texture();
 
-	virtual Type GetType() const = 0;
+	virtual Type GetType() const { return type_;	 }
 
 	const Desc& GetDesc() const		{	return m_Desc;	}
 
@@ -86,41 +85,18 @@ public:
 
 protected:
 	Desc m_Desc;
-};
 
-
-class Texture2D : public Texture
-{
-public:
-	Texture2D(const Texture::Desc& desc);
-
-	virtual Texture::Type GetType() const;
 };
 
 
 
 
-class Texture3D : public Texture
-{
-public:
-	Texture3D(const Texture::Desc& desc);
-
-	virtual Texture::Type GetType() const;
-
-	virtual uint GetFootprint() const;
-};
-
-class TextureCube : public Texture
-{
-public:
-	TextureCube(const Texture::Desc& desc);
-
-	virtual Texture::Type GetType() const;
-};
 
 
 
-class RenderTarget : public Texture2D
+
+
+class RenderTarget : public Texture
 {
 public:
 	enum DefinedSize

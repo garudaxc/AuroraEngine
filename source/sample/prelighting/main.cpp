@@ -121,7 +121,7 @@ public:
 
 	IScene* m_pScene;
 	
-	Camera camera_ = { Vector3f(0.f, -45.0f, 0.0f), Vector3f(0.0f, 0.0f, 0.0f), Vector3f::UNIT_Z };
+	Camera camera_ = { Vector3f(0.f, -2.0f, 0.0f), Vector3f(0.0f, 0.0f, 0.0f), Vector3f::UNIT_Z };
 	RectSize mainView_;
 };
 
@@ -137,6 +137,7 @@ bool MyApp::OnInitApp()
 
 bool MyApp::OnCreateDevice(const RectSize& mainView)
 {
+	camera_.SetFov(Mathf::PI / 4.0f);
 	mainView_ = mainView;
 	
 	m_pScene = CreateScene();
@@ -155,8 +156,7 @@ bool MyApp::OnCreateDevice(const RectSize& mainView)
 	assert(bOK);
 
 	TiXmlElement* pXmlEntity = doc.FirstChildElement("World")->FirstChildElement("Entities")->FirstChildElement("Entity");
-	while(pXmlEntity)
-	{
+	while(pXmlEntity) {
 		Entity* pEntity = EntityFactory::Get()->CreateEntity(pXmlEntity);
 		m_pEntity = pEntity;
 		m_pScene->AddEntity(pEntity);
@@ -180,18 +180,7 @@ bool MyApp::OnCreateDevice(const RectSize& mainView)
 	pLight->m_Transform.SetLocalTranslation(Vector3f(0.f, -4.f, 5.f));
 
 	m_pScene->AddLight(pLight);
-
-
 	 
-	//ColladaDocument colladaDoc;
-	//bool bOk = colladaDoc.Open("D:/develop/GaEngine/res/aaa.DAE");
-	//assert(bOk);
-	//int numGeometry = colladaDoc.GetNumGeometry();
-
-	//MeshBuildData* pData = colladaDoc.Test();
-
-	//Entity* pEntity = CreateEntityFromMeshData(pData, "Collada Test");
-
 	return true;
 }
 
@@ -270,7 +259,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance,
 	
 	MyApp app;
 
-	if (!app.Create(L"app", 800, 600))
+	if (!app.Create(L"app", 1200, 800))
 		return 1;
 
 	app.Run();

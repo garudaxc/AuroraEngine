@@ -5,7 +5,7 @@
 #include "Util.h"
 #include "RendererObject.h"
 #include "Renderer.h"
-//#include "MeshLoader.h"
+#include "FileSystem.h"
 #include "Renderer.h"
 namespace Aurora
 {
@@ -372,6 +372,68 @@ bool Geometry::CreateFromBuildData(MeshBuildData* pData) {
 	m_pVertexBuffer = CreateVertexBuffer(VertexLayout_PNTT);
 
 	return true;
+}
+
+void Geometry::Load(File* file)
+{
+	unsigned int magic = 0;
+	file->Read(magic);
+	if (magic != MAGIC_STR("MESH")) {
+		GLog->Error("file %s is not a mesh file!", file->Pathname().c_str());
+		return;
+	}
+
+	int numVertex, numIndex;
+	file->Read(numVertex);
+	file->Read(numIndex);
+
+
+	m_nNumVert = numVertex;
+	m_nNumIndex = numIndex;
+
+	uint32* pIndex = (uint32*)AddStream(Geometry::USAGE_INDEX, Geometry::TYPE_UINT);
+	Vector3f* pPos = (Vector3f*)AddStream(Geometry::USAGE_POSITION, Geometry::TYPE_FLOAT3);
+	Vector3f* pNormal = (Vector3f*)AddStream(Geometry::USAGE_NORMAL, Geometry::TYPE_FLOAT3);
+	Vector2f* pUV = (Vector2f*)AddStream(Geometry::USAGE_TEXCOORD, Geometry::TYPE_FLOAT2);
+
+
+	file->Read(magic);
+	assert(magic == MAGIC_STR("POSI"));
+	file->ReadArray(pPos, numVertex);
+
+	file->Read(magic);
+	assert(magic == MAGIC_STR("NORM"));
+	file->ReadArray(pNormal, numVertex);
+
+	file->Read(magic);
+	assert(magic == MAGIC_STR("TEX0"));
+	file->ReadArray(pUV, numVertex);
+
+	file->Read(magic);
+	assert(magic == MAGIC_STR("INDX"));
+	file->ReadArray(pIndex, numIndex);
+
+	if (file->Read(magic)) {
+		assert(magic == MAGIC_STR("ELEM"));
+		int numMeshGroup = 0;
+		file->Read(numMeshGroup);
+		vector<int> meshGroup(numMeshGroup);
+		file->ReadArray(&meshGroup[0], numMeshGroup);
+
+		int indexOffset = 0;
+		for (size_t i = 0; i < meshGroup.size(); i++) {
+			MeshElement elem;
+			elem.IndexCount = meshGroup[i] * 3;
+			elem.IndexStart = indexOffset;
+			//elem.vertexoffset = 0;
+			Elements_.push_back(elem);
+
+			indexOffset += meshGroup[i] * 3;
+		}
+	}
+		
+	CreateIndexBuffer();
+	m_pVertexBuffer = CreateVertexBuffer(VertexLayout_PNTT);
 }
 
 
@@ -1069,12 +1131,28 @@ Geometry* MeshManager::Load(const ResourceID& id)
 {
 	string pathName = Util::ProcessPathName(id);
 
-	TiXmlDocument doc;
-	bool loadOK = doc.LoadFile(pathName.c_str());
-	assert(loadOK);
-
 	Geometry* pMesh = new Geometry();
-	pMesh->Load(doc.FirstChild()->ToElement());
+
+	string ext = Util::GetFileNameExt(pathName);
+	if (ext == "xms") {
+		TiXmlDocument doc;
+		bool loadOK = doc.LoadFile(pathName.c_str());
+		assert(loadOK);
+
+		pMesh->Load(doc.FirstChild()->ToElement());
+	}
+
+	if (ext == "mesh") {
+		auto file = GFileSys->OpenFile(pathName);
+		if (file == nullptr) {
+			// todo default mesh
+			return pMesh;
+		}
+		pMesh->Load(file);
+		file->Close();
+
+	}
+
 
 	return pMesh;
 }

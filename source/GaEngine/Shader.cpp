@@ -314,7 +314,6 @@ void ModelShaderVS::CreateBindings()
 	
 	//ShaderParamterBindingItem 
 	bindings_.Bindings.push_back(ShaderParamterBindingItem{ "matWorld", 0, matWorld.Ptr() });
-	bindings_.Bindings.push_back(ShaderParamterBindingItem{ "matViewProj", 0, matViewProj.Ptr() });
 
 	bindings_.handle = CreateShaderParameterBinding(handle_, bindings_);	
 }
@@ -349,6 +348,9 @@ void ModelShaderPS::Initialize()
 
 void ModelShaderPS::CreateBindings()
 {
+	if (handle_ < 0) {
+		return;
+	}
 	//bindings_.Name = "$Globals";
 
 	////ShaderParamterBindingItem 

@@ -142,10 +142,6 @@ namespace Aurora
 
 		//m_pCmdBuffer->pUpdateLock->Lock();
 
-		Quaternionf qRot;
-
-		static float fRot = 0.f;
-		fRot += dt * 0.5f;
 
 		SceneView* pUpdateView = GFrameMemoryBuffer->AllocSceneView();
 		pUpdateView->pDrawingEntity = NULL;
@@ -154,8 +150,6 @@ namespace Aurora
 		for (vector<Entity*>::iterator it = m_Entitys.begin(); it != m_Entitys.end(); ++it)
 		{
 			Entity* pEntity = (*it);
-			QuaternionRotationAxis(qRot, Vector3f::UNIT_Z, fRot);
-			pEntity->GetTransfrom().SetLocalRotation(qRot);	
 			pEntity->Update();
 
 			DrawingEntity* pDrawEntity = GFrameMemoryBuffer->AllocDrawingEntity();

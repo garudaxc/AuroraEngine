@@ -96,11 +96,7 @@ namespace Aurora
 
 		static IRenderDevice* CreateDevice(HWND hWnd, int nWidth, int nHeight);
 
-		virtual uint32  CreateShader(const ShaderCode& code) = 0;
-
-		// resourec creation
-		virtual Shader* CreateVertexShader(const string& pathname, const vector<pair<string, string>>& defines) = 0;
-		virtual Shader* CreatePixelShader(const string& pathname, const vector<pair<string, string>>& defines) = 0;
+		virtual Handle  CreateShader(const ShaderCode& code) = 0;
  
 		virtual Texture* CreateTexture(File* file) = 0;
 
@@ -159,10 +155,7 @@ namespace Aurora
 	Handle CreateShaderTextureBinding(Handle shaderHandle, const ShaderTextureBinding& bindings);
 	void BindTexture(Handle binding, Texture* texture);
 
-
-
-
-
+	void BindGlobalParameter(Handle handle);
 
 }
 

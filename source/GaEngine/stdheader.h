@@ -6,6 +6,7 @@
 
 #include <Windows.h>
 #include <assert.h>
+#include <memory>
 #include <string>
 #include <sstream>
 #include <vector>

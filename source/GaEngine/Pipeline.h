@@ -1,4 +1,5 @@
 #pragma once
+#include "stdheader.h"
 #include "ResourceManager.h"
 
 namespace Aurora
@@ -27,36 +28,36 @@ public:
 	Pipeline(void);
 	~Pipeline(void);
 
-	void				Initialize(int width, int height);
-	void				Finalize();
+	void	Initialize(int width, int height);
+	void	Finalize();
 
 	
-	void			RenderSceneView(SceneView* pView);
+	void	RenderSceneView(SceneView* pView);
 
-	void			OnReset();
-	void			OnLost();
+	void	OnReset();
+	void	OnLost();
 
-	void			BeginPipe();
-	void			Render();
-	void			EndPipe();
+	void	BeginPipe();
+	void	Render();
+	void	EndPipe();
 
-	void			Clear();
+	void	Clear();
 
-	void			BeginOcclusionQuery(int x0, int y0, int x1, int y1);
-	int				EndOcclusionQuery();
+	void	BeginOcclusionQuery(int x0, int y0, int x1, int y1);
+	int		EndOcclusionQuery();
 
-	void			DrawLine(const Vector3f& a, const Vector3f& b, const Color& color, int pickupId);
-	void			DrawLineList(const Vector3f* pPos, uint nNumPoint, const Color& color, int pickupId);
-	void			DrawCicle(const Vector3f& center, float radius, const Vector3f& dir, const Color& color, int pickupId);
-	void			DrawAABB(const Vector3f& a, const Vector3f& b, const Color& color, int pickupId);
+	void	DrawLine(const Vector3f& a, const Vector3f& b, const Color& color, int pickupId);
+	void	DrawLineList(const Vector3f* pPos, uint nNumPoint, const Color& color, int pickupId);
+	void	DrawCicle(const Vector3f& center, float radius, const Vector3f& dir, const Color& color, int pickupId);
+	void	DrawAABB(const Vector3f& a, const Vector3f& b, const Color& color, int pickupId);
 		
 private:
-	void			SetupShaderVariables(SceneView* pView);
+	void	SetupShaderVariables(SceneView* pView);
 
-	bool				m_bOcclusionQuerying;
+	bool		m_bOcclusionQuerying;
 
-	OcclusionQuery*		m_pOcclusionQuery;
-	HelperRenderer*		m_pHelperRenderer;
+	unique_ptr<OcclusionQuery>	m_pOcclusionQuery;
+	unique_ptr<HelperRenderer>	m_pHelperRenderer;
 
 };
 

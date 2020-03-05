@@ -45,14 +45,14 @@ private:
 	VertexBuffer*		m_pVertexBuffer;
 	IndexBuffer*		m_pIndexBuffer;
 	Geometry*		m_pGeometry;
-	uint				m_nNumVert;
-	uint				m_nNumTri;
+	uint			m_nNumVert;
+	uint			m_nNumTri;
 
-	uint				m_nElemIndex;
+	uint			m_nElemIndex;
 
 	RenderOperator*		m_pOP;
 
-	float							m_fCullDist;
+	float		m_fCullDist;
 };
 
 

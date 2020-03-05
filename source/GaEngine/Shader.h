@@ -195,7 +195,6 @@ public:
 	string	pathname_{"..\\dev\\data\\shader\\testVS.shd"};
 
 	Matrix4f	matWorld;
-	Matrix4f	matViewProj;
 private:
 
 };
