@@ -147,7 +147,7 @@ ResourcePtr<ResType>::operator bool() const
 
 
 class Texture;
-class VertexDescription;
+class VertexLayout;
 class Geometry;
 class Material;
 class RenderTarget;
@@ -170,15 +170,14 @@ public:
 	static char* VEXDESC_P;
 
 	ResourcePtr<Texture>			GetTexture(const IDType& id);
-	ResourcePtr<VertexDescription>	GetVertexDesc(const IDType& id);
 	ResourcePtr<Geometry>		GetGeometryData(const IDType& id);
 
 	ResourcePtr<RenderTarget> 		AddRenderTarget(const IDType& id, RenderTarget* pRT);
 	ResourcePtr<RenderTarget>		GetRenderTarget(const IDType& id);
 
-	void							AddGeometryData(const IDType& id, Geometry* pGeom);
+	void			AddGeometryData(const IDType& id, Geometry* pGeom);
 
-	int								ClearUnrefResource();
+	int				ClearUnrefResource();
 
 	//ResourcePtr<Material>			GetMaterial(const IDType& id);
 	//ResourcePtr<Material>			AddMaterial(const IDType& id, Material* pMaterial);
@@ -186,19 +185,19 @@ public:
 	//MaterialInstance*				CreateMaterialInst(const IDType& mtlId);
 	
 
-	void							Init();
-	void							OnResetDevice();
-	void							OnLostDevice();
-	void							CleanUp();
+	void			Init();
+	void			OnResetDevice();
+	void			OnLostDevice();
+	void			CleanUp();
 
 
 	//RenderableObject*			CreateRenderableObject(const IDType& geomId, const IDType& descId);
 
 private:
-	ResPtrHolder*					Find(const IDType& id);
-	ResPtrHolder*					CreateTextureFromFile(const IDType& id);
+	ResPtrHolder*		Find(const IDType& id);
+	ResPtrHolder*		CreateTextureFromFile(const IDType& id);
 
-	ResPtrHolder*					CreateDefaultGeometryData(const IDType& id);
+	ResPtrHolder*		CreateDefaultGeometryData(const IDType& id);
 
 	map<IDType, ResPtrHolder*>			m_Resources;
 	

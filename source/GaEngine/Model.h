@@ -5,7 +5,7 @@ namespace Aurora
 	class Geometry;
 	class Renderable;
 	class MaterialInstance;
-
+	class RenderableVisitor;
 
 	class Model
 	{
@@ -18,17 +18,11 @@ namespace Aurora
 
 		const string&	GetName() const		{	return m_Name;	}
 
-		uint		GetNumRenderables() const;
-		Renderable*	GetRenderable(uint index);
-
-		const Renderable* GetRenderable(uint index) const;
-
-		void		CreateRenderable();
+		void	Accept(RenderableVisitor& visitor);
 
 	protected:
-		string				m_Name;
+		string			m_Name;
 		Geometry*		m_pMesh;
-		vector<Renderable*>		m_Renderables;
 	};
 
 

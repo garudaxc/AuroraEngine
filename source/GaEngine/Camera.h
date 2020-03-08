@@ -77,29 +77,29 @@ struct ViewPort
 		MaxZ	= 1.0f;
 	}
 };
-
-
-class Frustum
-{
-public:
-	enum PlaneID
-	{
-		PID_TOP = 0,
-		PID_BOTTOM,
-		PID_LEFT,
-		PID_RIGHT,
-		PID_FRONT,
-		PID_BACK,
-		PID_NUM_PLANE,
-	};
-
-	Plane			planes[PID_NUM_PLANE];
-};
-
-
-// find intersect point of three planes
-Vector3f IntersectPlane(const Plane& p0, const Plane& p1, const Plane& p2);
-void ExtractFrustum(Camera* pCamera, Frustum& frustum);
+//
+//
+//class Frustum
+//{
+//public:
+//	enum PlaneID
+//	{
+//		PID_TOP = 0,
+//		PID_BOTTOM,
+//		PID_LEFT,
+//		PID_RIGHT,
+//		PID_FRONT,
+//		PID_BACK,
+//		PID_NUM_PLANE,
+//	};
+//
+//	Plane	planes[PID_NUM_PLANE];
+//};
+//
+//
+//// find intersect point of three planes
+//Vector3f IntersectPlane(const Plane& p0, const Plane& p1, const Plane& p2);
+//void ExtractFrustum(Camera* pCamera, Frustum& frustum);
 
 
 
@@ -141,8 +141,6 @@ public:
 
 	virtual void GetPickRay(Vector3f& origin, Vector3f& dir, const DeviceWindow* pWindow);
 
-	virtual Ray GetRay(int x, int y, int nWindowWidth, int nWindowHeight)	{ assert(0); return Ray();	}
-	
 
 	Vector3f m_vEye = Vector3f(0.f, -45.0f, 0.0f);
 	Vector3f m_vRight;

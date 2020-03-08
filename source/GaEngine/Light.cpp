@@ -496,27 +496,27 @@ void LightRendering::Initialize()
 
 void LightRendering::Render(LightRenderingInfo* renderInfo)
 {
-	RenderTarget* rt[] = {renderInfo->pLightingRT};
-	RenderTarget* pDepthBuffer = GetRenderer()->GetDepthStecil();
-	GetRenderer()->SetRenderTarget(1, rt, pDepthBuffer);
+	//RenderTarget* rt[] = {renderInfo->pLightingRT};
+	//RenderTarget* pDepthBuffer = GetRenderer()->GetDepthStecil();
+	//GetRenderer()->SetRenderTarget(1, rt, pDepthBuffer);
 
-	GetRenderer()->Clear(IRenderDevice::CLEAR_FRAME_BUFFER, Color::ZERO);
+	//GetRenderer()->Clear(IRenderDevice::CLEAR_FRAME_BUFFER, Color::ZERO);
 
 
-	const vector<RenderStrategy*>& lights = *renderInfo->lights;
-	for (vector<RenderStrategy*>::const_iterator it = lights.begin();
-		it != lights.end(); ++it)
-	{
-		RenderStrategy* pRenderStrategy = *it;
+	//const vector<RenderStrategy*>& lights = *renderInfo->lights;
+	//for (vector<RenderStrategy*>::const_iterator it = lights.begin();
+	//	it != lights.end(); ++it)
+	//{
+	//	RenderStrategy* pRenderStrategy = *it;
 
-		uint nNumRenderable = pRenderStrategy->GetNumRenderable();
-		for (uint i = 0; i < nNumRenderable; i++)
-		{
-			const RenderOperator& op = pRenderStrategy->GetRenderable(i)->GetRenderOperator();
-			op.pMtlInst->Apply(0);
-			GetRenderer()->ExecuteOperator(op);
-		}
-	}
+	//	uint nNumRenderable = pRenderStrategy->GetNumRenderable();
+	//	for (uint i = 0; i < nNumRenderable; i++)
+	//	{
+	//		const RenderOperator& op = pRenderStrategy->GetRenderable(i)->GetRenderOperator();
+	//		op.pMtlInst->Apply(0);
+	//		GetRenderer()->ExecuteOperator(op);
+	//	}
+	//}
 
 
 

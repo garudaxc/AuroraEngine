@@ -729,8 +729,8 @@ bool RendererDX9::CreatePixelShader(const string& pathname, ShaderPtr& pShader, 
 //TYPE_FLOAT3,
 //TYPE_FLOAT4,
 //TYPE_UBYTE,
-//TYPE_UBYTE4,
-//TYPE_USHORT,
+//TYPE_UBYTE4_UINT,
+//TYPE_USHORT_UINT,
 //TYPE_USHORT2,
 //TYPE_UINT
 //};

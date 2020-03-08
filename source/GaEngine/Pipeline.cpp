@@ -15,30 +15,30 @@
 namespace Aurora
 {
 
-	struct MaterialCmp : public binary_function<Renderable*, Renderable*, bool>
-	{	// functor for operator<
-		bool operator()(const Renderable* _Left, const Renderable* _Right) const;
-	};
+	//struct MaterialCmp : public binary_function<Renderable*, Renderable*, bool>
+	//{	// functor for operator<
+	//	bool operator()(const Renderable* _Left, const Renderable* _Right) const;
+	//};
 
 
-	struct CullDistCmp : public binary_function<Renderable*, Renderable*, bool>
-	{	// functor for operator<
-		bool operator()(const Renderable* _Left, const Renderable* _Right) const;
-	};
+	//struct CullDistCmp : public binary_function<Renderable*, Renderable*, bool>
+	//{	// functor for operator<
+	//	bool operator()(const Renderable* _Left, const Renderable* _Right) const;
+	//};
 
-	
-	bool MaterialCmp::operator()(const Renderable* _Left, const Renderable* _Right) const
-	{
-		/*return _Left->GetMaterialInst()->GetMaterialTemplate()->GetPriority()
-			< _Right->GetMaterialInst()->GetMaterialTemplate()->GetPriority();*/
-		return _Left < _Right;
-	}
+	//
+	//bool MaterialCmp::operator()(const Renderable* _Left, const Renderable* _Right) const
+	//{
+	//	/*return _Left->GetMaterialInst()->GetMaterialTemplate()->GetPriority()
+	//		< _Right->GetMaterialInst()->GetMaterialTemplate()->GetPriority();*/
+	//	return _Left < _Right;
+	//}
 
-	bool CullDistCmp::operator()(const Renderable* _Left, const Renderable* _Right) const
-	{
-		// order distance from back to front
-		return _Left->GetCullDist() > _Right->GetCullDist();
-	}
+	//bool CullDistCmp::operator()(const Renderable* _Left, const Renderable* _Right) const
+	//{
+	//	// order distance from back to front
+	//	return _Left->GetCullDist() > _Right->GetCullDist();
+	//}
 
 
 
@@ -221,115 +221,100 @@ void Pipeline::SetupShaderVariables(SceneView* view)
 }
 
 
-static void RenderEntity(DrawingEntity* pEntity, uint nTechnique)
-{
-	const Matrix4f& matWorld = pEntity->mWorld;
-	shaderManager.SetWorldMatrix(matWorld);
-
-	const Entity* pRenderEntity = pEntity->pEntity;
-	uint nNumRenderable = pRenderEntity->GetNumRenderable();
-	for (uint i = 0; i < nNumRenderable; i++)
-	{
-		const RenderOperator& op = pRenderEntity->GetRenderable(i)->GetRenderOperator();
-		//op.pMtlInst->Apply(nTechnique);
-		//op.pMtlInst->Commit();
-		GRenderDevice->ExecuteOperator(op);
-	}
-}
 
 
 void RenderGeomPass(SceneView* pView)
 {
-	RenderTarget* rt[] = {renderInfo.pRTGbuffer0, renderInfo.pRTGbuffer1};
-	RenderTarget* pDepthBuffer = GRenderDevice->GetDepthStecil();
-	GRenderDevice->SetRenderTarget(2, rt, pDepthBuffer);
+	//RenderTarget* rt[] = {renderInfo.pRTGbuffer0, renderInfo.pRTGbuffer1};
+	//RenderTarget* pDepthBuffer = GRenderDevice->GetDepthStecil();
+	//GRenderDevice->SetRenderTarget(2, rt, pDepthBuffer);
 
-	//GShaderManager.BindGPassShader();
-	DrawingEntity* pEntity = pView->pDrawingEntity;
-	while (pEntity)
-	{
-		RenderEntity(pEntity, 0);
-		pEntity = pEntity->pNext;
-	}
+	////GShaderManager.BindGPassShader();
+	//DrawingEntity* pEntity = pView->pDrawingEntity;
+	//while (pEntity)
+	//{
+	//	RenderEntity(pEntity, 0);
+	//	pEntity = pEntity->pNext;
+	//}
 
-	GRenderDevice->RestoreFrameBuffer();
+	//GRenderDevice->RestoreFrameBuffer();
 }
 
 void RenderLightingPass(SceneView* pView)
 {
-	RenderTarget* rt[] = {renderInfo.pRTLighting};
-	RenderTarget* pDepthBuffer = GRenderDevice->GetDepthStecil();
-	GRenderDevice->SetRenderTarget(1, rt, pDepthBuffer);
-	GRenderDevice->Clear(IRenderDevice::CLEAR_FRAME_BUFFER, Color::ZERO);
-
-	GShaderManager.SetTexture(SV_GBUFFER0, renderInfo.pRTGbuffer0);
-	GShaderManager.SetTexture(SV_GBUFFER1, renderInfo.pRTGbuffer1);
-
-	//GShaderManager.BindDirLightShader();
-	DrawingLight* pLight = pView->pDrawingLight;
-	while (pLight)
-	{
-		Model* pModel = NULL;
-		if (pLight->Type == LT_DIRECTIONAL)
-		{
-			shaderManager.SetWorldMatrix(pLight->mWorld);
-			pModel = GModelManager.GetDirLight();
-			pModel->GetRenderable(0)->GetMaterialInst()->SetVariableValue("vLightColor", pLight->cColor.Ptr());
-		}
-		else if (pLight->Type == LT_POINT)
-		{
-			shaderManager.SetWorldMatrix(pLight->mWorld);
-			pModel = GModelManager.GetPointLight();
-			float param[] = {pLight->fRange, 0.f, 0.f, 0.f};
-			pModel->GetRenderable(0)->GetMaterialInst()->SetVariableValue("vLightColor", pLight->cColor.Ptr());
-			pModel->GetRenderable(0)->GetMaterialInst()->SetVariableValue("vLightParam", param);			
-		}
-		else if (pLight->Type == LT_SPOT)
-		{
-			shaderManager.SetWorldMatrix(pLight->mWorld);
-			pModel = GModelManager.GetSpotLight();
-
-			float param[4];
-			// x : tangent of half outter angle
-			// y : cosine of half outter angle
-			// z : cosine of half inner angle
-			// w : 1 / (z - y)
-			param[0] = Mathf::Tan(pLight->fInnerCone * .5f * Mathf::DEG_TO_RAD);
-			param[1] = Mathf::Cos(pLight->fOutterCone * .5f * Mathf::DEG_TO_RAD);
-			param[2] = Mathf::Cos(pLight->fInnerCone * .5f * Mathf::DEG_TO_RAD);
-			param[3] = 1.0f / (param[2] - param[1]);
-			pModel->GetRenderable(0)->GetMaterialInst()->SetVariableValue("vLightColor", pLight->cColor.Ptr());
-			pModel->GetRenderable(0)->GetMaterialInst()->SetVariableValue("vLightParam", param);
-
-		}
-
-		const RenderOperator& op = pModel->GetRenderable(0)->GetRenderOperator();
-		op.pMtlInst->Apply(0);
-		GRenderDevice->ExecuteOperator(op);
-
-		pLight = pLight->pNext;
-	}
-
-	GRenderDevice->RestoreFrameBuffer();
-	GShaderManager.SetTexture(SV_GBUFFER0, NULL);
-	GShaderManager.SetTexture(SV_GBUFFER1, NULL);
+//	RenderTarget* rt[] = {renderInfo.pRTLighting};
+//	RenderTarget* pDepthBuffer = GRenderDevice->GetDepthStecil();
+//	GRenderDevice->SetRenderTarget(1, rt, pDepthBuffer);
+//	GRenderDevice->Clear(IRenderDevice::CLEAR_FRAME_BUFFER, Color::ZERO);
+//
+//	GShaderManager.SetTexture(SV_GBUFFER0, renderInfo.pRTGbuffer0);
+//	GShaderManager.SetTexture(SV_GBUFFER1, renderInfo.pRTGbuffer1);
+//
+//	//GShaderManager.BindDirLightShader();
+//	DrawingLight* pLight = pView->pDrawingLight;
+//	while (pLight)
+//	{
+//		Model* pModel = NULL;
+//		if (pLight->Type == LT_DIRECTIONAL)
+//		{
+//			shaderManager.SetWorldMatrix(pLight->mWorld);
+//			pModel = GModelManager.GetDirLight();
+//			pModel->GetRenderable(0)->GetMaterialInst()->SetVariableValue("vLightColor", pLight->cColor.Ptr());
+//		}
+//		else if (pLight->Type == LT_POINT)
+//		{
+//			shaderManager.SetWorldMatrix(pLight->mWorld);
+//			pModel = GModelManager.GetPointLight();
+//			float param[] = {pLight->fRange, 0.f, 0.f, 0.f};
+//			pModel->GetRenderable(0)->GetMaterialInst()->SetVariableValue("vLightColor", pLight->cColor.Ptr());
+//			pModel->GetRenderable(0)->GetMaterialInst()->SetVariableValue("vLightParam", param);			
+//		}
+//		else if (pLight->Type == LT_SPOT)
+//		{
+//			shaderManager.SetWorldMatrix(pLight->mWorld);
+//			pModel = GModelManager.GetSpotLight();
+//
+//			float param[4];
+//			// x : tangent of half outter angle
+//			// y : cosine of half outter angle
+//			// z : cosine of half inner angle
+//			// w : 1 / (z - y)
+//			param[0] = Mathf::Tan(pLight->fInnerCone * .5f * Mathf::DEG_TO_RAD);
+//			param[1] = Mathf::Cos(pLight->fOutterCone * .5f * Mathf::DEG_TO_RAD);
+//			param[2] = Mathf::Cos(pLight->fInnerCone * .5f * Mathf::DEG_TO_RAD);
+//			param[3] = 1.0f / (param[2] - param[1]);
+//			pModel->GetRenderable(0)->GetMaterialInst()->SetVariableValue("vLightColor", pLight->cColor.Ptr());
+//			pModel->GetRenderable(0)->GetMaterialInst()->SetVariableValue("vLightParam", param);
+//
+//		}
+//
+//		const RenderOperator& op = pModel->GetRenderable(0)->GetRenderOperator();
+//		op.pMtlInst->Apply(0);
+//		GRenderDevice->ExecuteOperator(op);
+//
+//		pLight = pLight->pNext;
+//	}
+//
+//	GRenderDevice->RestoreFrameBuffer();
+//	GShaderManager.SetTexture(SV_GBUFFER0, NULL);
+//	GShaderManager.SetTexture(SV_GBUFFER1, NULL);
 }
 
-void RenderShadingPass(SceneView* pView)
-{
-	GRenderDevice->RestoreFrameBuffer();
-	GShaderManager.SetTexture(SV_LIGHTINGBUFFER, renderInfo.pRTLighting);
-
-	//GShaderManager.BindShadingPassShader();
-	DrawingEntity* pEntity = pView->pDrawingEntity;
-	while (pEntity)
-	{
-		RenderEntity(pEntity, 1);
-		pEntity = pEntity->pNext;
-	}
-
-	GShaderManager.SetTexture(SV_LIGHTINGBUFFER, NULL);
-}
+//void RenderShadingPass(SceneView* pView)
+//{
+//	GRenderDevice->RestoreFrameBuffer();
+//	GShaderManager.SetTexture(SV_LIGHTINGBUFFER, renderInfo.pRTLighting);
+//
+//	//GShaderManager.BindShadingPassShader();
+//	DrawingEntity* pEntity = pView->pDrawingEntity;
+//	while (pEntity)
+//	{
+//		RenderEntity(pEntity, 1);
+//		pEntity = pEntity->pNext;
+//	}
+//
+//	GShaderManager.SetTexture(SV_LIGHTINGBUFFER, NULL);
+//}
 
 
 
@@ -353,7 +338,7 @@ void Pipeline::RenderSceneView(SceneView* pView)
 
 	RenderLightingPass(pView);
 
-	RenderShadingPass(pView);
+	//RenderShadingPass(pView);
 
 	//RenderDebugPass(pView);
 	

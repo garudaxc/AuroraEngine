@@ -75,49 +75,8 @@ Texture::~Texture()
 
 //////////////////////////////////////////////////////////////////////////
 
-Texture2D::Texture2D(const Texture::Desc& desc):Texture(desc)
-{
-}
-
-Texture::Type Texture2D::GetType() const
-{
-	return Texture::TP_2D;
-}
-//////////////////////////////////////////////////////////////////////////
-
-Texture3D::Texture3D(const Texture::Desc& desc):Texture(desc)
-{
-}
-
-Texture::Type Texture3D::GetType() const
-{
-	return Texture::TP_3D;
-}
-
-uint Texture3D::GetFootprint() const
-{
-	// todo: calc mipmap
-	uint stride = Surface::GetStride(m_Desc.nFormat);
-	uint footprint = stride * m_Desc.nWidth * m_Desc.nHeight * m_Desc.nDepth;
-	return footprint;
-}
-
-
-//////////////////////////////////////////////////////////////////////////
-
-TextureCube::TextureCube(const Texture::Desc& desc):Texture(desc)
-{
-}
-
-Texture::Type TextureCube::GetType() const
-{
-	return Texture::TP_CUBE;
-}
-
-//////////////////////////////////////////////////////////////////////////
-
 RenderTarget::RenderTarget(const Texture::Desc& desc):
-Texture2D(desc)
+Texture(desc)
 {
 
 }

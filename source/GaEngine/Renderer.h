@@ -13,10 +13,8 @@ namespace Aurora
 	class ShaderConstTable;
 	class Texture;
 	class RenderOperator;
-	class VertexDescription;
+	class VertexLayout;
 	class RenderTarget;
-	class IndexBuffer;
-	class VertexBuffer;
 	class StateValuePair;
 
 
@@ -26,7 +24,7 @@ namespace Aurora
 	class RenderOperator
 	{
 	public:
-		enum PrimitiveType
+		enum PrimitiveType : int8
 		{
 			PT_POINTLIST             = 0,
 			PT_LINELIST,
@@ -35,35 +33,20 @@ namespace Aurora
 			PT_TRIANGLESTRIP,
 		};
 
-		RenderOperator()
-		{
-			memset(this, 0, sizeof(RenderOperator));
-		}
 
-		Material* pMaterial;
+		Material* pMaterial = nullptr;
+		MaterialInstance* pMtlInst = nullptr;
 
-		MaterialInstance* pMtlInst;
+		PrimitiveType nPrimType = PrimitiveType::PT_TRIANGLELIST;
 
-		IndexBuffer* pIndexBuffer;
+		int32	nBaseVertexIndex;
+		uint	nStartIndex;
+		int32	IndexCount;
+		uint32	VertexStride;
 
-		VertexBuffer* pVertexBuffer;
-
-		VertexLayout VertLayout;
-
-		PrimitiveType nPrimType;
-
-		int nBaseVertexIndex;
-
-		uint nNumVertices;
-
-		uint nStartIndex;
-
-		uint nPrimitiveCount;
-
-		uint nVertexStride;
-
-		//float*					pSystemVertBuff;
-		//ushort*					pSystemIndexBuff;
+		Handle		VertexLayout_ = -1;
+		Handle		VertexBuffer_	= -1;
+		Handle		IndexBuffer_	= -1;
 	};
 
 
@@ -78,6 +61,19 @@ namespace Aurora
 		}
 
 		return std::distance(v.begin(), it);
+	}
+
+	template<class type>
+	int32 FindAvailableSlot(vector<type>& v)
+	{
+		for (auto it = v.begin(); it != v.end(); ++it) {
+			if (!it->Occupied) {
+				return std::distance(v.begin(), it);
+			}
+		}
+
+		v.push_back(type());
+		return v.size() - 1;
 	}
 
 
@@ -104,12 +100,6 @@ namespace Aurora
 
 		virtual RenderTarget* CreateRenderTarget(const RenderTarget::Desc& desc) = 0;
 
-		virtual VertexBuffer* CreateVertexBuffer(Geometry* pGeometry, VertexLayout layout, uint nVert) = 0;
-
-		virtual VertexBuffer* CreateDynamicVertexBuffer(int nStride, int nNumVert) = 0;
-
-		virtual IndexBuffer* CreateIndexBuffer(Geometry* pGeometry, IndexBuffer::Format fmt, uint nNumIndex) = 0;
-
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -124,9 +114,6 @@ namespace Aurora
 		
 		virtual void		SetVertexShader(Shader* pShader) = 0;
 		virtual void		SetPixelShader(Shader* pShader) = 0;
-
-		virtual void		SetIndexBuffer(IndexBuffer* pIndexBuffer) = 0;
-		virtual void		SetVertexBuffer(VertexBuffer* pVertexBuffer) = 0;
 
 		virtual void		SetRenderTarget(uint idx, RenderTarget* pRenderTarget) = 0;
 		virtual void		SetDepthStencil(RenderTarget* pDepthStencil) = 0;
@@ -157,7 +144,37 @@ namespace Aurora
 
 	void BindGlobalParameter(Handle handle);
 
-}
+
+
+
+
+	Handle CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems);
+
+	
+	Handle CreateVertexBufferHandle(const void* data, int32 size);
+	Handle CreateIndexBufferHandle(const void* data, int32 size);
+
+
+
+
+
+	class ResourceBufferMapper
+	{
+	public:
+		ResourceBufferMapper(Handle handle);
+		~ResourceBufferMapper();
+
+		void* Ptr();
+
+	private:
+		void* pointer = nullptr;
+		Handle	handle_ = -1;
+	};
+
+
+
+
+}	
 
 
 #endif

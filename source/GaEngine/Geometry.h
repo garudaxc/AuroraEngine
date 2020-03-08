@@ -33,8 +33,6 @@ struct VertexPT
 };
 
 
-
-
 //--------------------------------------------
 // free function
 //-------------------------------------
@@ -48,15 +46,9 @@ float TriangleArea(const Vector3f& a, const Vector3f& b, const Vector3f& c);
 //-------------------------------------------------------------------------------------------------
 class RendererObject;
 class IRenderDevice;
-class Effect;
-class IndexBuffer;
 class Geometry;
-class VertexDeclaration;
-class VertexDescription;
-class VertexBuffer;
+class VertexLayout;
 class File;
-
-typedef map<VertexLayout, VertexBuffer*> VertexBufferPool;
 
 
 struct MeshElement
@@ -67,25 +59,21 @@ struct MeshElement
 };
 
 
-class Geometry : public Resource
+struct Vertex
 {
-public:
-
-	enum VertexElemType
+	enum ElemType : int8
 	{
 		TYPE_FLOAT = 0,
 		TYPE_FLOAT2,
 		TYPE_FLOAT3,
 		TYPE_FLOAT4,
-		TYPE_UBYTE,
-		TYPE_UBYTE4,
-		TYPE_USHORT,
-		TYPE_USHORT2,
+		TYPE_UBYTE4_UINT,
+		TYPE_UBYTE4_UNORM,
+		TYPE_USHORT_UINT,
 		TYPE_UINT,
-		NUM_OF_TYPE
 	};
 
-	enum ElemUsage
+	enum ElemUsage : int8
 	{
 		USAGE_POSITION = 0,
 		USAGE_NORMAL,
@@ -96,100 +84,88 @@ public:
 		USAGE_BLENDINDEX,
 		USAGE_BLENDWEIGHT,
 		USAGE_INDEX,
-		NUM_OF_USAGE
 	};
+};
 
 
-	static uint						GetSizeOfType(VertexElemType type);
+class Geometry : public Resource
+{
+public:
+
+	static uint			GetSizeOfType(Vertex::ElemType type);
 
 	struct Stream_t
 	{
-		uint8*			data;
-		uint						nSizeInByte;
-		VertexElemType				type;
-		uint8						usage;
-		uint8						nUsageIndex;
-		uint8						nStride;
+		uint8*		data;
+		uint		nSizeInByte;
+		Vertex::ElemType	type;
+		uint8		usage;
+		uint8		nUsageIndex;
+		uint8		nStride;
 
-		uint8*						Ptr()		{	return data;	}
-		const uint8*				Ptr() const	{	return data;	}
+		uint8*			Ptr()		{	return data;	}
+		const uint8*	Ptr() const	{	return data;	}
 	};
 
 	Geometry(uint nVert, uint nTri);
 	Geometry();
 	~Geometry() {}
+
+
+	static int32	CalcVertexStride(const vector<VertexLayoutItem>& layout);
 		
 	uint		GetNumVertex() const { return m_nNumVert; }
 	uint		GetNumTri() const { return m_nNumIndex / 3; }
 
 	uint		GetNumStream() const { return (uint)m_Streams.size(); }
 
-	uint		GetNumStreamOfUsage(ElemUsage usage) const;
+	uint		GetNumStreamOfUsage(Vertex::ElemUsage usage) const;
 
-	uint8*		AddStream(ElemUsage usage, VertexElemType type);
+	uint8*		AddStream(Vertex::ElemUsage usage, Vertex::ElemType type);
 
-	uint		GetNumElement() const		{	return 1;	}
+	uint		GetNumElement() const { return Elements_.size(); }
 
 	void		ComputeTangentSpace();
 
-	int			FindStream(ElemUsage usage, uint8 usageIndex) const;
-	uint8*				GetStreamPointer(ElemUsage usage, uint8 usageIndex);
-	virtual void*		GetBindID() const		{	return NULL;	}
+	int			FindStream(Vertex::ElemUsage usage, uint8 usageIndex) const;
+	uint8*				GetStreamPointer(Vertex::ElemUsage usage, uint8 usageIndex);
+
 	virtual void		OnReset();
 	virtual void		OnLost();
 
 	bool		Load(const TiXmlNode* pXmlMesh);
 	void		Save(TiXmlNode* pXmlMesh) const;
-	bool		CreateFromBuildData(MeshBuildData* pData);
 	void		Load(File* file);
 
-
-	VertexBuffer*		GetVertexBuffer();
-	IndexBuffer*		GetIndexBuffer();
-	VertexLayout		GetVertexLayout();
-
-	bool				HasSkin() const;
-
-	void				GetMaterialInfo(set<string>& info) const;
-
+	
+	bool		HasSkin() const;
+	void		GetMaterialInfo(set<string>& info) const;
+	void		PrepareVertexData(vector<int8>& data, const vector<VertexLayoutItem>& layout);
+	
 
 	//void						ComputeTangent();
 	//void						ComputeAABB();
 	//const AABB&					GetAABB() const	{	return m_AABB;	}
 
-	bool					AssembleVertexBuffer(void* pBuffer, const VertexDescription::Stream& stream);
+	vector<MeshElement>		Elements_;
+
+	Handle		VertexBufferHandle_ = -1;
+	Handle		IndexBufferHandle_ = -1;
+
 private:
-	bool					AssembleVertexElement(void* pBuffer, uint bufferOffset, uint bufferStride,
-													VertexElemType usedType, ElemUsage usage, uint8 usageIndex);
+	bool		AssembleVertexElement(void* pBuffer, uint bufferOffset, uint bufferStride,
+									Vertex::ElemType usedType, Vertex::ElemUsage usage, uint8 usageIndex);
 
+	void	CreateIndexBuffer();
 
-	VertexBuffer*			CreateVertexBuffer(VertexLayout layout);
-	IndexBuffer*			CreateIndexBuffer();
-
-	uint					m_nNumVert;
-	uint					m_nNumIndex;
+	uint		m_nNumVert;
+	uint		m_nNumIndex;
 
 	vector<Stream_t>		m_Streams;
 
-	AABB					m_AABB;
+	AABB		m_AABB;
+	
 
-	IndexBuffer*		m_pIndexBuffer;
-
-	VertexBufferPool		m_VertexBufferPool;
-
-	VertexBuffer*			m_pVertexBuffer;
-	vector<MeshElement>		Elements_;
-
-//
-//public:
-//	bool						CreateRendererObject();
-//	RendererObject*				GetRendererObject() { return &m_RendererObject; }
-//
-//	void						SetVertexDecl(const VertexDeclarationPtr& pVertDecl) { m_pVertexDecl = pVertDecl; }
-//	VertexDeclaration*			GetVertexDecl() { return m_pVertexDecl.get(); }
-//private:
-//	RendererObject				m_RendererObject;
-//	VertexDeclarationPtr		m_pVertexDecl;
 //
 //
 //public:
@@ -203,9 +179,7 @@ private:
 //private:
 //	uint						m_nLightmapSize;
 
-
 };
-
 
 //----------------------------------------------------------------------------
 
@@ -217,7 +191,6 @@ public:
 	static Geometry*			CreateBox(bool bInside, const Matrix4f& matTrans);
 	static Geometry*			CreateSphere(uint slice, uint stack, bool bInside, const Matrix4f& matTrans);
 };
-
 
 
 
@@ -240,8 +213,6 @@ private:
 };
 
 extern MeshManager GMeshManager;
-
-
 
 
 }

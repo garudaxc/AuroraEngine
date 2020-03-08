@@ -46,14 +46,9 @@ namespace Aurora
 		m_Transform.Update();
 	}
 
-	uint Entity::GetNumRenderable() const
+	void Entity::Accept(RenderableVisitor& visitor)
 	{
-		return m_pModel->GetNumRenderables();
-	}
-
-	Renderable* Entity::GetRenderable(uint idx) const
-	{
-		return m_pModel->GetRenderable(idx);
+		m_pModel->Accept(visitor);
 	}
 
 

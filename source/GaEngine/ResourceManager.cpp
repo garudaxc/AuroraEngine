@@ -63,18 +63,6 @@ ResourcePtr<Texture> ResourceManager::GetTexture(const IDType& id)
 }
 
 
-ResourcePtr<VertexDescription>	ResourceManager::GetVertexDesc(const IDType& id)
-{
-	assert(0);
-	ResPtrHolder* pHolder = Find(id);
-	if (pHolder == NULL)
-	{
-		pHolder = Find(VEXDESC_PNTT);
-	}
-
-	return ResourcePtr<VertexDescription>(pHolder);
-}
-
 
 ResPtrHolder* ResourceManager::Find(const IDType& id)
 {

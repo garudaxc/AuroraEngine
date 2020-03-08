@@ -458,8 +458,8 @@ namespace Aurora
 	}
 
 
-	VertexDescription* GetVertexDescription(VertexLayout layout);
-	VertexBuffer* RendererDx10::CreateVertexBuffer(Geometry* pGeometry, VertexLayout layout, uint nVert)
+	VertexDescription* GetVertexDescription(EVertexLayout layout);
+	VertexBuffer* RendererDx10::CreateVertexBuffer(Geometry* pGeometry, EVertexLayout layout, uint nVert)
 	{
 		VertexDescription* pVertexDesc = GetVertexDescription(layout);
 
@@ -1603,7 +1603,7 @@ namespace Aurora
 		nStride += Geometry::GetSizeOfType((Geometry::VertexElemType)item.type);
 
 
-		item.type		= Geometry::TYPE_UBYTE4;
+		item.type		= Geometry::TYPE_UBYTE4_UINT;
 		item.usage		= Geometry::USAGE_BLENDINDEX;
 		item.usageIndex	= 0;
 		stream.items.push_back(item);

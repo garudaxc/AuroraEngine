@@ -46,6 +46,22 @@ namespace Aurora
 	}
 
 
+	void Log::Warning(const char* text, ...)
+	{
+		LockObject lock(m_pLock);
+
+		va_list argptr;
+		va_start(argptr, text);
+		vsnprintf_s(m_TextBuffer, sizeof(m_TextBuffer),
+			sizeof(m_TextBuffer) - 1, text, argptr);
+		va_end(argptr);
+
+		//sprintf_s(m_TextBuffer, sizeof(m_TextBuffer), text);
+		m_file << "Warning : " << m_TextBuffer << endl;
+		m_file.flush();
+	}
+
+
 	void Log::Info(const char* text, ...)
 	{
 		LockObject lock(m_pLock);
@@ -56,7 +72,7 @@ namespace Aurora
 			sizeof(m_TextBuffer) - 1, text, argptr);
 		va_end( argptr );
 
-		m_file << m_TextBuffer << endl;
+		m_file << "Info : " << m_TextBuffer << endl;
 		m_file.flush();
 	}
 

@@ -203,56 +203,56 @@ ArcBall::GetTransformation(Matrix4f& t) const
 //================================================================================================
 
 
-
-
-Vector3f IntersectPlane(const Plane& p0, const Plane& p1, const Plane& p2)
-{
-	Matrix3f mat(p0.n.x, p1.n.x, p2.n.x,
-		p0.n.y, p1.n.y, p2.n.y,
-		p0.n.z, p1.n.z, p2.n.z);
-
-	Matrix3f matInv;
-	MatrixInverse(matInv, mat);
-
-	Vector3f point;
-	Vector3Transform(point, Vector3f(-p0.d, -p1.d, -p2.d), matInv);
-
-	return point;
-}
-
-
-
-
-void ExtractFrustum(const Matrix4f& viewProj, Frustum& frustum)
-{
-	Matrix4f mat = viewProj;
-
-
-	Vector4f m1(mat._11, mat._21, mat._31, mat._41);
-	Vector4f m2(mat._12, mat._22, mat._32, mat._42);
-	Vector4f m3(mat._13, mat._23, mat._33, mat._43);
-	Vector4f m4(mat._14, mat._24, mat._34, mat._44);
-
-
-	frustum.planes[Frustum::PID_TOP] = m4 - m2;
-	frustum.planes[Frustum::PID_TOP].Normalize();
-
-	frustum.planes[Frustum::PID_BOTTOM] = m4 + m2;
-	frustum.planes[Frustum::PID_BOTTOM].Normalize();
-
-	frustum.planes[Frustum::PID_LEFT] = m4 + m1;
-	frustum.planes[Frustum::PID_LEFT].Normalize();
-
-	frustum.planes[Frustum::PID_RIGHT] = m4 - m1;
-	frustum.planes[Frustum::PID_RIGHT].Normalize();
-
-	frustum.planes[Frustum::PID_FRONT] = m4 + m3;
-	frustum.planes[Frustum::PID_FRONT].Normalize();
-
-	frustum.planes[Frustum::PID_BACK] = m4 - m3;
-	frustum.planes[Frustum::PID_BACK].Normalize();
-
-}
+//
+//
+//Vector3f IntersectPlane(const Plane& p0, const Plane& p1, const Plane& p2)
+//{
+//	Matrix3f mat(p0.n.x, p1.n.x, p2.n.x,
+//		p0.n.y, p1.n.y, p2.n.y,
+//		p0.n.z, p1.n.z, p2.n.z);
+//
+//	Matrix3f matInv;
+//	MatrixInverse(matInv, mat);
+//
+//	Vector3f point;
+//	Vector3Transform(point, Vector3f(-p0.d, -p1.d, -p2.d), matInv);
+//
+//	return point;
+//}
+//
+//
+//
+//
+//void ExtractFrustum(const Matrix4f& viewProj, Frustum& frustum)
+//{
+//	Matrix4f mat = viewProj;
+//
+//
+//	Vector4f m1(mat._11, mat._21, mat._31, mat._41);
+//	Vector4f m2(mat._12, mat._22, mat._32, mat._42);
+//	Vector4f m3(mat._13, mat._23, mat._33, mat._43);
+//	Vector4f m4(mat._14, mat._24, mat._34, mat._44);
+//
+//
+//	frustum.planes[Frustum::PID_TOP] = m4 - m2;
+//	frustum.planes[Frustum::PID_TOP].Normalize();
+//
+//	frustum.planes[Frustum::PID_BOTTOM] = m4 + m2;
+//	frustum.planes[Frustum::PID_BOTTOM].Normalize();
+//
+//	frustum.planes[Frustum::PID_LEFT] = m4 + m1;
+//	frustum.planes[Frustum::PID_LEFT].Normalize();
+//
+//	frustum.planes[Frustum::PID_RIGHT] = m4 - m1;
+//	frustum.planes[Frustum::PID_RIGHT].Normalize();
+//
+//	frustum.planes[Frustum::PID_FRONT] = m4 + m3;
+//	frustum.planes[Frustum::PID_FRONT].Normalize();
+//
+//	frustum.planes[Frustum::PID_BACK] = m4 - m3;
+//	frustum.planes[Frustum::PID_BACK].Normalize();
+//
+//}
 
 
 

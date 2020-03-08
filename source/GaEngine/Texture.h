@@ -92,10 +92,6 @@ protected:
 
 
 
-
-
-
-
 class RenderTarget : public Texture
 {
 public:

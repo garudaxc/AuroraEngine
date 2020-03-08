@@ -64,26 +64,34 @@ void ComputeFaceNormal(const T* pIndex, Vector3f* pFaceNormal, const Vector3f* p
 }
 
 
-//------------------------------------------------------------------------------------
-//TYPE_FLOAT = 0,
-//TYPE_FLOAT2,
-//TYPE_FLOAT3,
-//TYPE_FLOAT4,
-//TYPE_UBYTE,
-//TYPE_UBYTE4,
-//TYPE_USHORT,
-//TYPE_USHORT2,
-//TYPE_UINT
 
-uint32 Geometry::GetSizeOfType(VertexElemType type) {
-	static uint32 s_SizeOfVertexElemType[NUM_OF_TYPE] = {
-		4, 8, 12, 16, 1, 4, 2, 4, 4
-	};
+uint32 Geometry::GetSizeOfType(Vertex::ElemType type) {
+	switch (type)
+	{
+	case Aurora::Vertex::TYPE_FLOAT:
+		return 4;
+	case Aurora::Vertex::TYPE_FLOAT2:
+		return 8;
+	case Aurora::Vertex::TYPE_FLOAT3:
+		return 12;
+	case Aurora::Vertex::TYPE_FLOAT4:
+		return 16;
+	case Aurora::Vertex::TYPE_UBYTE4_UINT:
+		return 4;
+	case Aurora::Vertex::TYPE_UBYTE4_UNORM:
+		return 4;
+	case Aurora::Vertex::TYPE_USHORT_UINT:
+		return 2;
+	case Aurora::Vertex::TYPE_UINT:
+		return 4;
+	default:
+		assert(0);
+		return 0;
+	}
 
-	return s_SizeOfVertexElemType[type];
 }
 
-void FlipTriangleOrder(uint8* pIndex, uint32 nTri, Geometry::VertexElemType indexType)
+void FlipTriangleOrder(uint8* pIndex, uint32 nTri, Vertex::ElemType indexType)
 {
 	int stride = Geometry::GetSizeOfType(indexType);
 	// swep two points in triangle
@@ -112,7 +120,7 @@ void FlipTriangleOrder(uint8* pIndex, uint32 nTri, Geometry::VertexElemType inde
 
 
 
-void ComputeNormal(Vector3f* pNormal, uint8* pIndex, uint32 nTri, Geometry::VertexElemType indexType,
+void ComputeNormal(Vector3f* pNormal, uint8* pIndex, uint32 nTri, Vertex::ElemType indexType,
 				   Vector3f* pPos, uint32 nVert)
 {
 	int stride = Geometry::GetSizeOfType(indexType);
@@ -145,18 +153,39 @@ void ComputeNormal(Vector3f* pNormal, uint8* pIndex, uint32 nTri, Geometry::Vert
 
 
 
+
+
+vector<VertexLayoutItem>	VertexLayoutPosNormTangentTex(
+	{
+	   {Vertex::TYPE_FLOAT3, Vertex::USAGE_POSITION, 0},
+	   {Vertex::TYPE_FLOAT3, Vertex::USAGE_NORMAL, 0},
+	   {Vertex::TYPE_FLOAT4, Vertex::USAGE_TANGENT, 0},
+	   {Vertex::TYPE_FLOAT2, Vertex::USAGE_TEXCOORD, 0},
+	}
+);
+
+
+
+
+
 Geometry::Geometry(uint32 nVert, uint32 nTri):m_nNumVert(nVert),
 m_nNumIndex(nTri*3) {
-	m_pVertexBuffer = NULL;
-	m_pIndexBuffer = NULL;
 }
 
 Geometry::Geometry():m_nNumVert(0),m_nNumIndex(0) {
-	m_pVertexBuffer = NULL;
-	m_pIndexBuffer = NULL;
 }
 
-uint32 Geometry::GetNumStreamOfUsage(ElemUsage usage) const {
+int32 Geometry::CalcVertexStride(const vector<VertexLayoutItem>& layout)
+{
+	int32 stride = 0;
+	for (auto it = layout.begin(); it != layout.end(); ++it) {
+		stride += Geometry::GetSizeOfType((Vertex::ElemType)it->type);
+	}
+
+	return stride;
+}
+
+uint32 Geometry::GetNumStreamOfUsage(Vertex::ElemUsage usage) const {
 	uint32 num = 0;
 	for (uint32 i = 0; i < GetNumStream(); i++)
 	{
@@ -169,16 +198,13 @@ uint32 Geometry::GetNumStreamOfUsage(ElemUsage usage) const {
 }
 
 
-uint8* Geometry::AddStream(ElemUsage usage, VertexElemType type) {
+uint8* Geometry::AddStream(Vertex::ElemUsage usage, Vertex::ElemType type) {
 	uint32 usageIndex		= GetNumStreamOfUsage(usage);
 
 	uint32 numElem = 0;
-	if (usage == USAGE_INDEX)
-	{
+	if (usage == Vertex::USAGE_INDEX)	{
 		numElem = m_nNumIndex;
-	}
-	else
-	{
+	} else {
 		numElem = m_nNumVert;
 	}
 
@@ -197,11 +223,9 @@ uint8* Geometry::AddStream(ElemUsage usage, VertexElemType type) {
 }
 
 
-int Geometry::FindStream(ElemUsage usage, uint8 usageIndex) const {
-	for (int i = 0; i < (int)m_Streams.size(); i++)
-	{
-		if (usage == m_Streams[i].usage && usageIndex == m_Streams[i].nUsageIndex)
-		{
+int Geometry::FindStream(Vertex::ElemUsage usage, uint8 usageIndex) const {
+	for (int i = 0; i < (int)m_Streams.size(); i++) {
+		if (usage == m_Streams[i].usage && usageIndex == m_Streams[i].nUsageIndex)	{
 			return i;
 		}
 	}
@@ -209,30 +233,30 @@ int Geometry::FindStream(ElemUsage usage, uint8 usageIndex) const {
 }
 
 
-uint8* Geometry::GetStreamPointer(ElemUsage usage, uint8 usageIndex) {
+uint8* Geometry::GetStreamPointer(Vertex::ElemUsage usage, uint8 usageIndex) {
 	int nStream = FindStream(usage, usageIndex);
-	if (nStream == -1)
-	{
-		return NULL;
+	if (nStream == -1)	{
+		return nullptr;
 	}
 
 	return m_Streams[nStream].Ptr();
 }
 
 
-bool Geometry::AssembleVertexElement(void* pBuffer, uint32 bufferOffset, uint32 bufferStride, VertexElemType usedType, 
-										 ElemUsage usage, uint8 usageIndex)
+bool Geometry::AssembleVertexElement(void* pBuffer, uint32 bufferOffset, uint32 bufferStride, Vertex::ElemType usedType, 
+										 Vertex::ElemUsage usage, uint8 usageIndex)
 {
 	int streamIndex = FindStream(usage, usageIndex);
 
 	// compute tangent if needed
-	if (streamIndex == -1 && usage == USAGE_TANGENT)
-	{
+	if (streamIndex == -1 && usage == Vertex::USAGE_TANGENT){
 		ComputeTangentSpace();
 		streamIndex = FindStream(usage, usageIndex);
 	}
 
-	assert(streamIndex != -1);
+	if (streamIndex == -1) {
+		return false;
+	}
 
 	const Stream_t& stream = m_Streams[streamIndex];
 	Util::MemMap(stream.Ptr(), stream.nStride,  (uint8*)pBuffer + bufferOffset, 
@@ -241,27 +265,6 @@ bool Geometry::AssembleVertexElement(void* pBuffer, uint32 bufferOffset, uint32 
 	return true;
 }
 
-
-bool Geometry::AssembleVertexBuffer(void* pBuffer, const VertexDescription::Stream& stream) {
-	uint32 bufferOffset = 0;
-	
-	for (uint32 j = 0; j < stream.items.size(); j++)
-	{
-		const VertexDescription::Item& item = stream.items[j];
-
-		bool res = AssembleVertexElement(pBuffer, bufferOffset, stream.nVertexStride, 
-								(VertexElemType)item.type, (ElemUsage)item.usage, 0);
-
-		if (!res)
-		{
-			return false;
-		}
-
-		bufferOffset += GetSizeOfType((VertexElemType)item.type);
-	}
-
-	return true;
-}
 
 bool Geometry::Load(const TiXmlNode* pXmlMesh) {
 	const TiXmlElement* pMesh = pXmlMesh->ToElement();
@@ -275,7 +278,7 @@ bool Geometry::Load(const TiXmlNode* pXmlMesh) {
 
 	stringstream ss;
 
-	uint32* pIndex = (uint32*)AddStream(Geometry::USAGE_INDEX, Geometry::TYPE_UINT);
+	uint32* pIndex = (uint32*)AddStream(Vertex::USAGE_INDEX, Vertex::TYPE_UINT);
 	string text = pMesh->FirstChild("Index")->FirstChild()->ToText()->Value();
 	ss.write(text.c_str(), text.size());
 	uint32 n;
@@ -287,7 +290,7 @@ bool Geometry::Load(const TiXmlNode* pXmlMesh) {
 	ss.clear();
 
 	text = pMesh->FirstChild("Position")->FirstChild()->ToText()->Value();
-	Vector3f* pPos = (Vector3f*)AddStream(Geometry::USAGE_POSITION, Geometry::TYPE_FLOAT3);
+	Vector3f* pPos = (Vector3f*)AddStream(Vertex::USAGE_POSITION, Vertex::TYPE_FLOAT3);
 	ss.write(text.c_str(), text.size());
 	for (int i = 0; i < nNumVerts; i++) {
 		char t;
@@ -297,7 +300,7 @@ bool Geometry::Load(const TiXmlNode* pXmlMesh) {
 	ss.clear();
 
 	text = pMesh->FirstChild("Normal")->FirstChild()->ToText()->Value();
-	Vector3f* pNormal = (Vector3f*)AddStream(Geometry::USAGE_NORMAL, Geometry::TYPE_FLOAT3);
+	Vector3f* pNormal = (Vector3f*)AddStream(Vertex::USAGE_NORMAL, Vertex::TYPE_FLOAT3);
 	ss.write(text.c_str(), text.size());
 	for (int i = 0; i < nNumVerts; i++)	{
 		char t;
@@ -307,7 +310,7 @@ bool Geometry::Load(const TiXmlNode* pXmlMesh) {
 	ss.clear();
 
 	text = pMesh->FirstChild("Texcoord")->FirstChild()->ToText()->Value();
-	Vector2f* pUV = (Vector2f*)AddStream(Geometry::USAGE_TEXCOORD, Geometry::TYPE_FLOAT2);
+	Vector2f* pUV = (Vector2f*)AddStream(Vertex::USAGE_TEXCOORD, Vertex::TYPE_FLOAT2);
 	ss.write(text.c_str(), text.size());
 	for (int i = 0; i < nNumVerts; i++)	{
 		char t;
@@ -316,10 +319,9 @@ bool Geometry::Load(const TiXmlNode* pXmlMesh) {
 	}
 	ss.clear();
 
-
 	if (pMesh->FirstChild("BlendIndex")) {
 		text = pMesh->FirstChild("BlendIndex")->FirstChild()->ToText()->Value();
-		uint8* pBlendIndex = (uint8*)AddStream(Geometry::USAGE_BLENDINDEX, Geometry::TYPE_UBYTE4);
+		uint8* pBlendIndex = (uint8*)AddStream(Vertex::USAGE_BLENDINDEX, Vertex::TYPE_UBYTE4_UINT);
 		ss.write(text.c_str(), text.size());
 		for (int i = 0; i < nNumVerts; i++)	{
 			char t;
@@ -331,7 +333,7 @@ bool Geometry::Load(const TiXmlNode* pXmlMesh) {
 
 	if (pMesh->FirstChild("BlendWeight")) {
 		text = pMesh->FirstChild("BlendWeight")->FirstChild()->ToText()->Value();
-		Vector3f* pBlendWeight = (Vector3f*)AddStream(Geometry::USAGE_BLENDWEIGHT, Geometry::TYPE_FLOAT3);
+		Vector3f* pBlendWeight = (Vector3f*)AddStream(Vertex::USAGE_BLENDWEIGHT, Vertex::TYPE_FLOAT3);
 		ss.write(text.c_str(), text.size());
 		for (int i = 0; i < nNumVerts; i++)	{
 			char t;
@@ -343,36 +345,21 @@ bool Geometry::Load(const TiXmlNode* pXmlMesh) {
 	}
 
 	CreateIndexBuffer();
-	if (pMesh->FirstChild("BlendIndex")) {
-		m_pVertexBuffer = CreateVertexBuffer(VertexLayout_PNTTBB);
-	} else {
-		m_pVertexBuffer = CreateVertexBuffer(VertexLayout_PNTT);
-	}
+
+
+	vector<int8> vertexData;
+	PrepareVertexData(vertexData, VertexLayoutPosNormTangentTex);
+	VertexBufferHandle_ = CreateVertexBufferHandle(&vertexData[0], vertexData.size());
+
+	//if (pMesh->FirstChild("BlendIndex")) {
+	//	m_pVertexBuffer = CreateVertexBuffer(VertexLayout_PNTTBB);
+	//} else {
+	//	m_pVertexBuffer = CreateVertexBuffer(VertexLayout_PNTT);
+	//}
 
 	return true;
 }
 
-
-bool Geometry::CreateFromBuildData(MeshBuildData* pData) {
-	m_nNumVert = pData->GetNumVertex();
-	m_nNumIndex = pData->GetNumFace() * 3;
-
-	uint32* pIndex = (uint32*)AddStream(Geometry::USAGE_INDEX, Geometry::TYPE_UINT);
-	Vector3f* pPos = (Vector3f*)AddStream(Geometry::USAGE_POSITION, Geometry::TYPE_FLOAT3);
-	Vector3f* pNormal = (Vector3f*)AddStream(Geometry::USAGE_NORMAL, Geometry::TYPE_FLOAT3);
-	Vector2f* pUV = (Vector2f*)AddStream(Geometry::USAGE_TEXCOORD, Geometry::TYPE_FLOAT2);
-
-	memcpy(pIndex, pData->GetIndexData(), sizeof(int) * m_nNumIndex);
-	memcpy(pPos, pData->GetPositionData(), sizeof(Vector3f) * m_nNumVert);
-	memcpy(pNormal, pData->GetNormalData(), sizeof(Vector3f) * m_nNumVert);
-	memcpy(pUV, pData->GetTexcoordData(), sizeof(Vector2f) * m_nNumVert);
-
-
-	CreateIndexBuffer();
-	m_pVertexBuffer = CreateVertexBuffer(VertexLayout_PNTT);
-
-	return true;
-}
 
 void Geometry::Load(File* file)
 {
@@ -387,14 +374,13 @@ void Geometry::Load(File* file)
 	file->Read(numVertex);
 	file->Read(numIndex);
 
-
 	m_nNumVert = numVertex;
 	m_nNumIndex = numIndex;
 
-	uint32* pIndex = (uint32*)AddStream(Geometry::USAGE_INDEX, Geometry::TYPE_UINT);
-	Vector3f* pPos = (Vector3f*)AddStream(Geometry::USAGE_POSITION, Geometry::TYPE_FLOAT3);
-	Vector3f* pNormal = (Vector3f*)AddStream(Geometry::USAGE_NORMAL, Geometry::TYPE_FLOAT3);
-	Vector2f* pUV = (Vector2f*)AddStream(Geometry::USAGE_TEXCOORD, Geometry::TYPE_FLOAT2);
+	uint32* pIndex = (uint32*)AddStream(Vertex::USAGE_INDEX, Vertex::TYPE_UINT);
+	Vector3f* pPos = (Vector3f*)AddStream(Vertex::USAGE_POSITION, Vertex::TYPE_FLOAT3);
+	Vector3f* pNormal = (Vector3f*)AddStream(Vertex::USAGE_NORMAL, Vertex::TYPE_FLOAT3);
+	Vector2f* pUV = (Vector2f*)AddStream(Vertex::USAGE_TEXCOORD, Vertex::TYPE_FLOAT2);
 
 
 	file->Read(magic);
@@ -432,16 +418,19 @@ void Geometry::Load(File* file)
 		}
 	}
 		
-	CreateIndexBuffer();
-	m_pVertexBuffer = CreateVertexBuffer(VertexLayout_PNTT);
-}
+	vector<int8> vertexData;
+	PrepareVertexData(vertexData, VertexLayoutPosNormTangentTex);
+	VertexBufferHandle_ = CreateVertexBufferHandle(&vertexData[0], vertexData.size());
 
+	CreateIndexBuffer();
+	//m_pVertexBuffer = CreateVertexBuffer(VertexLayout_PNTT);
+}
 
 
 bool Geometry::HasSkin() const {
 	bool hasSkin = false;
 	for (vector<Stream_t>::const_iterator it = m_Streams.begin(); it != m_Streams.end(); ++it) {
-		if (it->usage == USAGE_BLENDINDEX) {
+		if (it->usage == Vertex::USAGE_BLENDINDEX) {
 			hasSkin = true;
 		}
 	}
@@ -455,72 +444,51 @@ void Geometry::GetMaterialInfo(set<string>& info) const {
 	}
 }
 
-VertexLayout Geometry::GetVertexLayout()
+
+void Geometry::PrepareVertexData(vector<int8>& data, const vector<VertexLayoutItem>& layout)
 {
-	return VertexLayout_PNTT;
+	int32 stride = 0;
+	for (auto it = layout.begin(); it != layout.end(); ++it) {
+		stride += Geometry::GetSizeOfType((Vertex::ElemType)it->type);
+	}
+
+	data.resize(stride * m_nNumVert);
+	int32 elementOffset = 0;
+	for (auto it = layout.begin(); it != layout.end(); ++it) {
+		bool res = AssembleVertexElement(&data[0], elementOffset, stride,
+			(Vertex::ElemType)it->type, (Vertex::ElemUsage)it->usage, it->usageIndex);
+
+		if (!res) {
+			GLog->Warning("Can not find VertexElement type %d usage %d index %d", 
+				(int)it->type, (int)it->usage, it->usageIndex);
+		}
+		
+		elementOffset += GetSizeOfType((Vertex::ElemType)it->type);
+	}
 }
 
-IndexBuffer* Geometry::CreateIndexBuffer() {
-	int streamIndex = FindStream(USAGE_INDEX, 0);
+
+void Geometry::CreateIndexBuffer() {
+	   
+	int streamIndex = FindStream(Vertex::USAGE_INDEX, 0);
 	if (streamIndex == -1) {
-		return NULL;
+		GLog->Error("CreateIndexBuffer: can not find index buffer stream !");
+		return;
 	}
 
-	IndexBuffer::Format fmt = IndexBuffer::FMT_INDEX16;
-	uint32 stride = m_Streams[streamIndex].nStride;
-	if ( stride > 2) {
-		fmt = IndexBuffer::FMT_INDEX32;
-	}
+	assert(m_Streams[streamIndex].nStride == 4);
+	auto stream = m_Streams[streamIndex];
 
-	m_pIndexBuffer = GRenderDevice->CreateIndexBuffer(this, fmt, m_nNumIndex);
-	if (!m_pIndexBuffer) {
-		return NULL;
-	}
-
-	m_pIndexBuffer->OnReset();
-	return m_pIndexBuffer;
-}
-
-VertexBuffer* Geometry::CreateVertexBuffer(VertexLayout layout) {
-	VertexBuffer* pVertexBuffer = GRenderDevice->CreateVertexBuffer(this, layout, m_nNumVert);
-	pVertexBuffer->OnReset();
-	assert(pVertexBuffer);
-
-	m_VertexBufferPool.insert(make_pair(layout, pVertexBuffer));
-	return pVertexBuffer;
+	IndexBufferHandle_ = CreateIndexBufferHandle(stream.data, stream.nSizeInByte);
 }
 
 void Geometry::OnReset() {
-	if (m_pIndexBuffer)	{
-		m_pIndexBuffer->OnReset();
-	}
-
-	for (VertexBufferPool::iterator it = m_VertexBufferPool.begin();
-		it != m_VertexBufferPool.end(); ++it)	{
-		it->second->OnReset();
-	}
 }
 
 void Geometry::OnLost() {
-	if (m_pIndexBuffer)	{
-		m_pIndexBuffer->OnLost();
-	}
-
-	for (VertexBufferPool::iterator it = m_VertexBufferPool.begin();
-		it != m_VertexBufferPool.end(); ++it)	{
-		it->second->OnLost();
-	}
 }
 
-VertexBuffer* Geometry::GetVertexBuffer() {
-	assert(m_pVertexBuffer != NULL);
-	return m_pVertexBuffer;
-}
 
-IndexBuffer* Geometry::GetIndexBuffer() {
-	assert(m_pIndexBuffer != NULL);
-	return m_pIndexBuffer;
-}
 
 struct Triangle
 {
@@ -597,18 +565,18 @@ void CalculateTangentArray(long vertexCount, const Vector3f *vertex, const Vecto
 
 void Geometry::ComputeTangentSpace()
 {
-	assert(GetNumStreamOfUsage(USAGE_TANGENT) == 0);
+	assert(GetNumStreamOfUsage(Vertex::USAGE_TANGENT) == 0);
 
-	uint8* pData = AddStream(USAGE_TANGENT, TYPE_FLOAT4);
+	uint8* pData = AddStream(Vertex::USAGE_TANGENT, Vertex::TYPE_FLOAT4);
 
-	int posStream = FindStream(USAGE_POSITION, 0);
-	int normStream = FindStream(USAGE_NORMAL, 0);
-	int uvStream = FindStream(USAGE_TEXCOORD, 0);
-	int indexStream = FindStream(USAGE_INDEX, 0);
+	int posStream = FindStream(Vertex::USAGE_POSITION, 0);
+	int normStream = FindStream(Vertex::USAGE_NORMAL, 0);
+	int uvStream = FindStream(Vertex::USAGE_TEXCOORD, 0);
+	int indexStream = FindStream(Vertex::USAGE_INDEX, 0);
 
 	assert(posStream != -1 && normStream != -1 && uvStream != -1);
-	assert(m_Streams[uvStream].type == TYPE_FLOAT2);
-	assert(m_Streams[indexStream].type ==  TYPE_UINT);
+	assert(m_Streams[uvStream].type == Vertex::TYPE_FLOAT2);
+	assert(m_Streams[indexStream].type == Vertex::TYPE_UINT);
 
 	CalculateTangentArray(GetNumVertex(), 
 		(const Vector3f *)m_Streams[posStream].Ptr(), 
@@ -826,9 +794,6 @@ float TriangleArea(const Vector3f& a, const Vector3f& b, const Vector3f& c)
 //
 
 
-
-
-
 //-------------------------------------------------------------------------------
 Geometry* StandardMesh::CreatePlane(int nRow, int nCol, const Matrix4f &matTrans)
 {
@@ -838,9 +803,9 @@ Geometry* StandardMesh::CreatePlane(int nRow, int nCol, const Matrix4f &matTrans
 	Geometry* pMesh = new Geometry(nVert, nTri);
 	assert(pMesh != NULL);
 
-	Vector3f* pPos		= (Vector3f*)pMesh->AddStream(Geometry::USAGE_POSITION, Geometry::TYPE_FLOAT3);
-	Vector3f* pNormal	= (Vector3f*)pMesh->AddStream(Geometry::USAGE_NORMAL, Geometry::TYPE_FLOAT3);
-	Vector2f* pUV		= (Vector2f*)pMesh->AddStream(Geometry::USAGE_TEXCOORD, Geometry::TYPE_FLOAT2);
+	Vector3f* pPos		= (Vector3f*)pMesh->AddStream(Vertex::USAGE_POSITION, Vertex::TYPE_FLOAT3);
+	Vector3f* pNormal	= (Vector3f*)pMesh->AddStream(Vertex::USAGE_NORMAL, Vertex::TYPE_FLOAT3);
+	Vector2f* pUV		= (Vector2f*)pMesh->AddStream(Vertex::USAGE_TEXCOORD, Vertex::TYPE_FLOAT2);
 
 	// setup vertex
 	float yStep = 1.0f / (float)nRow;
@@ -869,7 +834,7 @@ Geometry* StandardMesh::CreatePlane(int nRow, int nCol, const Matrix4f &matTrans
 	Vector3TransformArray(pPos, sizeof(Vector3f), 
 		pPos, sizeof(Vector3f), nVert, matTrans);
 
-	uint16* pIndex = (uint16*)pMesh->AddStream(Geometry::USAGE_INDEX, Geometry::TYPE_USHORT);
+	uint16* pIndex = (uint16*)pMesh->AddStream(Vertex::USAGE_INDEX, Vertex::TYPE_USHORT_UINT);
 	uint16 v0, v1, v2, v3;
 	//---------------------
 	//		v1 - v3
@@ -903,8 +868,8 @@ Geometry* StandardMesh::CreateBox(bool bInside, const Matrix4f& matTrans)
 	Geometry* pMesh = new Geometry(8, 12);
 	assert(pMesh != NULL);
 
-	Vector3f* pPos		= (Vector3f*)pMesh->AddStream(Geometry::USAGE_POSITION, Geometry::TYPE_FLOAT3);
-	Vector3f* pNormal	= (Vector3f*)pMesh->AddStream(Geometry::USAGE_NORMAL, Geometry::TYPE_FLOAT3);
+	Vector3f* pPos		= (Vector3f*)pMesh->AddStream(Vertex::USAGE_POSITION, Vertex::TYPE_FLOAT3);
+	Vector3f* pNormal	= (Vector3f*)pMesh->AddStream(Vertex::USAGE_NORMAL, Vertex::TYPE_FLOAT3);
 
 	pPos[0].Set(-0.5f,  0.5f,  0.5f);
 	pPos[1].Set(-0.5f,  0.5f, -0.5f);
@@ -918,7 +883,7 @@ Geometry* StandardMesh::CreateBox(bool bInside, const Matrix4f& matTrans)
 
 	Vector3TransformArray(pPos, sizeof(Vector3f), pPos, sizeof(Vector3f), 8, matTrans);
 
-	uint16* pIndex = (uint16*)pMesh->AddStream(Geometry::USAGE_INDEX, Geometry::TYPE_USHORT);
+	uint16* pIndex = (uint16*)pMesh->AddStream(Vertex::USAGE_INDEX, Vertex::TYPE_USHORT_UINT);
 	//top
 	pIndex[0] = 1;	pIndex[1] = 0;	pIndex[2] = 3;
 	pIndex[3] = 1;	pIndex[4] = 3;	pIndex[5] = 2;
@@ -942,10 +907,10 @@ Geometry* StandardMesh::CreateBox(bool bInside, const Matrix4f& matTrans)
 
 	if (bInside)
 	{
-		FlipTriangleOrder((uint8*)pIndex, 12, Geometry::TYPE_USHORT);
+		FlipTriangleOrder((uint8*)pIndex, 12, Vertex::TYPE_USHORT_UINT);
 	}
 
-	ComputeNormal(pNormal, (uint8*)pIndex, 12, Geometry::TYPE_USHORT, pPos, 8);
+	ComputeNormal(pNormal, (uint8*)pIndex, 12, Vertex::TYPE_USHORT_UINT, pPos, 8);
 
 	return pMesh;
 }
@@ -958,9 +923,9 @@ Geometry* StandardMesh::CreateSphere(uint32 slice, uint32 stack, bool bInside, c
 	Geometry* pMesh = new Geometry(nVert, nTri);
 	assert(pMesh != NULL);
 
-	Vector3f* pPos		= (Vector3f*)pMesh->AddStream(Geometry::USAGE_POSITION, Geometry::TYPE_FLOAT3);
-	Vector3f* pNormal	= (Vector3f*)pMesh->AddStream(Geometry::USAGE_NORMAL, Geometry::TYPE_FLOAT3);
-	Vector2f* pUV		= (Vector2f*)pMesh->AddStream(Geometry::USAGE_TEXCOORD, Geometry::TYPE_FLOAT2);
+	Vector3f* pPos		= (Vector3f*)pMesh->AddStream(Vertex::USAGE_POSITION, Vertex::TYPE_FLOAT3);
+	Vector3f* pNormal	= (Vector3f*)pMesh->AddStream(Vertex::USAGE_NORMAL, Vertex::TYPE_FLOAT3);
+	Vector2f* pUV		= (Vector2f*)pMesh->AddStream(Vertex::USAGE_TEXCOORD, Vertex::TYPE_FLOAT2);
 
 
 	pPos[0].Set(0.0f, 1.0f, 0.0f);
@@ -1005,7 +970,7 @@ Geometry* StandardMesh::CreateSphere(uint32 slice, uint32 stack, bool bInside, c
 	Vector3TransformArray(pPos, sizeof(Vector3f), pPos, sizeof(Vector3f), nVert, matTrans);
 
 	// setup index
-	uint16* pIndex = (uint16*)pMesh->AddStream(Geometry::USAGE_INDEX, Geometry::TYPE_USHORT);
+	uint16* pIndex = (uint16*)pMesh->AddStream(Vertex::USAGE_INDEX, Vertex::TYPE_USHORT_UINT);
 	int iIndex = 0;
 	for (uint32 i = 0; i < slice; i++)
 	{
@@ -1047,7 +1012,7 @@ Geometry* StandardMesh::CreateSphere(uint32 slice, uint32 stack, bool bInside, c
 
 	if (bInside)
 	{
-		FlipTriangleOrder((uint8*)pIndex, nTri, Geometry::TYPE_USHORT);
+		FlipTriangleOrder((uint8*)pIndex, nTri, Vertex::TYPE_USHORT_UINT);
 	}
 
 	return pMesh;	

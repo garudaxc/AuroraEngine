@@ -10,18 +10,18 @@ namespace Aurora
 {
 
 
-	// 测试两平面的交界相对于某一个方向是否为边界
-	bool TestEdge(const Plane& p0, const Plane& p1, const Vector3f& dir)
-	{
-		float t0 = Vector3f::Dot(p0.n, dir);
-		float t1 = Vector3f::Dot(p1.n, dir);
-		if (t0 * t1 < 0.0f)
-		{
-			return true;
-		}
+	//// 测试两平面的交界相对于某一个方向是否为边界
+	//bool TestEdge(const Plane& p0, const Plane& p1, const Vector3f& dir)
+	//{
+	//	float t0 = Vector3f::Dot(p0.n, dir);
+	//	float t1 = Vector3f::Dot(p1.n, dir);
+	//	if (t0 * t1 < 0.0f)
+	//	{
+	//		return true;
+	//	}
 
-		return false;
-	}
+	//	return false;
+	//}
 
 
 
@@ -41,7 +41,7 @@ namespace Aurora
 
 		MaterialInstance* m_pMatInst;
 
-		VertexBuffer* m_pVertexBuffer;
+		//VertexBuffer* m_pVertexBuffer;
 
 		RenderOperator m_op;
 	};
@@ -49,7 +49,7 @@ namespace Aurora
 
 	const int VERTEX_BUFFER_SIZE = 1024;
 
-	LineRenderer::LineRenderer():m_pMatInst(NULL),m_pVertexBuffer(NULL)
+	LineRenderer::LineRenderer():m_pMatInst(NULL)
 	{
 
 	}
@@ -57,23 +57,23 @@ namespace Aurora
 	LineRenderer::~LineRenderer()
 	{
 		delete m_pMatInst;
-		delete m_pVertexBuffer;
+		//delete m_pVertexBuffer;
 	}
 
 	bool LineRenderer::Init()
 	{
 		m_pMatInst = GMaterialInstanceManager.GetMaterialInstance("asset:DrawLine.mtlInst", set<string>());
-		m_pVertexBuffer = GRenderDevice->CreateDynamicVertexBuffer(sizeof(Vector3f), VERTEX_BUFFER_SIZE);
+		//m_pVertexBuffer = GRenderDevice->CreateDynamicVertexBuffer(sizeof(Vector3f), VERTEX_BUFFER_SIZE);
 
 		memset(&m_op, 0, sizeof(m_op));
 
-		m_op.pVertexBuffer = m_pVertexBuffer;
-		m_op.pMtlInst = m_pMatInst;
-		m_op.VertLayout = VertexLayout_P;
-		m_op.nPrimType = RenderOperator::PT_LINELIST;
-		m_op.nBaseVertexIndex = 0;
-		m_op.nStartIndex = 0;
-		m_op.nVertexStride = sizeof(Vector3f);
+		//m_op.pVertexBuffer = m_pVertexBuffer;
+		//m_op.pMtlInst = m_pMatInst;
+		//m_op.VertLayout = VertexLayout_P;
+		//m_op.nPrimType = RenderOperator::PT_LINELIST;
+		//m_op.nBaseVertexIndex = 0;
+		//m_op.nStartIndex = 0;
+		//m_op.nVertexStride = sizeof(Vector3f);
 
 		return true;
 	}
@@ -274,15 +274,15 @@ namespace Aurora
 			corner[0] = a;
 			corner[1] = b;
 
-			VertexBuffer::Locker locker = m_pVertexBuffer->GetLocker();
-			memcpy(locker.Ptr(), corner, sizeof(corner));
+			//VertexBuffer::Locker locker = m_pVertexBuffer->GetLocker();
+			//memcpy(locker.Ptr(), corner, sizeof(corner));
 		}
 
-		m_op.pMtlInst->SetVariableValue("vDiffuse", color.Ptr());
-		m_op.nNumVertices = 2;
-		m_op.nStartIndex = 0;
-		m_op.nPrimitiveCount = 1;
-		m_op.nPrimType = RenderOperator::PT_LINELIST;
+		//m_op.pMtlInst->SetVariableValue("vDiffuse", color.Ptr());
+		//m_op.nNumVertices = 2;
+		//m_op.nStartIndex = 0;
+		//m_op.nPrimitiveCount = 1;
+		//m_op.nPrimType = RenderOperator::PT_LINELIST;
 
 		RenderOp(m_op, pickupId, pQuery);
 	}
@@ -363,20 +363,20 @@ namespace Aurora
 				0, 4, 1, 5, 2, 6, 3, 7,
 			};
 
-			VertexBuffer::Locker locker = m_pVertexBuffer->GetLocker();
-			Vector3f* pPos = (Vector3f*)locker.Ptr();
-			for (int i = 0; i < 24; i++)
-			{
-				pPos[i] = corner[index[i]];
-			}
+			//VertexBuffer::Locker locker = m_pVertexBuffer->GetLocker();
+			//Vector3f* pPos = (Vector3f*)locker.Ptr();
+			//for (int i = 0; i < 24; i++)
+			//{
+			//	pPos[i] = corner[index[i]];
+			//}
 		}
 
 		m_op.pMtlInst->SetVariableValue("vDiffuse", color.Ptr());
 
-		m_op.nPrimType = RenderOperator::PT_LINELIST;
-		m_op.nNumVertices = 24;
-		m_op.nStartIndex = 0;
-		m_op.nPrimitiveCount = 12;
+		//m_op.nPrimType = RenderOperator::PT_LINELIST;
+		//m_op.nNumVertices = 24;
+		//m_op.nStartIndex = 0;
+		//m_op.nPrimitiveCount = 12;
 
 		RenderOp(m_op, pickupId, pQuery);
 	}
@@ -491,20 +491,17 @@ namespace Aurora
 		void InitVertexBuffer();
 
 		MaterialInstance* m_pMatInst;
-
-		VertexBuffer* m_pVertexBuffer;
-
+		
 		RenderOperator m_op;
 	};
 
 
-	ScreenQuadRenderer::ScreenQuadRenderer():m_pVertexBuffer(NULL)
+	ScreenQuadRenderer::ScreenQuadRenderer()
 	{
 	}
 
 	ScreenQuadRenderer::~ScreenQuadRenderer()
 	{
-		delete m_pVertexBuffer;
 	}
 
 
@@ -512,18 +509,18 @@ namespace Aurora
 	{
 		m_pMatInst = GMaterialInstanceManager.GetMaterialInstance("asset:DrawLine.mtlInst", set<string>());
 
-		m_pVertexBuffer = GRenderDevice->CreateDynamicVertexBuffer(sizeof(VertexPT), 6);
+		//m_pVertexBuffer = GRenderDevice->CreateDynamicVertexBuffer(sizeof(VertexPT), 6);
 
-		memset(&m_op, 0, sizeof(m_op));
-		m_op.pVertexBuffer = m_pVertexBuffer;
-		m_op.pMtlInst = NULL;
-		m_op.VertLayout = VertexLayout_PT;
-		m_op.nPrimType = RenderOperator::PT_TRIANGLELIST;
-		m_op.nVertexStride = sizeof(VertexPT);
-		m_op.nBaseVertexIndex = 0;
-		m_op.nStartIndex = 0;
-		m_op.nNumVertices = 6;
-		m_op.nPrimitiveCount = 2;
+		//memset(&m_op, 0, sizeof(m_op));
+		//m_op.pVertexBuffer = m_pVertexBuffer;
+		//m_op.pMtlInst = NULL;
+		//m_op.VertLayout = VertexLayout_PT;
+		//m_op.nPrimType = RenderOperator::PT_TRIANGLELIST;
+		//m_op.nVertexStride = sizeof(VertexPT);
+		//m_op.nBaseVertexIndex = 0;
+		//m_op.nStartIndex = 0;
+		//m_op.nNumVertices = 6;
+		//m_op.nPrimitiveCount = 2;
 
 		InitVertexBuffer();
 
@@ -548,10 +545,10 @@ namespace Aurora
 		verties[4].uv.Set(1.f, 1.f);
 		verties[5].uv.Set(1.f, 0.f);
 
-		{
-			VertexBuffer::Locker locker = m_pVertexBuffer->GetLocker();
-			memcpy(locker.Ptr(), verties, sizeof(verties));
-		}
+		//{
+		//	VertexBuffer::Locker locker = m_pVertexBuffer->GetLocker();
+		//	memcpy(locker.Ptr(), verties, sizeof(verties));
+		//}
 	}
 
 	void ScreenQuadRenderer::DrawScreenQuad(MaterialInstance* pMtlInst)

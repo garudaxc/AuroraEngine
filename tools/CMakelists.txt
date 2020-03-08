@@ -28,7 +28,6 @@ aux_source_directory(../source/ThirdParty/stb srcs)
 aux_source_directory(../source/ThirdParty/dxTools srcs)
 
 
-
 # add_subdirectory(../code/thirdParty ../Build/thirdParty)
 
 # set(LIBRARY_OUTPUT_PATH ../Build/Libs) 

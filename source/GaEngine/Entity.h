@@ -9,6 +9,7 @@ namespace Aurora
 	class Renderable;
 	class Camera;
 	class RenderingContext;
+	class RenderableVisitor;
 	
 	class RenderStrategy
 	{
@@ -37,9 +38,7 @@ namespace Aurora
 		~Entity();
 
 		const string& GetName() const		{	return m_Name;	}
-
-		virtual void Render()		{}
-
+		
 		virtual void Update();
 
 		const Matrix4f&	GetWorldTransform() const;
@@ -50,9 +49,8 @@ namespace Aurora
 
 		Transform& GetTransfrom()		{	return m_Transform;	}
 		const Transform& GetTransfrom() const	{	return m_Transform;	}
-
-		virtual uint		GetNumRenderable() const;
-		virtual Renderable*	GetRenderable(uint idx) const;
+		
+		void		Accept(RenderableVisitor& visitor);
 
 	private:
 		string	m_Name;

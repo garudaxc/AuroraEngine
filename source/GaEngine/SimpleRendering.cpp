@@ -10,14 +10,9 @@
 #include "Model.h"
 #include "Texture.h"
 #include "RenderState.h"
-
+#include "DebugDraw.h"
 namespace Aurora
-{
-
-
-
-
-
+{	
 
 	struct DirectionalLightInfo
 	{
@@ -105,23 +100,49 @@ namespace Aurora
 	GlobalShaderParameter globalShaderParam_;
 
 
+	extern vector<VertexLayoutItem>	VertexLayoutPosNormTangentTex;
+	Handle VertexLayoutPosNormTangentTexHandle_ = -1;
+	int32  VertexLayoutPosNormTangentTexStride = 0;
+
+
+
+	class CSimpleVisitor : public RenderableVisitor
+	{
+	public:
+		virtual void Visit(RenderOperator& op)
+		{
+			op.VertexLayout_ = VertexLayoutPosNormTangentTexHandle_;
+			op.VertexStride = VertexLayoutPosNormTangentTexStride;
+			GRenderDevice->ExecuteOperator(op);
+		}
+	};
+
+
+	CSimpleVisitor    SimpleVisitor_;
+
+
 	
 	void SimpleRendering::Initialize()
 	{
+		VertexLayoutPosNormTangentTexHandle_ = CreateVertexLayoutHandle(VertexLayoutPosNormTangentTex);
+		VertexLayoutPosNormTangentTexStride = Geometry::CalcVertexStride(VertexLayoutPosNormTangentTex);
+
+		DebugDraw.Init();
+
+
 		modelvs_.Initialize();
 		modelps_.Initialize();
 		rasterState.CreateDeviceObject();
 
 		globalShaderParam_.CreateBinding();
 
+		pTexture =  GTextureManager.GetTexture("resource:Model/T_White_GrenadeLauncher_D.TGA");
+		//pTexture =  GTextureManager.GetTexture("resource:test cube.dds");
 
-		//pTexture =  GTextureManager.GetTexture("resource:Model/T_White_GrenadeLauncher_D.TGA");
-		pTexture =  GTextureManager.GetTexture("resource:test cube.dds");
 	}
 
 	void SimpleRendering::RenderSceneView(SceneView* view)
 	{
-
 		GRenderDevice->Clear(IRenderDevice::CLEAR_FRAME_BUFFER | IRenderDevice::CLEAR_DEPTH_BUFFER, Color(0.2f, 0.2f, 0.2f, 0.2f));
 
 		globalShaderParam_.MatrixView = view->matView;
@@ -133,7 +154,6 @@ namespace Aurora
 		globalShaderParam_.DirectionLight.Direction = lightDir;
 
 		globalShaderParam_.Bind();
-
 		
 
 		modelvs_.BindShader();
@@ -150,15 +170,8 @@ namespace Aurora
 			modelvs_.CommitShaderParameter();
 			modelps_.CommitShaderParameter();
 
-			const Entity* pRenderEntity = pEntity->pEntity;
-			uint nNumRenderable = pRenderEntity->GetNumRenderable();
-			for (uint i = 0; i < nNumRenderable; i++)
-			{
-				const RenderOperator& op = pRenderEntity->GetRenderable(i)->GetRenderOperator();
-				//op.pMtlInst->Apply(nTechnique);
-				//op.pMtlInst->Commit();
-				GRenderDevice->ExecuteOperator(op);
-			}
+			Entity* pRenderEntity = pEntity->pEntity;
+			pRenderEntity->Accept(SimpleVisitor_);
 
 			pEntity = pEntity->pNext;
 		}

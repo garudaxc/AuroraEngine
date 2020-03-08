@@ -14,7 +14,7 @@ namespace Aurora
 	class DrawingEntity
 	{
 	public:
-		const Entity* pEntity;
+		Entity* pEntity;
 
 		Matrix4f mWorld;
 

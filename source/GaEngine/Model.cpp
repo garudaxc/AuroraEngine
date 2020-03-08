@@ -1,7 +1,9 @@
+
 #include "stdHeader.h"
 #include "Model.h"
 #include "Geometry.h"
 #include "RendererObject.h"
+#include "Renderer.h"
 #include "Config.h"
 #include "Log.h"
 #include "MaterialInstance.h"
@@ -26,36 +28,30 @@ namespace Aurora
 	void Model::SetMesh(Geometry* pMesh)
 	{
 		m_pMesh = pMesh;
-		for (uint i = 0; i < pMesh->GetNumElement(); i++)
-		{
-			Renderable* pRenderable = new Renderable(pMesh, i);
-			m_Renderables.push_back(pRenderable);
-		}
 	}
 
 	void Model::SetMaterial(uint idx, MaterialInstance* pMtl)
 	{
-		assert(idx < m_Renderables.size());
-		m_Renderables[idx]->SetMaterialInst(pMtl);
+		//assert(idx < m_Renderables.size());
+		//m_Renderables[idx]->SetMaterialInst(pMtl);
 	}
 
-	uint Model::GetNumRenderables() const
+	void Model::Accept(RenderableVisitor& visitor)
 	{
-		return m_Renderables.size();
-	}
+		for (uint i = 0; i < m_pMesh->GetNumElement(); i++)
+		{
+			RenderOperator op;
 
-	Renderable* Model::GetRenderable(uint index)
-	{
-		return m_Renderables[index];
-	}
-
-	const Renderable* Model::GetRenderable(uint index) const
-	{
-		return m_Renderables[index];
-	}
-
-	void Model::CreateRenderable()
-	{
+			auto elem = m_pMesh->Elements_[i];
+			op.VertexBuffer_ = m_pMesh->VertexBufferHandle_;
+			op.IndexBuffer_ = m_pMesh->IndexBufferHandle_;
+			op.nBaseVertexIndex = 0;
+			op.nStartIndex = elem.IndexStart;
+			op.IndexCount = elem.IndexCount;
+			op.nPrimType = RenderOperator::PT_TRIANGLELIST;
+			
+			visitor.Visit(op);
+		}		
 	}
 
 	//////////////////////////////////////////////////////////////////////////

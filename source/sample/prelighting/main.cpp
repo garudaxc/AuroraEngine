@@ -35,25 +35,26 @@ using namespace std;
 
 Entity* CreateEntityFromMeshData(MeshBuildData* pData, const string& name)
 {
-	Model* pModel = new Model(name);
+	return nullptr;
+	//Model* pModel = new Model(name);
 
-	Geometry* pGeometry = NULL;
-	pGeometry = new Geometry();
-	bool bOk = pGeometry->CreateFromBuildData(pData);
-	if (!bOk)
-	{
-		return NULL;
-	}
-	pModel->SetMesh(pGeometry);
-	pData->Release();
+	//Geometry* pGeometry = NULL;
+	//pGeometry = new Geometry();
+	//bool bOk = pGeometry->CreateFromBuildData(pData);
+	//if (!bOk)
+	//{
+	//	return NULL;
+	//}
+	//pModel->SetMesh(pGeometry);
+	//pData->Release();
 
-	MaterialInstance* pMtlInst = GMaterialInstanceManager.GetMaterialInstance("Model/GeoSphere01.mtlInst", set<string>());
-	assert(pMtlInst);
-	pModel->SetMaterial(0, pMtlInst);
+	//MaterialInstance* pMtlInst = GMaterialInstanceManager.GetMaterialInstance("Model/GeoSphere01.mtlInst", set<string>());
+	//assert(pMtlInst);
+	//pModel->SetMaterial(0, pMtlInst);
 
 
-	Entity* pEntity = EntityFactory::Get()->CreateEntity(pModel);
-	return pEntity;
+	//Entity* pEntity = EntityFactory::Get()->CreateEntity(pModel);
+	//return pEntity;
 }
 
 
@@ -251,11 +252,8 @@ int WINAPI _tWinMain(HINSTANCE hInstance,
 					 LPTSTR    lpCmdLine,
 					 int       nCmdShow)
 {
-
-
 	//GCommandSystem->AddCommand("MyCommand", MyCommand, "abck");
 	//GCommandSystem->ExecuteCommand("MyCommand");
-
 	
 	MyApp app;
 

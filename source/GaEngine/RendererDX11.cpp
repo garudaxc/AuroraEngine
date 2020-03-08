@@ -249,11 +249,6 @@ namespace Aurora
 
 		virtual RenderTarget* CreateRenderTarget(const RenderTarget::Desc& desc);
 
-		virtual VertexBuffer* CreateVertexBuffer(Geometry* pGeometry, VertexLayout layout, uint nVert);
-
-		virtual IndexBuffer* CreateIndexBuffer(Geometry* pGeometry, IndexBuffer::Format fmt, uint nNumIndex);
-
-		virtual VertexBuffer* CreateDynamicVertexBuffer(int nStride, int nNumVert);
 
 		//////////////////////////////////////////////////////////////////////////
 
@@ -266,13 +261,11 @@ namespace Aurora
 		RenderTarget* GetFrameBuffer();
 		RenderTarget* GetDepthStecil();
 
-		virtual void		SetVertexDesc(VertexDescription* pVertDesc);
+		virtual void		SetVertexDesc(VertexLayout* pVertDesc);
 
 		virtual void		SetVertexShader(Shader* pShader);
 		virtual void		SetPixelShader(Shader* pShader);
 
-		virtual void		SetIndexBuffer(IndexBuffer* pIndexBuffer);
-		virtual void		SetVertexBuffer(VertexBuffer* pVertexBuffer);
 
 		virtual void		SetRenderTarget(uint idx, RenderTarget* pRenderTarget);
 		virtual void		SetDepthStencil(RenderTarget* pDepthStencil);
@@ -289,8 +282,6 @@ namespace Aurora
 		virtual void		RestoreFrameBuffer();
 
 
-		void		InitializeInputLayout();
-		void		FinalizeInputLayout();
 	};
 
 
@@ -466,12 +457,10 @@ namespace Aurora
 
 		GRenderDevice = &GRendererDx11;
 
-		GRendererDx11.InitializeInputLayout();
 		CreateGlobalParameterBuffer();
 
 		return GRenderDevice;
 	}
-
 
 
 
@@ -482,7 +471,6 @@ namespace Aurora
 	RendererDx11::~RendererDx11(void)
 	{
 	}
-
 
 
 	struct ShaderObject
@@ -1172,195 +1160,157 @@ namespace Aurora
 		return pRT;
 	}
 
+	
 
-	//////////////////////////////////////////////////////////////////////////
-
-	class VertexBufferDx11 : public VertexBuffer
+	struct GeometryBufferInfo
 	{
-	public:
-		VertexBufferDx11(uint nStride, uint nNumVertex);
-		~VertexBufferDx11();
+		int32	Occupied = 0;
+		int32	Size = 0;
+		D3D11_USAGE Usage;
+		UINT		BindFlags;
 
-	private:
-
-		virtual void* Lock();
-
-		virtual void Unlock();
+		ID3D11Buffer* d3dBuffer = nullptr;
 	};
 
-	VertexBufferDx11::VertexBufferDx11(uint nStride, uint nNumVertex):VertexBuffer(nStride, nNumVertex)
+
+	vector<GeometryBufferInfo>		GeometryBufferInfos_;
+
+
+	Handle CreateVertexBufferHandle(const void* data, int32 size)
 	{
+		D3D11_BUFFER_DESC bufferDesc = { 0 };
+		bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		bufferDesc.MiscFlags = 0;
+		bufferDesc.ByteWidth = size;
 
-	}
+		D3D11_SUBRESOURCE_DATA initData;
+		D3D11_SUBRESOURCE_DATA* initDataPtr = nullptr;
 
-	VertexBufferDx11::~VertexBufferDx11()
-	{
-		ID3D10Buffer* pDxBuffer = (ID3D10Buffer*)HALHandle;
-		pDxBuffer->Release();
-		HALHandle = NULL;
-	}
+		if (data == nullptr) {
+			// dynamic buffer
+			bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+			bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		} else {
+			bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+			bufferDesc.CPUAccessFlags = 0;
 
-	void* VertexBufferDx11::Lock()
-	{
-		assert(0);
-		VOID* pointer = NULL;
-		//// todo: implement the flags
-		//ID3D11Buffer* pDxBuffer = (ID3D11Buffer*)HALHandle;
-		//HRESULT hr = pDxBuffer->Map(D3D11_MAP_WRITE_DISCARD, 0, &pointer);
-		//assert(SUCCEEDED(hr));
-		return pointer;
-	}
+			initData.SysMemPitch = 0;
+			initData.SysMemSlicePitch = 0;
+			initData.pSysMem = data;
 
-	void VertexBufferDx11::Unlock()
-	{
-		assert(0);
-		//ID3D11Buffer* pDxBuffer = (ID3D11Buffer*)HALHandle;
-		//pDxBuffer->Unmap();
-	}
-
-
-
-
-	VertexDescription* GetVertexDescription(VertexLayout layout);
-	VertexBuffer* RendererDx11::CreateVertexBuffer(Geometry* pGeometry, VertexLayout layout, uint nVert)
-	{
-		VertexDescription* pVertexDesc = GetVertexDescription(layout);
-
-		uint nStride = 0;
-		for (uint j = 0; j < pVertexDesc->stream.items.size(); j++)
-		{
-			const VertexDescription::Item& item = pVertexDesc->stream.items[j];
-			nStride += Geometry::GetSizeOfType((Geometry::VertexElemType)item.type);
+			initDataPtr = &initData;
 		}
 
-		VertexBuffer* pVertexBuffer = new VertexBufferDx11(nStride, pGeometry->GetNumVertex());
-		
-		vector<unsigned char> tempBuffer;
+		ID3D11Buffer* d3dBuffer = nullptr;
 
-		tempBuffer.resize(pVertexBuffer->GetSizeInByte());
-		pGeometry->AssembleVertexBuffer(&tempBuffer[0], pVertexDesc->stream);
+		HRESULT hr = D3D11Device->CreateBuffer(&bufferDesc, initDataPtr, &d3dBuffer);
+		if (FAILED(hr)) {
+			GLog->Error("Create Vertex buffer failed hr = %#X", hr);
+			return -1;
+		}
 
-		D3D11_BUFFER_DESC bufferDesc;
-		bufferDesc.Usage		= D3D11_USAGE_DEFAULT;
-		bufferDesc.BindFlags	= D3D11_BIND_VERTEX_BUFFER;
-		bufferDesc.CPUAccessFlags = 0;
-		bufferDesc.MiscFlags	= 0;
-		bufferDesc.ByteWidth	= pVertexBuffer->GetSizeInByte();
+		GeometryBufferInfo info = { 0 };
+		info.Size = size;
+		info.BindFlags = bufferDesc.BindFlags;
+		info.Usage = bufferDesc.Usage;
+		info.d3dBuffer = d3dBuffer;
+		info.Occupied = 1;
 
-		D3D11_SUBRESOURCE_DATA InitData;
-		InitData.SysMemPitch = 0;
-		InitData.SysMemSlicePitch = 0;
-		InitData.pSysMem		= &tempBuffer[0];
+		Handle slot = FindAvailableSlot(GeometryBufferInfos_);
+		GeometryBufferInfos_[slot] = info;
 
-		HRESULT hr = D3D11Device->CreateBuffer(&bufferDesc, &InitData, (ID3D11Buffer**)(&pVertexBuffer->HALHandle));
-		assert(SUCCEEDED(hr));
-
-		return pVertexBuffer;
-	}
-
-	//////////////////////////////////////////////////////////////////////////
-
-
-
-	class IndexBufferD3D11 : public IndexBuffer
-	{
-	public:
-		IndexBufferD3D11(Geometry* pGeometry, IndexBuffer::Format fmt, uint nNumIndex);
-		~IndexBufferD3D11();
-
-		virtual void*			GetBindID() const;
-		virtual void			OnReset();
-		virtual void			OnLost();
-
-		virtual void*			Lock();
-		virtual void			Unlock();
-
-	private:
-		ID3D11Buffer*           m_pBuffer;
-		Geometry*			m_pGeometry;
-	};
-
-	IndexBufferD3D11::IndexBufferD3D11(Geometry* pGeometry, IndexBuffer::Format fmt, uint nNumIndex):
-	IndexBuffer(fmt, nNumIndex),m_pBuffer(NULL),m_pGeometry(pGeometry)
-	{
-
-	}
-
-	IndexBufferD3D11::~IndexBufferD3D11()
-	{
-		assert(m_pBuffer == NULL);
+		return slot;
 	}
 
 
-	void* IndexBufferD3D11::GetBindID() const
+	Handle CreateIndexBufferHandle(const void* data, int32 size)
 	{
-		return m_pBuffer;
+		D3D11_BUFFER_DESC bufferDesc = { 0 };
+		bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		bufferDesc.MiscFlags = 0;
+		bufferDesc.ByteWidth = size;
+
+		D3D11_SUBRESOURCE_DATA initData;
+		D3D11_SUBRESOURCE_DATA* initDataPtr = nullptr;
+
+		if (data == nullptr) {
+			// dynamic buffer
+			bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+			bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		}
+		else {
+			bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+			bufferDesc.CPUAccessFlags = 0;
+
+			initData.SysMemPitch = 0;
+			initData.SysMemSlicePitch = 0;
+			initData.pSysMem = data;
+
+			initDataPtr = &initData;
+		}
+
+		ID3D11Buffer* d3dBuffer = nullptr;
+
+		HRESULT hr = D3D11Device->CreateBuffer(&bufferDesc, initDataPtr, &d3dBuffer);
+		if (FAILED(hr)) {
+			GLog->Error("Create index buffer failed hr = %#X", hr);
+			return -1;
+		}
+
+		GeometryBufferInfo info = { 0 };
+		info.Size = size;
+		info.BindFlags = bufferDesc.BindFlags;
+		info.Usage = bufferDesc.Usage;
+		info.d3dBuffer = d3dBuffer;
+		info.Occupied = 1;
+
+		Handle slot = FindAvailableSlot(GeometryBufferInfos_);
+		GeometryBufferInfos_[slot] = info;
+
+		return slot;
 	}
 
-	void* IndexBufferD3D11::Lock()
+
+
+
+	ResourceBufferMapper::ResourceBufferMapper(Handle handle)
 	{
-		assert(0);
-		VOID* pointer = NULL;
-		// todo: implement the flags
-		//HRESULT hr = m_pBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, &pointer);
-		//assert(SUCCEEDED(hr));
+		handle_ = handle;
+		auto buffer = GeometryBufferInfos_[handle_];
+
+		if (buffer.Usage != D3D11_USAGE_DYNAMIC) {
+			GLog->Error("try to map non dynamic buffer!");
+		}
+		else {
+			D3D11_MAPPED_SUBRESOURCE resource = { 0 };
+			HRESULT hr = ImmediateContext->Map(buffer.d3dBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+			if (FAILED(hr)) {
+				GLog->Error("map buffer resource  failed! hr = %#X", hr);
+			}
+			else {
+				pointer = resource.pData;
+			}
+		}
+
+	}
+
+	ResourceBufferMapper::~ResourceBufferMapper()
+	{
+		if (pointer != nullptr) {
+			auto buffer = GeometryBufferInfos_[handle_];
+			ImmediateContext->Unmap(buffer.d3dBuffer, 0);
+		}
+	}
+
+	void* ResourceBufferMapper::Ptr()
+	{
 		return pointer;
 	}
 
-	void IndexBufferD3D11::Unlock()
-	{
-		assert(0);
-		//m_pBuffer->Unmap();
-	}
-
-	void IndexBufferD3D11::OnReset()
-	{
-		assert(m_pBuffer == NULL);
-		D3DFORMAT d3dFmt = (GetFormat() == IndexBuffer::FMT_INDEX16) ? D3DFMT_INDEX16 : D3DFMT_INDEX32;
-		uint stride = (GetFormat() == IndexBuffer::FMT_INDEX16) ? 2 : 4;
-		UINT length = stride * GetNumIndex();
-
-		uint8* pMemBuffer = m_pGeometry->GetStreamPointer(Geometry::USAGE_INDEX, 0);
-		assert(pMemBuffer != NULL);
 
 
-		D3D11_BUFFER_DESC bufferDesc;
-		bufferDesc.ByteWidth	= length;
-		bufferDesc.Usage		= D3D11_USAGE_DEFAULT;
-		bufferDesc.BindFlags	= D3D11_BIND_INDEX_BUFFER;
-		bufferDesc.CPUAccessFlags = 0;
-		bufferDesc.MiscFlags	= 0;
-
-		D3D11_SUBRESOURCE_DATA InitData;
-		InitData.SysMemPitch = 0;
-		InitData.SysMemSlicePitch = 0;
-		InitData.pSysMem = pMemBuffer;
-
-		HRESULT hr = D3D11Device->CreateBuffer(&bufferDesc, &InitData, &m_pBuffer);
-		assert(SUCCEEDED(hr));
-
-		// Set index buffer
-		//g_pd3dDevice->IASetIndexBuffer(g_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-	}
-
-	void IndexBufferD3D11::OnLost()
-	{
-		assert(m_pBuffer != NULL);
-		m_pBuffer->Release();
-		m_pBuffer = NULL;
-	}
 
 
-	IndexBuffer* RendererDx11::CreateIndexBuffer(Geometry* pGeometry, IndexBuffer::Format fmt, uint nNumIndex)
-	{
-		return new IndexBufferD3D11(pGeometry, fmt, nNumIndex);
-	}
-
-	VertexBuffer* RendererDx11::CreateDynamicVertexBuffer(int nStride, int nNumVert)
-	{
-		return nullptr;
-	}
 
 	//////////////////////////////////////////////////////////////////////////
 
@@ -1419,7 +1369,7 @@ namespace Aurora
 		return nullptr;
 	}
 
-	void RendererDx11::SetVertexDesc(VertexDescription* pVertDesc)
+	void RendererDx11::SetVertexDesc(VertexLayout* pVertDesc)
 	{
 		ID3D11InputLayout* layout = (ID3D11InputLayout*)pVertDesc->HALHandle;
 		ImmediateContext->IASetInputLayout(layout);
@@ -1436,28 +1386,6 @@ namespace Aurora
 		ImmediateContext->PSSetShader((ID3D11PixelShader*)pShader->HALHandle, NULL, 0);
 	}
 
-	void RendererDx11::SetIndexBuffer(IndexBuffer* pIndexBuffer)
-	{
-		if (pIndexBuffer == NULL)
-		{
-			ImmediateContext->IASetIndexBuffer(NULL, (DXGI_FORMAT)0, 0);
-			return;
-		}
-
-		IndexBufferD3D11* pIndexBuffer11 = (IndexBufferD3D11*)pIndexBuffer;
-
-		ImmediateContext->IASetIndexBuffer((ID3D11Buffer*)pIndexBuffer11->GetBindID(), 
-			pIndexBuffer11->GetFormat() == IndexBuffer::FMT_INDEX16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT, 0);
-	}
-
-	void RendererDx11::SetVertexBuffer(VertexBuffer* pVertexBuffer)
-	{
-		UINT strides[] = {pVertexBuffer->GetStride()};
-		UINT offsets[] = {0};
-		//ID3D10Buffer* pBuffers[] = {pVertexBuffer10->GetBindPointer(0)};
-
-		ImmediateContext->IASetVertexBuffers(0, 1, (ID3D11Buffer**)(&pVertexBuffer->HALHandle), strides, offsets);
-	}
 
 	void RendererDx11::SetRenderTarget(uint idx, RenderTarget* pRenderTarget)
 	{
@@ -1498,33 +1426,6 @@ namespace Aurora
 
 	}
 
-	void RendererDx11::ExecuteOperator(const RenderOperator& op)
-	{
-		ImmediateContext->IASetPrimitiveTopology(D3D11Mapping::PrimitiveTopology(op.nPrimType));
-
-		VertexDescription* pVertDesc = GetVertexDescription(op.VertLayout);
-
-		//pVertDesc = GetVertexDescription()
-
-		if (op.pIndexBuffer)
-		{
-			this->SetIndexBuffer(op.pIndexBuffer);
-			this->SetVertexBuffer(op.pVertexBuffer);
-
-			this->SetVertexDesc(pVertDesc);
-
-			ImmediateContext->DrawIndexed(op.nPrimitiveCount * 3, op.nStartIndex, op.nBaseVertexIndex);
-		}
-		else
-		{
-			this->SetIndexBuffer(NULL);
-			this->SetVertexBuffer(op.pVertexBuffer);
-			this->SetVertexDesc(pVertDesc);
-
-			ImmediateContext->Draw(op.nNumVertices, op.nBaseVertexIndex);
-		}
-	}
-
 	void RendererDx11::OnReset()
 	{
 
@@ -1549,7 +1450,6 @@ namespace Aurora
 	{
 
 	}
-
 
 
 
@@ -1580,14 +1480,10 @@ namespace Aurora
 
 		hr = D3DCompile(buffer, strlen(buffer), "CreateShaderSignature shader", NULL, NULL, "Main",
 			"vs_4_0", 0, 0, &pShader, &pError);
-
-		assert(SUCCEEDED(hr));
-
-		if (FAILED(hr))
-		{
+		
+		if (FAILED(hr)) {
 			int code = HRESULT_CODE(hr);
-			if (pError)
-			{
+			if (pError) {
 				string errorMsg = (const char*)pError->GetBufferPointer();
 				pError->Release();
 				GLog->Error("CreateShaderSignature error : %s", errorMsg);
@@ -1607,326 +1503,239 @@ namespace Aurora
 
 
 
-	static VertexDescription* CreateInputLayoutPNTT()
-	{
-		vector<D3D11_INPUT_ELEMENT_DESC> vDecl;
 
-		D3D11_INPUT_ELEMENT_DESC elem;
-		elem.SemanticName			= NULL;
-		elem.Format					= DXGI_FORMAT_R32G32B32_FLOAT;
-		elem.AlignedByteOffset		= 0;
-		elem.SemanticIndex			= 0;
-		elem.InputSlot				= 0;
-		elem.InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
-		elem.InstanceDataStepRate	= 0;
-
-
-		elem.SemanticName			= "POSITION";
-		elem.Format					= DXGI_FORMAT_R32G32B32_FLOAT;
-		elem.AlignedByteOffset		= 0;
-		vDecl.push_back(elem);
-
-		elem.SemanticName			= "NORMAL";
-		elem.Format					= DXGI_FORMAT_R32G32B32_FLOAT;
-		elem.AlignedByteOffset		= 12;
-		vDecl.push_back(elem);
-
-		elem.SemanticName			= "TEXCOORD";
-		elem.Format					= DXGI_FORMAT_R32G32_FLOAT;
-		elem.AlignedByteOffset		= 24;
-		vDecl.push_back(elem);
-
-		elem.SemanticName			= "TANGENT";
-		elem.Format					= DXGI_FORMAT_R32G32B32A32_FLOAT;
-		elem.AlignedByteOffset		= 32;
-		vDecl.push_back(elem);
-
-
-		char* 	vsin = 	"float4 pos		: POSITION;"
-			"float3 normal	: NORMAL;"
-			"float2 tex		: TEXCOORD0;"
-			"float4 tangent	: TANGENT;";
-		ID3D10Blob* pInputSig = CreateShaderSignature(vsin);
-
-		VertexDescription* pVertexDesc = new VertexDescription();
-		VertexDescription::Stream stream;
-		uint nStride = 0;
-
-		VertexDescription::Item item;
-		item.type		= Geometry::TYPE_FLOAT3;
-		item.usage		= Geometry::USAGE_POSITION;
-		item.usageIndex	= 0;
-		stream.items.push_back(item);
-		nStride += Geometry::GetSizeOfType(Geometry::TYPE_FLOAT3);
-
-
-		item.type		= Geometry::TYPE_FLOAT3;
-		item.usage		= Geometry::USAGE_NORMAL;
-		item.usageIndex	= 0;
-		stream.items.push_back(item);
-		nStride += Geometry::GetSizeOfType(Geometry::TYPE_FLOAT3);
-
-		item.type		= Geometry::TYPE_FLOAT2;
-		item.usage		= Geometry::USAGE_TEXCOORD;
-		item.usageIndex	= 0;
-		stream.items.push_back(item);
-		nStride += Geometry::GetSizeOfType(Geometry::TYPE_FLOAT2);
-
-
-		item.type		= Geometry::TYPE_FLOAT4;
-		item.usage		= Geometry::USAGE_TANGENT;
-		item.usageIndex	= 0;
-		stream.items.push_back(item);
-		nStride += Geometry::GetSizeOfType(Geometry::TYPE_FLOAT4);
-		stream.nVertexStride = nStride;
-		pVertexDesc->stream = stream;
-
-		HRESULT hr = D3D11Device->CreateInputLayout(&vDecl[0], vDecl.size(), 
-			pInputSig->GetBufferPointer(), pInputSig->GetBufferSize(),
-			(ID3D11InputLayout**)(&pVertexDesc->HALHandle));
-
-		assert(SUCCEEDED(hr));
-		pInputSig->Release();
-
-		return pVertexDesc;
-	}
-
-
-	static VertexDescription* CreateInputLayoutPNTTBB()
-	{
-		vector<D3D11_INPUT_ELEMENT_DESC> vDecl;
-
-		D3D11_INPUT_ELEMENT_DESC elem;
-		elem.SemanticName			= NULL;
-		elem.Format					= DXGI_FORMAT_R32G32B32_FLOAT;
-		elem.AlignedByteOffset		= 0;
-		elem.SemanticIndex			= 0;
-		elem.InputSlot				= 0;
-		elem.InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
-		elem.InstanceDataStepRate	= 0;
-
-
-		elem.SemanticName			= "POSITION";
-		elem.Format					= DXGI_FORMAT_R32G32B32_FLOAT;
-		elem.AlignedByteOffset		= 0;
-		vDecl.push_back(elem);
-
-		elem.SemanticName			= "NORMAL";
-		elem.Format					= DXGI_FORMAT_R32G32B32_FLOAT;
-		elem.AlignedByteOffset		= 12;
-		vDecl.push_back(elem);
-
-		elem.SemanticName			= "TEXCOORD";
-		elem.Format					= DXGI_FORMAT_R32G32_FLOAT;
-		elem.AlignedByteOffset		= 24;
-		vDecl.push_back(elem);
-
-		elem.SemanticName			= "TANGENT";
-		elem.Format					= DXGI_FORMAT_R32G32B32A32_FLOAT;
-		elem.AlignedByteOffset		= 32;
-		vDecl.push_back(elem);
-
-		elem.SemanticName			= "BLENDINDICES";
-		elem.Format					= DXGI_FORMAT_R8G8B8A8_UINT;
-		elem.AlignedByteOffset		= 48;
-		vDecl.push_back(elem);
-
-		elem.SemanticName			= "BLENDWEIGHT";
-		elem.Format					= DXGI_FORMAT_R32G32B32_FLOAT;
-		elem.AlignedByteOffset		= 52;
-		vDecl.push_back(elem);
-
-
-		char* 	vsin = 	"float4 pos			: POSITION;"
-			"float3 normal		: NORMAL;"
-			"float2 tex			: TEXCOORD0;"
-			"float4 tangent		: TANGENT;"
-			"uint4 blendIndex	: BLENDINDICES;"
-			"float3 blendWeight : BLENDWEIGHT;";
-		ID3DBlob* pInputSig = CreateShaderSignature(vsin);
-
-		VertexDescription* pVertexDesc = new VertexDescription();
-		VertexDescription::Stream stream;
-		uint nStride = 0;
-
-		VertexDescription::Item item;
-		item.type		= Geometry::TYPE_FLOAT3;
-		item.usage		= Geometry::USAGE_POSITION;
-		item.usageIndex	= 0;
-		stream.items.push_back(item);
-		nStride += Geometry::GetSizeOfType(Geometry::TYPE_FLOAT3);
-
-
-		item.type		= Geometry::TYPE_FLOAT3;
-		item.usage		= Geometry::USAGE_NORMAL;
-		item.usageIndex	= 0;
-		stream.items.push_back(item);
-		nStride += Geometry::GetSizeOfType((Geometry::VertexElemType)item.type);
-
-		item.type		= Geometry::TYPE_FLOAT2;
-		item.usage		= Geometry::USAGE_TEXCOORD;
-		item.usageIndex	= 0;
-		stream.items.push_back(item);
-		nStride += Geometry::GetSizeOfType((Geometry::VertexElemType)item.type);
-
-		item.type		= Geometry::TYPE_FLOAT4;
-		item.usage		= Geometry::USAGE_TANGENT;
-		item.usageIndex	= 0;
-		stream.items.push_back(item);
-		nStride += Geometry::GetSizeOfType((Geometry::VertexElemType)item.type);
-
-
-		item.type		= Geometry::TYPE_UBYTE4;
-		item.usage		= Geometry::USAGE_BLENDINDEX;
-		item.usageIndex	= 0;
-		stream.items.push_back(item);
-		nStride += Geometry::GetSizeOfType((Geometry::VertexElemType)item.type);
-
-		item.type		= Geometry::TYPE_FLOAT3;
-		item.usage		= Geometry::USAGE_BLENDWEIGHT;
-		item.usageIndex	= 0;
-		stream.items.push_back(item);
-		nStride += Geometry::GetSizeOfType((Geometry::VertexElemType)item.type);
-
-		stream.nVertexStride = nStride;
-		pVertexDesc->stream = stream;
-
-		HRESULT hr = D3D11Device->CreateInputLayout(&vDecl[0], vDecl.size(), 
-			pInputSig->GetBufferPointer(), pInputSig->GetBufferSize(),
-			(ID3D11InputLayout**)(&pVertexDesc->HALHandle));
-
-		assert(SUCCEEDED(hr));
-		pInputSig->Release();
-
-		return pVertexDesc;
-	}
-
-	static VertexDescription* CreateInputLayoutPT()
-	{
-		vector<D3D11_INPUT_ELEMENT_DESC> vDecl;
-
-		D3D11_INPUT_ELEMENT_DESC elem;
-		elem.SemanticName			= NULL;
-		elem.Format					= DXGI_FORMAT_R32G32B32_FLOAT;
-		elem.AlignedByteOffset		= 0;
-		elem.SemanticIndex			= 0;
-		elem.InputSlot				= 0;
-		elem.InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
-		elem.InstanceDataStepRate	= 0;
-
-		elem.SemanticName			= "POSITION";
-		elem.Format					= DXGI_FORMAT_R32G32B32_FLOAT;
-		elem.AlignedByteOffset		= 0;
-		vDecl.push_back(elem);
-
-		elem.SemanticName			= "TEXCOORD";
-		elem.Format					= DXGI_FORMAT_R32G32_FLOAT;
-		elem.AlignedByteOffset		= 12;
-		vDecl.push_back(elem);
-
-		char* vsin =	"float4 pos		: POSITION;"
-			"float2 tex		: TEXCOORD0;";
-
-		ID3DBlob* pInputSig = CreateShaderSignature(vsin);
-
-		VertexDescription* pVertexDesc = new VertexDescription();
-		VertexDescription::Stream stream;
-		uint nStride = 0;
-
-		VertexDescription::Item item;
-		item.type		= Geometry::TYPE_FLOAT3;
-		item.usage		= Geometry::USAGE_POSITION;
-		item.usageIndex	= 0;
-		stream.items.push_back(item);
-
-
-		item.type		= Geometry::TYPE_FLOAT2;
-		item.usage		= Geometry::USAGE_TEXCOORD;
-		item.usageIndex	= 0;
-		stream.items.push_back(item);
-		nStride += Geometry::GetSizeOfType(Geometry::TYPE_FLOAT2);
-		stream.nVertexStride = nStride;
-		pVertexDesc->stream = stream;
-
-		HRESULT hr = D3D11Device->CreateInputLayout(&vDecl[0], vDecl.size(), 
-			pInputSig->GetBufferPointer(), pInputSig->GetBufferSize(),
-			(ID3D11InputLayout**)(&pVertexDesc->HALHandle));
-
-		assert(SUCCEEDED(hr));
-		pInputSig->Release();
-
-		return pVertexDesc;
-
-	}
-
-	static VertexDescription* CreateInputLayoutP()
-	{
-		vector<D3D11_INPUT_ELEMENT_DESC> vDecl;
-
-		D3D11_INPUT_ELEMENT_DESC elem;
-		elem.SemanticName			= NULL;
-		elem.Format					= DXGI_FORMAT_R32G32B32_FLOAT;
-		elem.AlignedByteOffset		= 0;
-		elem.SemanticIndex			= 0;
-		elem.InputSlot				= 0;
-		elem.InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
-		elem.InstanceDataStepRate	= 0;
-
-		elem.SemanticName			= "POSITION";
-		elem.Format					= DXGI_FORMAT_R32G32B32_FLOAT;
-		elem.AlignedByteOffset		= 0;
-		vDecl.push_back(elem);
-
-		char* vsin =	"float4 pos		: POSITION;";
-
-		ID3D10Blob* pInputSig = CreateShaderSignature(vsin);
-
-		VertexDescription* pVertexDesc = new VertexDescription;
-		VertexDescription::Stream stream;
-		uint nStride = 0;
-
-		VertexDescription::Item item;
-		item.type		= Geometry::TYPE_FLOAT3;
-		item.usage		= Geometry::USAGE_POSITION;
-		item.usageIndex	= 0;
-		stream.items.push_back(item);
-		nStride += Geometry::GetSizeOfType(Geometry::TYPE_FLOAT3);
-		stream.nVertexStride = nStride;
-		pVertexDesc->stream = stream;
-
-		HRESULT hr = D3D11Device->CreateInputLayout(&vDecl[0], vDecl.size(), 
-			pInputSig->GetBufferPointer(), pInputSig->GetBufferSize(),
-			(ID3D11InputLayout**)(&pVertexDesc->HALHandle));
-
-		assert(SUCCEEDED(hr));
-		pInputSig->Release();
-
-		return pVertexDesc;
-	}
-
-	
-	static VertexDescription* gInputLayout[VertexLayout_NUM];
-	static VertexDescription* GetVertexDescription(VertexLayout layout)
-	{
-		return gInputLayout[layout];
-	}
-
-	void RendererDx11::InitializeInputLayout()
-	{
-		gInputLayout[VertexLayout_PNTT]		= CreateInputLayoutPNTT();
-		gInputLayout[VertexLayout_PT]		= CreateInputLayoutPT();
-		gInputLayout[VertexLayout_P]		= CreateInputLayoutP();
-		gInputLayout[VertexLayout_PNTTBB]	= CreateInputLayoutPNTTBB();
-	}
-
-
-	void RendererDx11::FinalizeInputLayout()
-	{
-		for (int i = 0; i < VertexLayout_NUM; i++) {
-			ID3D11InputLayout* pD3DObj = (ID3D11InputLayout*)gInputLayout[i]->HALHandle;
-			pD3DObj->Release();
-			delete gInputLayout[i];
-			gInputLayout[i] = NULL;
+	const char* MapDX11SemanticName(Vertex::ElemUsage usage) {
+
+		switch (usage)
+		{
+		case Aurora::Vertex::USAGE_POSITION:
+			return "SV_Position";
+		case Aurora::Vertex::USAGE_NORMAL:
+			return "NORMAL";
+		case Aurora::Vertex::USAGE_COLOR:
+			return "COLOR";
+		case Aurora::Vertex::USAGE_TEXCOORD:
+			return "TEXCOORD";
+		case Aurora::Vertex::USAGE_TANGENT:
+			return "TANGENT";
+		case Aurora::Vertex::USAGE_BINORMAL:
+			return "BINORMAL";
+		case Aurora::Vertex::USAGE_BLENDINDEX:
+			return "BLENDINDICES";
+		case Aurora::Vertex::USAGE_BLENDWEIGHT:
+			return "BLENDWEIGHT";
+		case Aurora::Vertex::USAGE_INDEX:
+			assert(0);
+			return "";
+		default:
+			assert(0);
+			return "";
 		}
 	}
+
+
+	DXGI_FORMAT MapDX11VertexElemType(Vertex::ElemType type)
+	{
+		switch (type)
+		{
+		case Aurora::Vertex::TYPE_FLOAT:
+			return DXGI_FORMAT_R32_FLOAT;
+
+		case Aurora::Vertex::TYPE_FLOAT2:
+			return DXGI_FORMAT_R32G32_FLOAT;
+
+		case Aurora::Vertex::TYPE_FLOAT3:
+			return DXGI_FORMAT_R32G32B32_FLOAT;
+
+		case Aurora::Vertex::TYPE_FLOAT4:
+			return DXGI_FORMAT_R32G32B32A32_FLOAT;
+
+		case Aurora::Vertex::TYPE_UBYTE4_UINT:
+			return DXGI_FORMAT_R8G8B8A8_UINT;
+
+		case Aurora::Vertex::TYPE_UBYTE4_UNORM:
+			return DXGI_FORMAT_R8G8B8A8_UNORM;
+
+		case Aurora::Vertex::TYPE_USHORT_UINT:
+			return DXGI_FORMAT_R16_UINT;
+
+		case Aurora::Vertex::TYPE_UINT:
+			return DXGI_FORMAT_R32_UINT;
+		default:
+			assert(0);
+			return DXGI_FORMAT_R32G32B32_FLOAT;
+		}
+	}
+
+
+	const char* MapVertexElementDeclaration(Vertex::ElemUsage usage)
+	{
+		switch (usage)
+		{
+		case Aurora::Vertex::USAGE_POSITION:
+			return "float4 Position";
+
+		case Aurora::Vertex::USAGE_NORMAL:
+			return "float3 Normal";
+
+		case Aurora::Vertex::USAGE_COLOR:
+			return "float4 Color";
+
+		case Aurora::Vertex::USAGE_TEXCOORD:
+			return "float2 Texcoord";
+
+		case Aurora::Vertex::USAGE_TANGENT:
+			return "float4 Tangent";
+
+		case Aurora::Vertex::USAGE_BINORMAL:
+			return "float3 Binormal";
+
+		case Aurora::Vertex::USAGE_BLENDINDEX:
+			return "float4 BlendIndex";
+
+		case Aurora::Vertex::USAGE_BLENDWEIGHT:
+			return "float4 BlendWeight";
+
+		case Aurora::Vertex::USAGE_INDEX:
+			assert(0);
+			return "";
+
+		default:
+			assert(0);
+			return "";
+		}
+
+	}
+
+
+
+	static ID3DBlob* CreateSignatureWithVertexLayout(const vector<VertexLayoutItem>& layoutItems)
+	{
+
+		string vsInputCode = "struct GeomVertexInput {\n";
+		char line[256] = { 0 };
+
+		for (auto item = layoutItems.begin(); item != layoutItems.end(); ++item) {
+
+			const char* decl = MapVertexElementDeclaration((Vertex::ElemUsage)item->usage);
+			const char* semanticName = MapDX11SemanticName((Vertex::ElemUsage)item->usage);
+			
+			char buff[8];
+			auto indexName = (item->usageIndex > 0) ? itoa(item->usageIndex, buff, 10) : "";
+			sprintf(line, "%s%s : %s%s;\n", decl, indexName, semanticName, indexName);
+			vsInputCode += line;
+		}
+
+		vsInputCode += "};\n";
+
+		string signatureCode = vsInputCode;
+			   
+		signatureCode += "\
+			float4 Main(GeomVertexInput vsin) : SV_POSITION	 \
+			{										 \
+			return float4(0, 0, 0, 0);				 \
+			};										 \
+		";
+
+
+		ID3D10Blob* pShader = NULL;
+		ID3D10Blob* pError = NULL;
+
+		HRESULT hr = S_FALSE;
+		hr = D3DCompile(signatureCode.c_str(), signatureCode.size(), "CreateShaderSignature shader", 
+						NULL, NULL, "Main", "vs_4_0", 0, 0, &pShader, &pError);
+
+		if (FAILED(hr)) {
+			int code = HRESULT_CODE(hr);
+			if (pError) {
+				string errorMsg = (const char*)pError->GetBufferPointer();
+				GLog->Error("CreateShaderSignature error : %s", errorMsg);
+			}			
+			pError->Release();
+
+			return nullptr;
+		}
+
+		ID3DBlob* pInputSig = NULL;
+		hr = D3DGetInputSignatureBlob(pShader->GetBufferPointer(), pShader->GetBufferSize(), &pInputSig);
+		assert(SUCCEEDED(hr));
+
+		hr = pShader->Release();
+		assert(SUCCEEDED(hr));
+
+		return pInputSig;
+	}
+	   
+
+
+	struct VertexLayoutInfo
+	{
+		string	VertexInputCode;
+		ID3D11InputLayout* d3d11InputLayout = nullptr;
+	};
+
+
+
+
+
+	static vector<VertexLayoutInfo*>  VertexLayouts_;
+
+
+	Handle CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems)
+	{
+
+		vector<D3D11_INPUT_ELEMENT_DESC> elemDesc;
+		for (auto item = layoutItems.begin(); item != layoutItems.end(); ++item) {
+			D3D11_INPUT_ELEMENT_DESC desc = {0};
+
+			desc.SemanticName = MapDX11SemanticName((Vertex::ElemUsage)item->usage);
+			desc.SemanticIndex	= item->usageIndex;
+			desc.Format			= MapDX11VertexElemType((Vertex::ElemType)item->type);
+			desc.InputSlot		= 0;
+			desc.AlignedByteOffset	= D3D11_APPEND_ALIGNED_ELEMENT;
+			desc.InputSlotClass		= D3D11_INPUT_PER_VERTEX_DATA;
+			desc.InstanceDataStepRate = 0;
+
+			elemDesc.push_back(desc);
+		}		
+
+		ID3D10Blob* pInputSig = CreateSignatureWithVertexLayout(layoutItems);
+		ID3D11InputLayout* d3dLayout = nullptr;		
+
+		HRESULT hr = D3D11Device->CreateInputLayout(&elemDesc[0], elemDesc.size(),
+			pInputSig->GetBufferPointer(), pInputSig->GetBufferSize(), &d3dLayout);
+			   		 
+		assert(SUCCEEDED(hr));
+		pInputSig->Release();
+
+		auto info = new VertexLayoutInfo();
+		info->d3d11InputLayout = d3dLayout;
+
+		Handle slot = FindAvailableSlot(VertexLayouts_);
+		VertexLayouts_[slot] = info;
+
+		return slot;
+	}
+
+
+	void RendererDx11::ExecuteOperator(const RenderOperator& op)
+	{
+		ImmediateContext->IASetPrimitiveTopology(D3D11Mapping::PrimitiveTopology(op.nPrimType));
+		
+		auto layout = VertexLayouts_[op.VertexLayout_];
+		auto vertex = GeometryBufferInfos_[op.VertexBuffer_];
+		auto index = GeometryBufferInfos_[op.IndexBuffer_];
+
+		ImmediateContext->IASetIndexBuffer(index.d3dBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+		UINT strides[] = { op.VertexStride };
+		UINT offsets[] = { 0 };
+
+		ImmediateContext->IASetVertexBuffers(0, 1, &vertex.d3dBuffer, strides, offsets);
+		ImmediateContext->IASetInputLayout(layout->d3d11InputLayout);
+
+		ImmediateContext->DrawIndexed(op.IndexCount, op.nStartIndex, op.nBaseVertexIndex);
+	}
+
+
 }

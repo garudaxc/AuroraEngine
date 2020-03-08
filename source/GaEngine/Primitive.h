@@ -4,125 +4,129 @@
 #include "AABB.h"
 namespace Aurora
 {
-	class Plane
+	namespace Primitive
 	{
-	public:
-		Plane() {}
-		Plane(const Vector3f& norm, float dist);
-		Plane(const Vector3f& norm, const Vector3f& point);
-		Plane(const Vector3f& a, const Vector3f& b, const Vector3f& c);
-		Plane(const Vector4f& v);
 
-		const Plane& operator = (const Vector4f& v);
+		class Plane
+		{
+		public:
+			Plane() {}
+			Plane(const Vector3f& norm, float dist);
+			Plane(const Vector3f& norm, const Vector3f& point);
+			Plane(const Vector3f& a, const Vector3f& b, const Vector3f& c);
+			Plane(const Vector4f& v);
 
-		void Normalize();
+			const Plane& operator = (const Vector4f& v);
 
-		Vector3f n;
+			void Normalize();
 
-		float d;
-	};
+			Vector3f n;
 
-
-	float Distance(const Plane& plane, const Vector3f& point);
-
-
-
-	struct Vertex
-	{
-		Aurora::Vector3f			pos;
-		Aurora::Vector3f			normal;
-		Aurora::Vector3f			tangent;
-		Aurora::Vector3f			binormal;
-		Aurora::Vector3f			color;
-		Aurora::Vector2f			uv;
-		float*					coeff;
-	};
+			float d;
+		};
 
 
-	struct Triangle
-	{
-		Vertex*			p0;
-		Vertex*			p1;
-		Vertex*			p2;	
-		float			area;
+		float Distance(const Plane& plane, const Vector3f& point);
+
+
+
+		struct Vertex
+		{
+			Aurora::Vector3f			pos;
+			Aurora::Vector3f			normal;
+			Aurora::Vector3f			tangent;
+			Aurora::Vector3f			binormal;
+			Aurora::Vector3f			color;
+			Aurora::Vector2f			uv;
+			float* coeff;
+		};
+
+
+		struct Triangle
+		{
+			Vertex* p0;
+			Vertex* p1;
+			Vertex* p2;
+			float			area;
 #if 0
 
-		Aurora::Vector3f		ivm0;
-		Aurora::Vector3f		ivm1;
-		Aurora::Vector3f		ivm2;
+			Aurora::Vector3f		ivm0;
+			Aurora::Vector3f		ivm1;
+			Aurora::Vector3f		ivm2;
 #endif
-	};
+		};
 
 
-	class DifferentialGeometry
-	{
-	public:
-		Aurora::Vector3f		pos;
-		Aurora::Vector3f		normal;
-		Aurora::Vector3f		tangent;
-		Aurora::Vector3f		binormal;
-		Aurora::Vector2f		uv;
-		const Triangle*		pTri;
-
-	};
-
-
-	class Intersection
-	{
-	public:
-		bool towSide;
-		bool backFace;
-
-		Vector3f pos;
-		float u;
-		float v;
-		const Triangle* pTri;
-
-		Intersection()
+		class DifferentialGeometry
 		{
-			backFace = false;
-		}
-	};
+		public:
+			Aurora::Vector3f		pos;
+			Aurora::Vector3f		normal;
+			Aurora::Vector3f		tangent;
+			Aurora::Vector3f		binormal;
+			Aurora::Vector2f		uv;
+			const Triangle* pTri;
+
+		};
 
 
-	void CalcDifferentialGeometry(const Intersection& inter, DifferentialGeometry& dg);
+		class Intersection
+		{
+		public:
+			bool towSide;
+			bool backFace;
+
+			Vector3f pos;
+			float u;
+			float v;
+			const Triangle* pTri;
+
+			Intersection()
+			{
+				backFace = false;
+			}
+		};
 
 
-	class Ray
-	{
-	public:
-		Ray();
-		Ray(const Ray& r);
-		Ray(const Vector3f& o, const Vector3f& d);
-
-		Aurora::Vector3f PosFromT(float t) const;
-
-		Aurora::Vector3f origin;
-
-		Aurora::Vector3f dir;
-
-		mutable float tmin, tmax;
-	};
+		void CalcDifferentialGeometry(const Intersection& inter, DifferentialGeometry& dg);
 
 
-	class Sphere
-	{
-	public:
-		virtual bool TestIntersect(Intersection& intersection, const Ray& ray) const;
+		class Ray
+		{
+		public:
+			Ray();
+			Ray(const Ray& r);
+			Ray(const Vector3f& o, const Vector3f& d);
 
-		Aurora::Vector3f m_vCenter;
+			Aurora::Vector3f PosFromT(float t) const;
 
-		float m_fRadius;
-	};
+			Aurora::Vector3f origin;
+
+			Aurora::Vector3f dir;
+
+			mutable float tmin, tmax;
+		};
 
 
-	bool TestRayAABB(const AABB& aabb, const Ray& ray, float& tmin, float& tmax);
+		class Sphere
+		{
+		public:
+			virtual bool TestIntersect(Intersection& intersection, const Ray& ray) const;
 
-	bool TestRayAABB(const AABB& aabb, const Ray& ray);
+			Aurora::Vector3f m_vCenter;
 
-	bool TestRayTriangle(Intersection& intersection, const Triangle* pTri, const Ray& ray);
+			float m_fRadius;
+		};
 
-	bool IntersectRayTriangle(Intersection& intersection, const Triangle* pTri, const Ray& ray, float& tRay);
+
+		bool TestRayAABB(const AABB& aabb, const Ray& ray, float& tmin, float& tmax);
+
+		bool TestRayAABB(const AABB& aabb, const Ray& ray);
+
+		bool TestRayTriangle(Intersection& intersection, const Triangle* pTri, const Ray& ray);
+
+		bool IntersectRayTriangle(Intersection& intersection, const Triangle* pTri, const Ray& ray, float& tRay);
+	}
 
 }
 

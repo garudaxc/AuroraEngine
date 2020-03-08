@@ -17,6 +17,7 @@ public:
 	void Finalize();
 
 	void Error(const char* text, ...);
+	void Warning(const char* text, ...);
 
 	void Info(const char* text, ...);
 

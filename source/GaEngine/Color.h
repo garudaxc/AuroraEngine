@@ -3,6 +3,7 @@
 
 #include <string>
 #include "AurMath.h"
+#include "Types.h"
 
 namespace Aurora
 {
@@ -36,6 +37,8 @@ public:
 	inline float* Ptr();
 	inline const float* Ptr() const;
 
+
+	uint32			ToRGBA8();
 	std::string			ToStringRGB() const;
 	const Color&		FromStringRGB(const std::string& str);
 	const Color&		FromStringRGBA(const std::string& str);
@@ -160,6 +163,18 @@ inline const float* Color::Ptr() const
 	return &r;
 }
 //-----------------------------------------------------------
+
+
+uint32 Color::ToRGBA8()
+{
+	int r8 = Mathf::Max(r * 255, 255);
+	int g8 = Mathf::Max(r * 255, 255);
+	int b8 = Mathf::Max(r * 255, 255);
+	int a8 = Mathf::Max(r * 255, 255);
+
+	unsigned int rgba8 = (r8 << 24) | (g8 << 16) | (b8 << 8) | a8;
+	return rgba8;
+}
 
 inline std::string Color::ToStringRGB() const
 {
