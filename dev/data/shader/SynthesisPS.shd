@@ -1,0 +1,217 @@
+#include "stdafx.shd"
+#include "CommonPS.shd"
+
+
+sampler2D texAlbedo;
+float3 DiffuseColor;
+float3 EmissiveColor;
+float ObjectId;
+sampler2D texNormal;
+float TransPattern;
+
+
+struct PS_INPUT
+{
+	float2 vpos		: VPOS;
+	float3 normal	: TEXCOORD0;
+	float2 tex		: TEXCOORD1;
+	float3 worldPos : TEXCOORD2;
+	float3 eyeDir	: TEXCOORD3;
+};
+
+
+struct PS_OUTPUT
+{
+	half4 c0	: COLOR0;
+};
+
+
+float4 SampleDSF(in sampler2D samp, in sampler2D depthIDSamp, in float2 texCoord, 
+				 in float2 texSize, in float instanceID, 
+				 in float2 texScale, in float2 offset, in float2 filterScale)
+{
+	// Scale out into pixel space
+	float2 unormSamplePos = texSize * texCoord;
+
+	// Determine the lerp amounts
+	float2 lerps = (frac(unormSamplePos) - (0.5f * texScale) - offset) / filterScale ;
+	float lerpAmount[3];
+	lerpAmount[0] = lerps.x;
+	lerpAmount[1] = lerps.x;
+	lerpAmount[2] = lerps.y;
+
+	// Get the upper left position
+	float2 lerpPos = floor(unormSamplePos) + offset + 0.5f;
+	lerpPos /= texSize;
+
+	// Figure out our 4 sample points
+	float2 samplePoints[4];
+	samplePoints[0] = lerpPos;
+	samplePoints[1] = lerpPos + float2(filterScale.x / texSize.x, 0);
+	samplePoints[2] = lerpPos + float2(0, filterScale.y / texSize.y);
+	samplePoints[3] = lerpPos + float2(filterScale.x / texSize.x, filterScale.y / texSize.y);
+
+	// Take the 4 samples, and compute an additional weight for
+	// each sample based on comparison with the DepthID buffer
+	float4 samples[4];
+	float weights[4];
+	for (int i = 0; i < 4; i++)
+	{
+		samples[i] = tex2D(samp, samplePoints[i]);
+
+		weights[i] = 0.0;
+		float id = tex2D(depthIDSamp, samplePoints[i]).a;
+		if (floor(id * 256.0f + 0.5) == floor(instanceID + 0.5))
+		{
+			weights[i] = 1.0;
+		}
+	};
+
+	// We'll bias our lerp weights based on our additional DepthID
+	// weights.  This will filter out "bad" samples that are across
+	// discontinuities .
+	lerpAmount[0] = saturate(lerpAmount[0] - weights[0] + weights[1]);
+	lerpAmount[1] = saturate(lerpAmount[1] - weights[2] + weights[3]);
+
+	float topWeight = (weights[0] + weights[1]) * 0.5f;
+	float bottomWeight = (weights[2] + weights[3]) * 0.5f;
+	lerpAmount[2] = saturate(lerpAmount[2] - topWeight + bottomWeight);
+
+	// Perform the bilinear filtering with our new weights
+	return lerp(lerp(samples[0], samples[1], lerpAmount[0]),
+				   lerp(samples[2], samples[3],lerpAmount[1]),
+				   lerpAmount[2]);
+}
+
+
+float4 DSFFilter(float2 uv)
+{
+	//float4 lightInfo = tex2D(LightingRT, uv);
+	//return lightInfo;
+
+	float2 filterScale = float2(1.0, 1.0);
+
+	// Figure out our 4 sample points
+	float2 samplePoints[4];
+	samplePoints[0] = uv;
+	samplePoints[1] = uv + float2(filterScale.x * BackBufferSizeParam.x, 0);
+	samplePoints[2] = uv + float2(0, filterScale.y * BackBufferSizeParam.y);
+	samplePoints[3] = uv + float2(filterScale.x * BackBufferSizeParam.x, filterScale.y * BackBufferSizeParam.y);
+
+	// Take the 4 samples, and compute an additional weight for
+	// each sample based on comparison with the DepthID buffer
+	float4 samples[4];
+	float weights[4];
+	for (int i = 0; i < 4; i++)
+	{
+		samples[i] = tex2D(LightingRT, samplePoints[i]);
+
+		weights[i] = 0.0;
+		float id = tex2D(NormalRT, samplePoints[i]).a;
+		if (floor(id * 256.0f + 0.5) == floor(ObjectId + 0.5))
+		{
+			weights[i] = 1.0;
+		}
+
+		//float2 depthID = tex2D(depthIDSamp, samplePoints[i]).xy;
+		//weights[i] = FuzzyEquals(depthID.y, instanceID, 0.01f)
+		//				&& FuzzyEquals(depthID.x, depthVS, 0.1f);
+	};
+
+
+	float lerpAmount[3];
+	lerpAmount[0] = 0.0;
+	lerpAmount[1] = 0.0;
+	lerpAmount[2] = 0.0;
+	// We'll bias our lerp weights based on our additional DepthID
+	// weights.  This will filter out "bad" samples that are across
+	// discontinuities .
+	lerpAmount[0] = saturate(lerpAmount[0] - weights[0] + weights[1]);
+	lerpAmount[1] = saturate(lerpAmount[1] - weights[2] + weights[3]);
+
+	float topWeight = (weights[0] + weights[1]) * 0.5f;
+	float bottomWeight = (weights[2] + weights[3]) * 0.5f;
+	lerpAmount[2] = saturate(lerpAmount[2] - topWeight + bottomWeight);
+
+	// Perform the bilinear filtering with our new weights
+	return lerp(lerp(samples[0], samples[1], lerpAmount[0]),
+				   lerp(samples[2], samples[3],lerpAmount[1]),
+				   lerpAmount[2]);
+}
+
+
+
+
+
+PS_OUTPUT Main(PS_INPUT input)
+{
+	LightPixelShaderMidst midst;
+	FillLightPSMidst(midst, input.vpos);
+
+	PS_OUTPUT output = (PS_OUTPUT)0;
+
+
+
+	/*float2 offset[9] = {
+		{0.0f, 0.0f}, {-BackBufferSizeParam.x, 0.0f}, {BackBufferSizeParam.x, 0.0f},{0.0f, -BackBufferSizeParam.y}, {0.0f, BackBufferSizeParam.y}, 
+		{-BackBufferSizeParam.x, -BackBufferSizeParam.y}, {BackBufferSizeParam.x, -BackBufferSizeParam.y},
+		{-BackBufferSizeParam.x, BackBufferSizeParam.y}, {BackBufferSizeParam.x, BackBufferSizeParam.y}};
+
+	half4 lightingInfo = float4(0, 0, 0, 0);
+	for (int i = 0; i < 9; i++)
+	{
+		float2 uv = midst.srCoord + offset[i];
+		float id = tex2D(NormalRT, uv).a;
+		if (floor(id * 256.0f + 0.5) == floor(ObjectId + 0.5))
+		{
+			lightingInfo = tex2D(LightingRT, uv);
+			break;
+		}
+	}*/
+
+
+#ifdef _INFERREDLIGHTING_
+#ifdef _SEMITRANSPARENT_
+	float2 offset;
+	if (TransPattern == 0)
+	{
+		offset.x = frac(input.vpos.x * 0.5) * 2.0 - 1;
+		offset.y = frac(input.vpos.y * 0.5) * 2.0 - 1;
+	}
+	else if (TransPattern == 1)
+	{
+		offset.x = frac(input.vpos.x * 0.5) * 2.0;
+		offset.y = frac(input.vpos.y * 0.5) * 2.0 - 1;
+	}
+	else if (TransPattern == 2)
+	{
+		offset.x = frac(input.vpos.x * 0.5) * 2.0 - 1;
+		offset.y = frac(input.vpos.y * 0.5) * 2.0;
+	}
+	else if (TransPattern == 3)
+	{
+		offset.x = frac(input.vpos.x * 0.5) * 2.0;
+		offset.y = frac(input.vpos.y * 0.5) * 2.0;
+	}
+
+	float4 l = SampleDSF(LightingRT, NormalRT, midst.srCoord, BackBufferSizeParam.zw,
+		ObjectId, float2(1, 1), offset, float2(2.0, 2.0));
+#else
+	float4 l = SampleDSF(LightingRT, NormalRT, midst.srCoord, BackBufferSizeParam.zw,
+		ObjectId, float2(1, 1), float2(0.0, 0.0), float2(1.0, 1.0));
+#endif
+
+#else
+	float4 l = GetLightBufferColor(midst);
+#endif
+
+	half4 albedo = tex2D(texAlbedo, input.tex);
+	
+	half3 diffuse = l.rgb * albedo.rgb * DiffuseColor;
+	half3 spec = l.a * l.rgb;
+
+	float iid = ObjectId / 256.0f;
+	output.c0 = float4(diffuse + spec + GlobalAmbient + EmissiveColor, albedo.a);
+	//output.c0 = float4(lightingInfo.rgb, 1);
+	return output;
+}

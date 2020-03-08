@@ -1,0 +1,30 @@
+#include "stdafx.shd"
+#include "CommonVS.shd"
+
+float radius;
+
+
+
+
+struct VS_OUTPUT
+{
+    float4 pos : SV_POSITION; // World position
+	float3 normal	: TEXCOORD0;
+	float2 tex		: TEXCOORD1;
+};
+
+VS_OUTPUT Main( GeomVertexInput input )
+{
+	VS_OUTPUT output;
+
+	//input.pos.xyz *= 0.1f;
+
+	output.pos = GetHomogeneousCoord(input);
+	//output.pos = input.pos;
+	
+	output.normal = mul(input.normal, (float3x3)matWorld);
+	output.tex = input.tex;
+
+			
+    return output;
+}

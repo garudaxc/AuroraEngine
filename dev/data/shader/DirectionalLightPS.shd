@@ -1,0 +1,48 @@
+#include "stdafx.shd"
+#include "CommonPS.shd"
+
+
+float3 LightColor;
+
+
+#define _SHADOW_
+
+#ifdef _SHADOW_
+float4x4 MatShadowProj;
+sampler2D ShadowMapRT;
+#endif
+
+
+
+struct PS_INPUT
+{
+	float2 vpos			: VPOS;
+	float2 tex			: TEXCOORD0;
+	float3 eyeDir		: TEXCOORD1;
+	float3 direction	: TEXCOORD2;
+};
+
+
+
+
+
+float4 Main(PS_INPUT input) : COLOR
+{
+	LightPixelShaderMidst midst;
+	FillLightPSMidst(midst, input.vpos);
+		
+	float3 pixelWorldPos = GetWorldFromEyeDir(midst, input.eyeDir);
+
+	float illum = 1.0f;
+#ifdef _SHADOW_
+	float4 shadowPos = mul(float4(pixelWorldPos, 1), MatShadowProj);
+	illum = tex2Dproj(ShadowMapRT, shadowPos);
+#endif
+
+	float dnl = saturate(dot(input.direction, midst.normal));
+	half3 c0 = dnl * LightColor * illum;
+
+	half spec = ComputeSpec(midst, input.direction, pixelWorldPos, 1);
+		
+	return float4(c0, spec);
+}

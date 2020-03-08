@@ -1,0 +1,20 @@
+#include "stdafx.shd"
+#include "CommonPS.shd"
+
+
+sampler2D ColorRT	:	register(s0);
+
+
+struct PS_INPUT
+{
+	float2 texCoord		: TEXCOORD0;
+};
+
+
+
+half4 Main(PS_INPUT input) : COLOR0
+{
+	half4 color = tex2D(ColorRT, input.texCoord);
+
+	return half4(color.xyz, 1);
+}

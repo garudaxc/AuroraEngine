@@ -1,0 +1,68 @@
+#include "stdafx.shd"
+#include "CommonPS.shd"
+
+float3 LightColor;
+
+// x : tangent of half outter angle
+// y : cosine of half outter angle
+// z : cosine of half inner angle
+// w : 1 / (z - y)
+float4 SpotLightParam;
+
+#define _SHADOW_
+
+#ifdef _SHADOW_
+float4x4 MatShadowProj;
+sampler2D ShadowMapRT;
+#endif
+
+
+#ifdef _SPOTLIGHT_TEX_PROJ_
+float4x4 MatTexProj;
+sampler2D TexProj;
+#endif
+
+
+
+struct PS_INPUT
+{
+	float2 vpos			: VPOS;
+	float3 eyeDir		: TEXCOORD0;
+	float3 direction	: TEXCOORD1;
+	float3 lightPos		: TEXCOORD2;
+};
+
+
+
+float4 Main(PS_INPUT input) : COLOR
+{
+	LightPixelShaderMidst midst;
+	FillLightPSMidst(midst, input.vpos);
+	
+	float3 pixelWorldPos = GetWorldFromEyeDir(midst, input.eyeDir);
+	
+	float illum = 1.0f;
+#ifdef _SHADOW_
+	float4 shadowPos = mul(float4(pixelWorldPos, 1), MatShadowProj);
+	illum = tex2Dproj(ShadowMapRT, shadowPos);
+#endif
+	
+	float3 l = normalize(input.lightPos - pixelWorldPos);
+	
+	float dnl = saturate(dot(l, midst.normal));
+	
+	float angleCos = dot(l, input.direction);
+	float spotFactor  = saturate((angleCos - SpotLightParam.y) * SpotLightParam.w);
+	half3 c0 = dnl * spotFactor * LightColor * illum;
+	
+	
+#ifdef _SPOTLIGHT_TEX_PROJ_
+	float4 projPos = mul(float4(pixelWorldPos, 1), MatTexProj);
+	half3 projTexColor = tex2Dproj(TexProj, projPos).rgb;
+	c0 *= projTexColor;
+#endif
+
+	half spec = ComputeSpec(midst, l, pixelWorldPos, spotFactor * illum);
+
+	return float4(c0, spec);
+}

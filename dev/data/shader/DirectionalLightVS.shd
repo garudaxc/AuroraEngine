@@ -1,0 +1,32 @@
+#include "stdafx.shd"
+#include "CommonVS.shd"
+
+struct VS_INPUT
+{
+	float4 pos		: POSITION;
+};
+
+struct VS_OUTPUT
+{
+	float4 pos			: POSITION;
+	float2 tex			: TEXCOORD0;
+	float3 eyeDir		: TEXCOORD1;
+	float3 direction	: TEXCOORD2;
+};
+
+
+
+
+
+VS_OUTPUT Main( VS_INPUT input )
+{
+	VS_OUTPUT output;	
+	output.pos = float4(input.pos.xyz, 1);
+	
+	// objec's z axis
+	output.direction = matWorld._31_32_33;
+	
+	output.tex = float2(0, 0);
+	output.eyeDir = GetEyeDir(output.pos);
+	return output;
+}

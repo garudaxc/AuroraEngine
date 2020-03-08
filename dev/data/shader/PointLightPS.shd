@@ -1,0 +1,52 @@
+#include "stdafx.shd"
+#include "CommonPS.shd"
+
+float3 LightColor;
+
+// x:range start
+// y:range end
+float4 PointLightParam;
+
+#ifdef _POINTLIGHT_TEX_PROJ_
+samplerCUBE TexProj;
+float3x3 MatTexProj;
+#endif
+
+struct PS_INPUT
+{
+	float2 vpos			: VPOS;
+	float3 eyeDir		: TEXCOORD0;
+	float3 lightPos		: TEXCOORD1;
+};
+
+
+
+
+float4 Main(PS_INPUT input) : COLOR
+{
+	LightPixelShaderMidst midst;
+	FillLightPSMidst(midst, input.vpos);
+
+	float3 pixelWorldPos = GetWorldFromEyeDir(midst, input.eyeDir);
+	
+	float3 l = input.lightPos - pixelWorldPos;
+	float dist = length(l);
+	l /= dist;
+	
+	float dnl = saturate(dot(l, midst.normal));
+	
+	float atten = 1 - smoothstep(PointLightParam.x, PointLightParam.y, dist);
+	
+	half3 c0 = LightColor * dnl * atten;
+	
+#ifdef _POINTLIGHT_TEX_PROJ_
+	// from world space to obj space
+	float3 texProjDir = mul(MatTexProj, -l);
+	half4 texProjColor = texCUBE(TexProj, texProjDir);
+	c0 *= texProjColor.rgb;
+#endif
+	
+	half spec = ComputeSpec(midst, l, pixelWorldPos, atten);
+	
+	return float4(c0, spec);
+}

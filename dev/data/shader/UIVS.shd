@@ -1,0 +1,28 @@
+#include "stdafx.shd"
+#include "CommonVS.shd"
+
+// xy: scale
+// zw: offset
+float4 SpriteParam;
+
+struct VS_INPUT
+{
+    float4 pos			: POSITION;
+	float2 texCoord		: TEXCOORD0;
+
+};
+
+struct VS_OUTPUT
+{
+	float4 pos			: POSITION;
+	float2 texCoord		: TEXCOORD0;
+};
+
+VS_OUTPUT Main( VS_INPUT input )
+{
+	VS_OUTPUT output;
+	output.pos = float4(input.pos.xy * SpriteParam.xy + SpriteParam.zw, 0, 1);
+	output.texCoord = input.texCoord;
+			
+    return output;
+}

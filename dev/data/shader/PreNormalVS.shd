@@ -1,0 +1,29 @@
+#include "stdafx.shd"
+#include "CommonVS.shd"
+
+
+struct VS_OUTPUT
+{
+	float4 pos		: POSITION;
+	float3 normal	: TEXCOORD0;
+	float2 tex		: TEXCOORD1;
+		
+	float3 tangent	: TEXCOORD2;
+	float3 binormal	: TEXCOORD3;	
+	
+	float dep		: TEXCOORD4;
+	
+};
+
+VS_OUTPUT Main(GeomVertexInput input)
+{
+	VS_OUTPUT output;
+	
+	GetHomogeneousCoordAndDepth(input, output.pos, output.dep);
+	GetNTB(input, output.normal, output.tangent, output.binormal);
+	
+	output.tex = input.tex;
+	
+	
+    return output;
+}

@@ -1,0 +1,28 @@
+#include "stdafx.shd"
+#include "CommonVS.shd"
+
+
+struct VS_OUTPUT
+{
+	float4 pos		: POSITION;
+	float3 normal	: TEXCOORD0;
+	float2 tex		: TEXCOORD1;
+	float3 worldPos : TEXCOORD2;
+	float3 eyeDir	: TEXCOORD3;
+};
+
+VS_OUTPUT Main(GeomVertexInput input)
+{
+	VS_OUTPUT output;
+	output.pos = GetHomogeneousCoord(input);
+	
+	output.normal = GetNormal(input);
+	output.tex = input.tex;
+	
+	float4 worldPos = mul(float4(input.pos.xyz, 1.0), matWorld);
+	output.worldPos = worldPos.xyz;
+	
+	output.eyeDir = GetEyeDir(output.pos);
+	
+    return output;
+}

@@ -1,0 +1,30 @@
+#include "stdafx.shd"
+#include "CommonVS.shd"
+
+
+// x:range start
+// y:range end
+float4 PointLightParam;
+
+struct VS_INPUT
+{
+	float4 pos		: POSITION;
+};
+
+struct VS_OUTPUT
+{
+	float4 pos			: POSITION;
+	float3 eyeDir		: TEXCOORD0;
+	float3 lightPos		: TEXCOORD1;
+};
+
+
+VS_OUTPUT Main( VS_INPUT input )
+{
+	VS_OUTPUT output;
+	output.pos = GetLightHomogeneousCoord(input.pos.xyz * PointLightParam.y);
+	output.lightPos = matWorld._41_42_43;
+	output.eyeDir = GetEyeDir(output.pos);
+	
+	return output;
+}

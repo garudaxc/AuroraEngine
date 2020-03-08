@@ -1,0 +1,22 @@
+#include "stdafx.shd"
+#include "CommonVS.shd"
+
+
+
+struct VS_INPUT
+{
+    float4 pos			: POSITION;
+
+};
+
+struct VS_OUTPUT
+{
+	float4 pos			: POSITION;
+};
+
+VS_OUTPUT Main( VS_INPUT input )
+{
+	VS_OUTPUT output;
+	output.pos = mul(float4(input.pos.xyz, 1), matViewProj);			
+    return output;
+}

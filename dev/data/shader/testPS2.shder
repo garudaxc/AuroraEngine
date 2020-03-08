@@ -1,0 +1,39 @@
+#include "stdafx.shd"
+
+struct PS_INPUT
+{
+    float4 pos : SV_POSITION; // World position
+	//float2 vpos		: VPOS;
+	float3 normal	: TEXCOORD0;
+	float2 tex		: TEXCOORD1;
+};
+
+Texture2D    g_txDiffuse;
+SamplerState g_samLinear;
+
+float3 Color_ = {1.0, 1.0, 1.0};
+
+
+struct PS_OUTPUT
+{
+	half4 c0	: SV_Target0;
+};
+
+
+PS_OUTPUT Main(PS_INPUT input)
+{
+	PS_OUTPUT output = (PS_OUTPUT)0;
+
+    float4 vDiffuse = g_txDiffuse.Sample( g_samLinear, input.tex );
+
+	float3 c = input.normal * 0.5 + 0.5;
+
+	float ndl = max(0, dot(input.normal, DirectionLight0));
+
+
+	c = vDiffuse.xyz * LightColor0.xyz * ndl;
+
+	output.c0 = float4(c, 1.0);
+
+	return output;
+}

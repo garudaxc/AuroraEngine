@@ -1,0 +1,31 @@
+#include "stdafx.shd"
+#include "CommonVS.shd"
+
+
+float4x4 matShadowViewProj;
+
+
+
+struct Shadow_VS_Input
+{
+	float4 pos		: POSITION;
+};
+
+
+struct VS_OUTPUT
+{
+	float4 pos		: POSITION;
+	float2 dep		: TEXCOORD0;
+};
+
+
+VS_OUTPUT Main(Shadow_VS_Input input)
+{
+	VS_OUTPUT output;
+	float4 pos = mul(float4(input.pos.xyz, 1), matWorld);
+	pos = mul(pos, matShadowViewProj);
+	output.pos = pos;
+	output.dep = pos.zw;
+	
+    return output;
+}

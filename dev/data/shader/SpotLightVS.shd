@@ -1,0 +1,45 @@
+#include "stdafx.shd"
+#include "CommonVS.shd"
+
+
+// x : tangent of half outter angle
+// y : cosine of half outter angle
+// z : cosine of half inner angle
+// w : 1 / (z - y)
+float4 SpotLightParam;
+
+
+
+struct VS_INPUT
+{
+	float4 pos		: POSITION;
+};
+
+struct VS_OUTPUT
+{
+	float4 pos			: POSITION;
+	float3 eyeDir		: TEXCOORD0;
+	float3 direction	: TEXCOORD1;
+	float3 lightPos		: TEXCOORD2;
+};
+
+
+VS_OUTPUT Main( VS_INPUT input )
+{
+	VS_OUTPUT output;
+	
+	float3 objPos = input.pos.xyz;
+	
+	float len = 500;
+	objPos = float3(objPos.xy * SpotLightParam.x * len, objPos.z * len);
+	
+
+	output.pos = GetLightHomogeneousCoord(objPos);
+	
+	// objec's z axis
+	output.direction = matWorld._31_32_33;
+	output.lightPos = matWorld._41_42_43;
+	output.eyeDir = GetEyeDir(output.pos);
+	
+	return output;
+}

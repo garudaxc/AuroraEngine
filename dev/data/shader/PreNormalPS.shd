@@ -1,0 +1,41 @@
+#include "stdafx.shd"
+#include "CommonPS.shd"
+
+struct PS_INPUT
+{
+	float2 vpos		: VPOS;
+	float3 normal	: TEXCOORD0;
+	float2 tex		: TEXCOORD1;
+	
+	float3 tangent	: TEXCOORD2;
+	float3 binormal	: TEXCOORD3;
+	
+	float dep		: TEXCOORD4;
+};
+
+struct PS_OUTPUT
+{
+	half4 c0	: COLOR0;
+	half4 c1	: COLOR1;
+};
+
+float Bumpniess;
+float Glossiness;
+float SpecularLevel;
+
+sampler2D texNormal;
+
+
+PS_OUTPUT Main(PS_INPUT input)
+{
+	PS_OUTPUT output = (PS_OUTPUT)0;
+
+	half4 texNorm = tex2D(texNormal, input.tex).rgba;
+	half3 normMap = texNorm.rgb * 2.0 - 1.0;
+	normMap *= Bumpniess;	
+	half3 normal = normalize(input.normal + input.tangent * normMap.x - input.binormal * normMap.y);
+
+	PackGBuffer(output.c0, output.c1, normal, input.dep, Glossiness, SpecularLevel);
+
+	return output;	
+}

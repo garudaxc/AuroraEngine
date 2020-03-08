@@ -1,0 +1,25 @@
+#include "stdafx.shd"
+#include "CommonPS.shd"
+
+
+struct PS_INPUT
+{
+	float2 dep		: TEXCOORD0;
+};
+
+
+
+struct PS_OUTPUT
+{
+	float4 c0	: COLOR0;
+};
+
+
+PS_OUTPUT Main(PS_INPUT input)
+{
+	PS_OUTPUT output = (PS_OUTPUT)0;
+	float d = input.dep.x / input.dep.y;
+	
+	output.c0 = float4(d, d, d, d);
+	return output;
+}
