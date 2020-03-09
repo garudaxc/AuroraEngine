@@ -25,10 +25,9 @@ namespace Aurora
 
 		Handle		VertexBuffer_	= -1;
 		Handle		IndexBuffer_	= -1;
-
 	};
 
 
-	extern CHelperDraw DebugDraw;
+	extern CHelperDraw HelperDraw;
 
 }

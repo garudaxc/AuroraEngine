@@ -1,11 +1,39 @@
 #include "stdheader.h"
-#include "DebugDraw.h"
+#include "HelperDraw.h"
 #include "Geometry.h"
 #include "RendererObject.h"
 #include "Renderer.h"
+#include "Shader.h"
 
 namespace Aurora
 {
+	class CDrawLineVertexShader : public BaseShader
+	{
+	public:
+
+		void	Initialize();
+	};
+
+	void CDrawLineVertexShader::Initialize()
+	{
+		InitBase(BaseShader::VERTEX_SHADER, "..\\dev\\data\\shader\\HelperVS.shader");
+	}
+
+
+
+	class CDrawLinePixelShader : public BaseShader
+	{
+	public:
+		void	Initialize();
+	};
+
+	void CDrawLinePixelShader::Initialize()
+	{
+		InitBase(BaseShader::VERTEX_SHADER, "..\\dev\\data\\shader\\HelperVS.shader");
+	}
+
+	CDrawLineVertexShader	DrawLineVertexShader;
+	CDrawLinePixelShader	DrawLinePixelShader;
 
 
 	struct CVertexLayoutPositonColor
@@ -95,8 +123,7 @@ namespace Aurora
 		Color	color;
 		float	life;
 	};
-
-
+	
 
 	const	int32 FigureBufferSize = 10 * 1024;
 	int8	FigureBuffer[FigureBufferSize];
@@ -115,7 +142,7 @@ namespace Aurora
 	int32 GetFigure(T& figure, int32 pointer)
 	{
 		T* p = (T*)(FigureBuffer + pointer);
-		figure = *T;
+		figure = *p;
 		return pointer + sizeof(T);
 	}
 
@@ -126,7 +153,7 @@ namespace Aurora
 	}
 
 
-	CHelperDraw DebugDraw;
+	CHelperDraw HelperDraw;
 
 
 	CHelperDraw::CHelperDraw()
@@ -139,6 +166,9 @@ namespace Aurora
 
 	void CHelperDraw::Init()
 	{
+		DrawLineVertexShader.Initialize();
+		DrawLinePixelShader.Initialize();
+
 		VertexLayoutPositonColor_.Init();
 		VertexBuffer_ = CreateVertexBufferHandle(nullptr, MaxVertexCount * VertexLayoutPositonColor_.Stride);
 		IndexBuffer_ = CreateIndexBufferHandle(nullptr, MaxIndexCount * 4);
@@ -183,24 +213,18 @@ namespace Aurora
 				else if (type == EHelperDrawType::LineList) {
 
 				}
-
 			}
 		}
 
 		FigureBufferPointer = 0;
 
-		RenderOperator op;
+		DrawLineVertexShader.BindShader();
+		DrawLinePixelShader.BindShader();
+		
+		RenderOperator op(VertexLayoutPositonColor_.handle_, VertexBuffer_, IndexBuffer_,
+			RenderOperator::PT_LINELIST, 0, 0, indexBase, VertexLayoutPositonColor_.Stride);
 
-		op.IndexBuffer_ = IndexBuffer_;
-		op.VertexBuffer_ = VertexBuffer_;
-		op.IndexCount = indexBase;
-		op.nBaseVertexIndex = 0;
-		op.nPrimType = RenderOperator::PT_LINELIST;
-		op.nStartIndex = 0;
-		op.VertexLayout_ = VertexLayoutPositonColor_.handle_;
-		op.VertexStride = VertexLayoutPositonColor_.Stride;
-
+		GRenderDevice->ExecuteOperator(op);
 	}
-
 
 }

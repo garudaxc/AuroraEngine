@@ -196,23 +196,30 @@ namespace Aurora
 	{
 	public:
 
-		static D3D11_PRIMITIVE_TOPOLOGY PrimitiveTopology(RenderOperator::PrimitiveType priType);
+		static D3D11_PRIMITIVE_TOPOLOGY PrimitiveTopology(RenderOperator::EPrimitiveType priType);
 	};
 
 
 
 
-	D3D11_PRIMITIVE_TOPOLOGY D3D11Mapping::PrimitiveTopology(RenderOperator::PrimitiveType priType)
+	D3D11_PRIMITIVE_TOPOLOGY D3D11Mapping::PrimitiveTopology(RenderOperator::EPrimitiveType priType)
 	{
-		static D3D11_PRIMITIVE_TOPOLOGY table[] = {
-			D3D11_PRIMITIVE_TOPOLOGY_POINTLIST,
-			D3D11_PRIMITIVE_TOPOLOGY_LINELIST,
-			D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP,
-			D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-			D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP,
-		};
-
-		return table[priType];
+		switch (priType)
+		{
+		case Aurora::RenderOperator::PT_POINTLIST:
+			return D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
+		case Aurora::RenderOperator::PT_LINELIST:
+			return D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
+		case Aurora::RenderOperator::PT_LINESTRIP:
+			return D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP;
+		case Aurora::RenderOperator::PT_TRIANGLELIST:
+			return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		case Aurora::RenderOperator::PT_TRIANGLESTRIP:
+			return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+		default:
+			assert(0);
+			return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		}
 	}
 
 
@@ -488,7 +495,6 @@ namespace Aurora
 
 
 
-
 	Handle RendererDx11::CreateShader(const ShaderCode& code)
 	{
 		vector<D3D_SHADER_MACRO> macros;
@@ -509,13 +515,13 @@ namespace Aurora
 #endif
 
 		char* target = "vs_4_0";
-		if (code.type == Shader::Category::TYPE_PIXEL_SHADER) {
+		if (code.type == BaseShader::PIXEL_SHADER) {
 			target = "ps_4_0";
 		}
-		else if (code.type == Shader::Category::TYPE_GEOM_SHADER) {
+		else if (code.type == BaseShader::GEOM_SHADER) {
 
 		}
-		else if (code.type == Shader::Category::TYPE_COMPUTE_SHADER) {
+		else if (code.type == BaseShader::COMPUTE_SHADER) {
 
 		}
 
@@ -541,7 +547,7 @@ namespace Aurora
 
 		auto obj = new ShaderObject();
 		obj->Name = code.name;
-		if (code.type == Shader::Category::TYPE_VERTEX_SHADER) {
+		if (code.type == BaseShader::VERTEX_SHADER) {
 
 			ID3D11VertexShader* pVertexShader = NULL;
 			hr = D3D11Device->CreateVertexShader(pCompiledShader->GetBufferPointer(),
@@ -549,7 +555,7 @@ namespace Aurora
 			assert(SUCCEEDED(hr));
 			obj->VertexShader = pVertexShader;
 		}
-		else if (code.type == Shader::Category::TYPE_PIXEL_SHADER) {
+		else if (code.type == BaseShader::PIXEL_SHADER) {
 			ID3D11PixelShader* pixelShader = NULL;
 			hr = D3D11Device->CreatePixelShader(pCompiledShader->GetBufferPointer(),
 				pCompiledShader->GetBufferSize(), NULL, &pixelShader);
@@ -631,7 +637,7 @@ namespace Aurora
 
 		code.name = "Global Buffer";
 		code.text = shaderCode;
-		code.type = Shader::Category::TYPE_VERTEX_SHADER;
+		code.type = BaseShader::VERTEX_SHADER;
 
 		Handle handle = GRendererDx11.CreateShader(code);
 
@@ -1676,8 +1682,6 @@ namespace Aurora
 
 
 
-
-
 	static vector<VertexLayoutInfo*>  VertexLayouts_;
 
 
@@ -1720,7 +1724,7 @@ namespace Aurora
 
 	void RendererDx11::ExecuteOperator(const RenderOperator& op)
 	{
-		ImmediateContext->IASetPrimitiveTopology(D3D11Mapping::PrimitiveTopology(op.nPrimType));
+		ImmediateContext->IASetPrimitiveTopology(D3D11Mapping::PrimitiveTopology(op.PrimType_));
 		
 		auto layout = VertexLayouts_[op.VertexLayout_];
 		auto vertex = GeometryBufferInfos_[op.VertexBuffer_];
@@ -1728,13 +1732,13 @@ namespace Aurora
 
 		ImmediateContext->IASetIndexBuffer(index.d3dBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-		UINT strides[] = { op.VertexStride };
+		UINT strides[] = { op.VertexStride_ };
 		UINT offsets[] = { 0 };
 
 		ImmediateContext->IASetVertexBuffers(0, 1, &vertex.d3dBuffer, strides, offsets);
 		ImmediateContext->IASetInputLayout(layout->d3d11InputLayout);
 
-		ImmediateContext->DrawIndexed(op.IndexCount, op.nStartIndex, op.nBaseVertexIndex);
+		ImmediateContext->DrawIndexed(op.IndexCount_, op.StartIndex_, op.BaseVertexIndex_);
 	}
 
 

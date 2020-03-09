@@ -128,12 +128,10 @@ public:
 
 
 
-
 bool MyApp::OnInitApp()
 {
 	return true;
 }
-
 
 
 bool MyApp::OnCreateDevice(const RectSize& mainView)
@@ -149,7 +147,6 @@ bool MyApp::OnCreateDevice(const RectSize& mainView)
 	
 	EditorCameraMover* pCameraController = &m_CamController;
 	GEventDisPatcher->AddMouseEventListener(pCameraController);
-
 
 
 	TiXmlDocument doc;
@@ -225,13 +222,10 @@ void MyApp::OnDestroyDevice()
 
 void MyApp::OnKeyEvent(const KeyEvent& event) 
 {
-
-	if (event.Code == KeyEvent::KEYCODE_1)
-	{
+	if (event.Code == KeyEvent::KEYCODE_1) {
 		int a = 0;
 		a++;
 	}
-
 }
 
 

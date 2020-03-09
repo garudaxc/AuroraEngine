@@ -164,8 +164,7 @@ inline const float* Color::Ptr() const
 }
 //-----------------------------------------------------------
 
-
-uint32 Color::ToRGBA8()
+inline uint32 Color::ToRGBA8()
 {
 	int r8 = Mathf::Max(r * 255, 255);
 	int g8 = Mathf::Max(r * 255, 255);
@@ -195,7 +194,6 @@ inline const Color& Color::FromStringRGBA(const std::string& str)
 	return *this;
 }
 
-
 inline void ColorModulate(Color& out, const Color& c1, const Color& c2)
 {
 	out.Set(c1.r * c2.r, c1.g * c2.g, c1.b * c2.b, c1.a * c2.a);
@@ -217,7 +215,6 @@ inline Color ParseColor(const std::string& str)
 	sscanf_s(str.c_str(), "%f,%f,%f", &r, &g, &b);
 	return Color(r, g, b);
 }
-
 
 
 }// end of namespace

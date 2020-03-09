@@ -91,17 +91,6 @@ class Shader
 {
 public:
 
-
-
-	enum Category
-	{
-		TYPE_VERTEX_SHADER,
-		TYPE_PIXEL_SHADER,
-		TYPE_GEOM_SHADER,
-		TYPE_COMPUTE_SHADER,
-
-	};
-
 	Shader(void);
 	Shader(void* handle, uint instructionCount);
 	~Shader(void);
@@ -120,15 +109,13 @@ private:
 
 };
 
-
-
 //////////////////////////////////////////////////////////////////////////
 
 struct ShaderCode
 {
-	Shader::Category	type;
-	string				name;
-	string				text;
+	int8			type = 0;
+	string			name;
+	string			text;
 	vector<string>		includes;
 	vector<pair<string, string>>	 defines;
 };
@@ -164,17 +151,31 @@ struct ShaderTextureBinding
 class BaseShader
 {
 public:
+
+
+	enum ShaderType : int8
+	{
+		VERTEX_SHADER,
+		PIXEL_SHADER,
+		GEOM_SHADER,
+		COMPUTE_SHADER,
+	};
+
 	BaseShader();
 	~BaseShader();
+
+	void	InitBase(ShaderType type, const string& pathname);
 
 	void	CommitShaderParameter();
 	void	BindShader();
 
-	Shader::Category	type_ = Shader::Category::TYPE_VERTEX_SHADER;
+	ShaderType	type_ = VERTEX_SHADER;
 
 	ShaderParamterBindings	bindings_;
 	Handle	handle_ = -1;
 	string	name_{ "test shader" };
+
+	string	pathname_;
 
 private:
 
@@ -191,8 +192,6 @@ public:
 	void	Initialize();
 
 	void	CreateBindings();
-
-	string	pathname_{"..\\dev\\data\\shader\\testVS.shd"};
 
 	Matrix4f	matWorld;
 private:
@@ -211,13 +210,10 @@ public:
 	void	CreateBindings();
 
 	void	BindTextureToRender(Texture* texture);
-
-	string	pathname_{ "..\\dev\\data\\shader\\testPS2.shder" };
-
+	
 private:
 
 	ShaderTextureBinding texBinding_;
-
 };
 
 

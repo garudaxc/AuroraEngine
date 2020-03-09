@@ -40,15 +40,10 @@ namespace Aurora
 	{
 		for (uint i = 0; i < m_pMesh->GetNumElement(); i++)
 		{
-			RenderOperator op;
-
 			auto elem = m_pMesh->Elements_[i];
-			op.VertexBuffer_ = m_pMesh->VertexBufferHandle_;
-			op.IndexBuffer_ = m_pMesh->IndexBufferHandle_;
-			op.nBaseVertexIndex = 0;
-			op.nStartIndex = elem.IndexStart;
-			op.IndexCount = elem.IndexCount;
-			op.nPrimType = RenderOperator::PT_TRIANGLELIST;
+			RenderOperator op(-1, m_pMesh->VertexBufferHandle_, 
+				m_pMesh->IndexBufferHandle_, RenderOperator::PT_TRIANGLELIST,
+				0, elem.IndexStart, elem.IndexCount, 0);
 			
 			visitor.Visit(op);
 		}		

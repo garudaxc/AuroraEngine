@@ -262,6 +262,31 @@ BaseShader::~BaseShader()
 {
 }
 
+void BaseShader::InitBase(ShaderType type, const string& pathname)
+{
+	type_ = type;
+	pathname_ = pathname;
+
+	auto file = GFileSys->OpenFile(pathname_);
+
+	ShaderCode code;
+	code.text = file->ReadAsString();
+	code.type = type_;
+	code.name = pathname_;
+
+	file->Close();
+
+	if (type_ == VERTEX_SHADER) {
+		code.defines.push_back(make_pair("VERTEX_SHADER", "1"));
+	}
+
+	if (type_ == PIXEL_SHADER) {
+		code.defines.push_back(make_pair("PIXEL_SHADER", "1"));
+	}
+
+	handle_ = GRenderDevice->CreateShader(code);
+}
+
 void BaseShader::CommitShaderParameter()
 {
 	if (bindings_.handle >= 0) {
@@ -272,11 +297,11 @@ void BaseShader::CommitShaderParameter()
 void BaseShader::BindShader()
 {
 	assert(handle_ >= 0);
-	if (type_ == Shader::Category::TYPE_VERTEX_SHADER) {
+	if (type_ == VERTEX_SHADER) {
 		BindVertexShader(handle_);
 	}
 
-	if (type_ == Shader::Category::TYPE_PIXEL_SHADER) {
+	if (type_ == PIXEL_SHADER) {
 		BindPixelShader(handle_);
 	}
 }
@@ -292,19 +317,8 @@ ModelShaderVS::~ModelShaderVS()
 }
 
 void ModelShaderVS::Initialize()
-{
-	type_ = Shader::Category::TYPE_VERTEX_SHADER;
-	auto file = GFileSys->OpenFile(pathname_);
-
-	ShaderCode code;
-	code.text = file->ReadAsString();
-	code.type = type_;
-	code.name = pathname_;
-
-	file->Close();
-
-	handle_ = GRenderDevice->CreateShader(code);
-
+{	
+	InitBase(VERTEX_SHADER, "..\\dev\\data\\shader\\testVS.shd");
 	CreateBindings();
 }
 
@@ -318,8 +332,6 @@ void ModelShaderVS::CreateBindings()
 	bindings_.handle = CreateShaderParameterBinding(handle_, bindings_);	
 }
 
-
-
 ModelShaderPS::ModelShaderPS()
 {
 }
@@ -328,21 +340,9 @@ ModelShaderPS::~ModelShaderPS()
 {
 }
 
-
 void ModelShaderPS::Initialize()
 {
-	type_ = Shader::Category::TYPE_PIXEL_SHADER;
-	auto file = GFileSys->OpenFile(pathname_);
-
-	ShaderCode code;
-	code.text = file->ReadAsString();
-	code.type = type_;
-	code.name = pathname_;
-
-	file->Close();
-
-	handle_ = GRenderDevice->CreateShader(code);
-
+	InitBase(PIXEL_SHADER, "..\\dev\\data\\shader\\testPS2.shder");
 	CreateBindings();
 }
 

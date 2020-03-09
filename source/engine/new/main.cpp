@@ -86,14 +86,14 @@ bool LineRenderer::Init()
 {
 	m_pMatInst = Global::GetResourceManager()->CreateMaterialInst("MtlHelper");
 
-	m_op.pMaterial = m_pMatInst->GetMaterialTemplate();
-	m_op.pMtlInst = m_pMatInst.get();
-	m_op.pVertDesc = Global::GetResourceManager()->GetVertexDesc(ResourceManager::PLAIN_VEXDESC).Get();
-	m_op.nPrimType = RenderOperator::PT_LINELIST;
-	m_op.nBaseVertexIndex = 0;
-	m_op.nMinVertexIndex = 0;
-	m_op.nStartIndex = 0;
-	m_op.nVertexStride = sizeof(Vector3f);
+	//m_op.pMaterial = m_pMatInst->GetMaterialTemplate();
+	//m_op.pMtlInst = m_pMatInst.get();
+	//m_op.pVertDesc = Global::GetResourceManager()->GetVertexDesc(ResourceManager::PLAIN_VEXDESC).Get();
+	//m_op.nPrimType = RenderOperator::PT_LINELIST;
+	//m_op.nBaseVertexIndex = 0;
+	//m_op.nMinVertexIndex = 0;
+	//m_op.nStartIndex = 0;
+	//m_op.nVertexStride = sizeof(Vector3f);
 	return true;
 
 }

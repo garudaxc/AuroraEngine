@@ -10,7 +10,7 @@
 #include "Model.h"
 #include "Texture.h"
 #include "RenderState.h"
-#include "DebugDraw.h"
+#include "HelperDraw.h"
 namespace Aurora
 {	
 
@@ -112,7 +112,7 @@ namespace Aurora
 		virtual void Visit(RenderOperator& op)
 		{
 			op.VertexLayout_ = VertexLayoutPosNormTangentTexHandle_;
-			op.VertexStride = VertexLayoutPosNormTangentTexStride;
+			op.VertexStride_ = VertexLayoutPosNormTangentTexStride;
 			GRenderDevice->ExecuteOperator(op);
 		}
 	};
@@ -120,14 +120,13 @@ namespace Aurora
 
 	CSimpleVisitor    SimpleVisitor_;
 
-
 	
 	void SimpleRendering::Initialize()
 	{
 		VertexLayoutPosNormTangentTexHandle_ = CreateVertexLayoutHandle(VertexLayoutPosNormTangentTex);
 		VertexLayoutPosNormTangentTexStride = Geometry::CalcVertexStride(VertexLayoutPosNormTangentTex);
 
-		DebugDraw.Init();
+		HelperDraw.Init();
 
 
 		modelvs_.Initialize();

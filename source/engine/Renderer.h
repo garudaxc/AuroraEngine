@@ -24,7 +24,7 @@ namespace Aurora
 	class RenderOperator
 	{
 	public:
-		enum PrimitiveType : int8
+		enum EPrimitiveType : int8
 		{
 			PT_POINTLIST             = 0,
 			PT_LINELIST,
@@ -33,20 +33,35 @@ namespace Aurora
 			PT_TRIANGLESTRIP,
 		};
 
+		RenderOperator() {};
+		RenderOperator(Handle VertexLayout, Handle VertexBuffer, Handle IndexBuffer,
+			EPrimitiveType PrimType, int32 BaseVertexIndex, uint StartIndex,
+			int32 IndexCount, uint32 VertexStride) 
+		{
+			VertexLayout_ = VertexLayout;
+			VertexBuffer_ = VertexBuffer;
+			IndexBuffer_ = IndexBuffer;
+			PrimType_ = PrimType;
+			BaseVertexIndex_ = BaseVertexIndex;
+			StartIndex_ = StartIndex;
+			IndexCount_ = IndexCount;
+			VertexStride_ = VertexStride;
+		}
+
 
 		Material* pMaterial = nullptr;
 		MaterialInstance* pMtlInst = nullptr;
 
-		PrimitiveType nPrimType = PrimitiveType::PT_TRIANGLELIST;
+		EPrimitiveType PrimType_ = PT_TRIANGLELIST;
 
-		int32	nBaseVertexIndex;
-		uint	nStartIndex;
-		int32	IndexCount;
-		uint32	VertexStride;
-
-		Handle		VertexLayout_ = -1;
+		Handle		VertexLayout_	= -1;
 		Handle		VertexBuffer_	= -1;
 		Handle		IndexBuffer_	= -1;
+
+		int32	BaseVertexIndex_;
+		uint	StartIndex_;
+		int32	IndexCount_;
+		uint32	VertexStride_;
 	};
 
 
