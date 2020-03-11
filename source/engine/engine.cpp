@@ -15,6 +15,7 @@
 #include "Entity.h"
 #include "Mesh.h"
 #include "SimpleRendering.h"
+#include "Gui.h"
 
 namespace Aurora
 {
@@ -47,7 +48,7 @@ namespace Aurora
 
 	}
 
-	void Engine::Init(HWND hWnd, int nWidth, int nHeight, FrameListener* pListener)
+	void Engine::Init(int nWidth, int nHeight, FrameListener* pListener)
 	{
 		Config::Initialize();
 
@@ -57,7 +58,7 @@ namespace Aurora
 
 		m_pTimer = new Timer();
 
-		m_pRenderer = IRenderDevice::CreateDevice(hWnd, nWidth, nHeight);
+		m_pRenderer = IRenderDevice::CreateDevice(nWidth, nHeight);
 
 		m_pResourceManager = new ResourceManager();
 		m_pResourceManager->Init();
@@ -82,11 +83,15 @@ namespace Aurora
 		m_pFrameListener = pListener;
 
 		m_pTimer->Reset();
+
+		GuiInit();
 	}
 
 
 	void Engine::Destroy()
 	{
+		GuiCleanup();
+
 		EntityFactory::Finalize();
 
 		GPipeline.Finalize();

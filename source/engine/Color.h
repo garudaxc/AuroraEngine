@@ -42,10 +42,8 @@ public:
 	std::string			ToStringRGB() const;
 	const Color&		FromStringRGB(const std::string& str);
 	const Color&		FromStringRGBA(const std::string& str);
-
-
+	
 	float r, g, b, a;
-
 
 	static const Color WHITE;
 	static const Color BLACK;
@@ -166,12 +164,12 @@ inline const float* Color::Ptr() const
 
 inline uint32 Color::ToRGBA8()
 {
-	int r8 = Mathf::Max(r * 255, 255);
-	int g8 = Mathf::Max(r * 255, 255);
-	int b8 = Mathf::Max(r * 255, 255);
-	int a8 = Mathf::Max(r * 255, 255);
+	int r8 = Mathf::Min(r * 255, 255);
+	int g8 = Mathf::Min(g * 255, 255);
+	int b8 = Mathf::Min(b * 255, 255);
+	int a8 = Mathf::Min(a * 255, 255);
 
-	unsigned int rgba8 = (r8 << 24) | (g8 << 16) | (b8 << 8) | a8;
+	unsigned int rgba8 = (a8 << 24) | (b8 << 16) | (g8 << 8) | r8;
 	return rgba8;
 }
 

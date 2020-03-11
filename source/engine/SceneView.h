@@ -53,8 +53,6 @@ namespace Aurora
 		float fFarPlane;
 		int nWidth, nHeight;
 
-		Vector3f vEyePos;
-
 		DrawingEntity* pDrawingEntity;
 		DrawingLight* pDrawingLight;
 	};

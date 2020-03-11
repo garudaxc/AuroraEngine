@@ -105,7 +105,7 @@ namespace Aurora
 		};
 
 
-		static IRenderDevice* CreateDevice(HWND hWnd, int nWidth, int nHeight);
+		static IRenderDevice* CreateDevice(int nWidth, int nHeight);
 
 		virtual Handle  CreateShader(const ShaderCode& code) = 0;
  

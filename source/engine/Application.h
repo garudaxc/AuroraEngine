@@ -26,10 +26,7 @@ public:
 	virtual void		OnResizeFrameBuffer(int width, int height)	{}
 	virtual void		OnUpdate(float dt)							{}
 	virtual void		OnRender()								{}
-
-	HWND				GetHWnd() { return m_hWnd; }
-
-
+	   
 	void			StartTiming();
 	float			EndTiming(char* text, bool bTextout = true);
 
@@ -39,12 +36,11 @@ protected:
 
 	Engine*		m_pEngine;
 
-	int				m_nWindowWidth;
-	int				m_nWindowHeight;
-	HWND			m_hWnd;
+	int			m_nWindowWidth;
+	int			m_nWindowHeight;
 
-	long			m_lTimeStart;
-	long			m_lTimeEnd;
+	long		m_lTimeStart;
+	long		m_lTimeEnd;
 
 private:
 	// message call back

@@ -2,407 +2,200 @@
 #include "Platform.h"
 #include <Windows.h>
 #include <io.h>
+#include <vector>
+#include <bitset>
+#include <array>
+#include <string>
+#include <intrin.h>
 
 namespace Aurora
 {
 
 
-static bool HasCPUID() {
-	__asm 
+	class InstructionSet
 	{
-		pushfd						// save eflags
-		pop		eax
-		test	eax, 0x00200000		// check ID bit
-		jz		set21				// bit 21 is not set, so jump to set_21
-		and		eax, 0xffdfffff		// clear bit 21
-		push	eax					// save new value in register
-		popfd						// store new value in flags
-		pushfd
-		pop		eax
-		test	eax, 0x00200000		// check ID bit
-		jz		good
-		jmp		err					// cpuid not supported
-set21:
-		or		eax, 0x00200000		// set ID bit
-		push	eax					// store new value
-		popfd						// store new value in EFLAGS
-		pushfd
-		pop		eax
-		test	eax, 0x00200000		// if bit 21 is on
-		jnz		good
-		jmp		err
-	}
+		// forward declarations
+		class InstructionSet_Internal;
 
-err:
-	return false;
-good:
-	return true;
-}
+	public:
+		// getters
+		static std::string Vendor(void) { return CPU_Rep.vendor_; }
+		static std::string Brand(void) { return CPU_Rep.brand_; }
 
-#define _REG_EAX		0
-#define _REG_EBX		1
-#define _REG_ECX		2
-#define _REG_EDX		3
+		static bool SSE3(void) { return CPU_Rep.f_1_ECX_[0]; }
+		static bool PCLMULQDQ(void) { return CPU_Rep.f_1_ECX_[1]; }
+		static bool MONITOR(void) { return CPU_Rep.f_1_ECX_[3]; }
+		static bool SSSE3(void) { return CPU_Rep.f_1_ECX_[9]; }
+		static bool FMA(void) { return CPU_Rep.f_1_ECX_[12]; }
+		static bool CMPXCHG16B(void) { return CPU_Rep.f_1_ECX_[13]; }
+		static bool SSE41(void) { return CPU_Rep.f_1_ECX_[19]; }
+		static bool SSE42(void) { return CPU_Rep.f_1_ECX_[20]; }
+		static bool MOVBE(void) { return CPU_Rep.f_1_ECX_[22]; }
+		static bool POPCNT(void) { return CPU_Rep.f_1_ECX_[23]; }
+		static bool AES(void) { return CPU_Rep.f_1_ECX_[25]; }
+		static bool XSAVE(void) { return CPU_Rep.f_1_ECX_[26]; }
+		static bool OSXSAVE(void) { return CPU_Rep.f_1_ECX_[27]; }
+		static bool AVX(void) { return CPU_Rep.f_1_ECX_[28]; }
+		static bool F16C(void) { return CPU_Rep.f_1_ECX_[29]; }
+		static bool RDRAND(void) { return CPU_Rep.f_1_ECX_[30]; }
 
-/*
-================
-CPUID
-================
-*/
-static void CPUID( int func, unsigned regs[4] ) {
-	unsigned regEAX, regEBX, regECX, regEDX;
+		static bool MSR(void) { return CPU_Rep.f_1_EDX_[5]; }
+		static bool CX8(void) { return CPU_Rep.f_1_EDX_[8]; }
+		static bool SEP(void) { return CPU_Rep.f_1_EDX_[11]; }
+		static bool CMOV(void) { return CPU_Rep.f_1_EDX_[15]; }
+		static bool CLFSH(void) { return CPU_Rep.f_1_EDX_[19]; }
+		static bool MMX(void) { return CPU_Rep.f_1_EDX_[23]; }
+		static bool FXSR(void) { return CPU_Rep.f_1_EDX_[24]; }
+		static bool SSE(void) { return CPU_Rep.f_1_EDX_[25]; }
+		static bool SSE2(void) { return CPU_Rep.f_1_EDX_[26]; }
 
-	__asm pusha
-	__asm mov eax, func
-	__asm __emit 00fh
-	__asm __emit 0a2h
-	__asm mov regEAX, eax
-	__asm mov regEBX, ebx
-	__asm mov regECX, ecx
-	__asm mov regEDX, edx
-	__asm popa
+		static bool FSGSBASE(void) { return CPU_Rep.f_7_EBX_[0]; }
+		static bool BMI1(void) { return CPU_Rep.f_7_EBX_[3]; }
+		static bool HLE(void) { return CPU_Rep.isIntel_ && CPU_Rep.f_7_EBX_[4]; }
+		static bool AVX2(void) { return CPU_Rep.f_7_EBX_[5]; }
+		static bool BMI2(void) { return CPU_Rep.f_7_EBX_[8]; }
+		static bool ERMS(void) { return CPU_Rep.f_7_EBX_[9]; }
+		static bool INVPCID(void) { return CPU_Rep.f_7_EBX_[10]; }
+		static bool RTM(void) { return CPU_Rep.isIntel_ && CPU_Rep.f_7_EBX_[11]; }
+		static bool AVX512F(void) { return CPU_Rep.f_7_EBX_[16]; }
+		static bool RDSEED(void) { return CPU_Rep.f_7_EBX_[18]; }
+		static bool ADX(void) { return CPU_Rep.f_7_EBX_[19]; }
+		static bool AVX512PF(void) { return CPU_Rep.f_7_EBX_[26]; }
+		static bool AVX512ER(void) { return CPU_Rep.f_7_EBX_[27]; }
+		static bool AVX512CD(void) { return CPU_Rep.f_7_EBX_[28]; }
+		static bool SHA(void) { return CPU_Rep.f_7_EBX_[29]; }
 
-	regs[_REG_EAX] = regEAX;
-	regs[_REG_EBX] = regEBX;
-	regs[_REG_ECX] = regECX;
-	regs[_REG_EDX] = regEDX;
-}
+		static bool PREFETCHWT1(void) { return CPU_Rep.f_7_ECX_[0]; }
 
+		static bool LAHF(void) { return CPU_Rep.f_81_ECX_[0]; }
+		static bool LZCNT(void) { return CPU_Rep.isIntel_ && CPU_Rep.f_81_ECX_[5]; }
+		static bool ABM(void) { return CPU_Rep.isAMD_ && CPU_Rep.f_81_ECX_[5]; }
+		static bool SSE4a(void) { return CPU_Rep.isAMD_ && CPU_Rep.f_81_ECX_[6]; }
+		static bool XOP(void) { return CPU_Rep.isAMD_ && CPU_Rep.f_81_ECX_[11]; }
+		static bool TBM(void) { return CPU_Rep.isAMD_ && CPU_Rep.f_81_ECX_[21]; }
 
-/*
-================
-IsAMD
-================
-*/
-static bool IsAMD() {
-	char pstring[16];
-	char processorString[13];
+		static bool SYSCALL(void) { return CPU_Rep.isIntel_ && CPU_Rep.f_81_EDX_[11]; }
+		static bool MMXEXT(void) { return CPU_Rep.isAMD_ && CPU_Rep.f_81_EDX_[22]; }
+		static bool RDTSCP(void) { return CPU_Rep.isIntel_ && CPU_Rep.f_81_EDX_[27]; }
+		static bool _3DNOWEXT(void) { return CPU_Rep.isAMD_ && CPU_Rep.f_81_EDX_[30]; }
+		static bool _3DNOW(void) { return CPU_Rep.isAMD_ && CPU_Rep.f_81_EDX_[31]; }
 
-	// get name of processor
-	CPUID( 0, ( unsigned int * ) pstring );
-	processorString[0] = pstring[4];
-	processorString[1] = pstring[5];
-	processorString[2] = pstring[6];
-	processorString[3] = pstring[7];
-	processorString[4] = pstring[12];
-	processorString[5] = pstring[13];
-	processorString[6] = pstring[14];
-	processorString[7] = pstring[15];
-	processorString[8] = pstring[8];
-	processorString[9] = pstring[9];
-	processorString[10] = pstring[10];
-	processorString[11] = pstring[11];
-	processorString[12] = 0;
+	private:
+		static const InstructionSet_Internal CPU_Rep;
 
-	if ( strcmp( processorString, "AuthenticAMD" ) == 0 ) {
-		return true;
-	}
-	return false;
-}
+		class InstructionSet_Internal
+		{
+		public:
+			InstructionSet_Internal()
+				: nIds_{ 0 },
+				nExIds_{ 0 },
+				isIntel_{ false },
+				isAMD_{ false },
+				f_1_ECX_{ 0 },
+				f_1_EDX_{ 0 },
+				f_7_EBX_{ 0 },
+				f_7_ECX_{ 0 },
+				f_81_ECX_{ 0 },
+				f_81_EDX_{ 0 },
+				data_{},
+				extdata_{}
+			{
+				//int cpuInfo[4] = {-1};
+				std::array<int, 4> cpui;
 
-/*
-================
-HasCMOV
-================
-*/
-static bool HasCMOV() {
-	unsigned regs[4];
+				// Calling __cpuid with 0x0 as the function_id argument
+				// gets the number of the highest valid function ID.
+				__cpuid(cpui.data(), 0);
+				nIds_ = cpui[0];
 
-	// get CPU feature bits
-	CPUID( 1, regs );
-
-	// bit 15 of EDX denotes CMOV existence
-	if ( regs[_REG_EDX] & ( 1 << 15 ) ) {
-		return true;
-	}
-	return false;
-}
-
-/*
-================
-Has3DNow
-================
-*/
-static bool Has3DNow() {
-	unsigned regs[4];
-
-	// check AMD-specific functions
-	CPUID( 0x80000000, regs );
-	if ( regs[_REG_EAX] < 0x80000000 ) {
-		return false;
-	}
-
-	// bit 31 of EDX denotes 3DNow! support
-	CPUID( 0x80000001, regs );
-	if ( regs[_REG_EDX] & ( 1 << 31 ) ) {
-		return true;
-	}
-
-	return false;
-}
-
-/*
-================
-HasMMX
-================
-*/
-static bool HasMMX() {
-	unsigned regs[4];
-
-	// get CPU feature bits
-	CPUID( 1, regs );
-
-	// bit 23 of EDX denotes MMX existence
-	if ( regs[_REG_EDX] & ( 1 << 23 ) ) {
-		return true;
-	}
-	return false;
-}
-
-/*
-================
-HasSSE
-================
-*/
-static bool HasSSE() {
-	unsigned regs[4];
-
-	// get CPU feature bits
-	CPUID( 1, regs );
-
-	// bit 25 of EDX denotes SSE existence
-	if ( regs[_REG_EDX] & ( 1 << 25 ) ) {
-		return true;
-	}
-	return false;
-}
-
-/*
-================
-HasSSE2
-================
-*/
-static bool HasSSE2() {
-	unsigned regs[4];
-
-	// get CPU feature bits
-	CPUID( 1, regs );
-
-	// bit 26 of EDX denotes SSE2 existence
-	if ( regs[_REG_EDX] & ( 1 << 26 ) ) {
-		return true;
-	}
-	return false;
-}
-
-/*
-================
-HasSSE3
-================
-*/
-static bool HasSSE3() {
-	unsigned regs[4];
-
-	// get CPU feature bits
-	CPUID( 1, regs );
-
-	// bit 0 of ECX denotes SSE3 existence
-	if ( regs[_REG_ECX] & ( 1 << 0 ) ) {
-		return true;
-	}
-	return false;
-}
-
-/*
-================
-LogicalProcPerPhysicalProc
-================
-*/
-#define NUM_LOGICAL_BITS   0x00FF0000     // EBX[23:16] Bit 16-23 in ebx contains the number of logical
-                                          // processors per physical processor when execute cpuid with 
-                                          // eax set to 1
-static unsigned char LogicalProcPerPhysicalProc() {
-	unsigned int regebx = 0;
-	__asm {
-		mov eax, 1
-		cpuid
-		mov regebx, ebx
-	}
-	return (unsigned char) ((regebx & NUM_LOGICAL_BITS) >> 16);
-}
-
-/*
-================
-GetAPIC_ID
-================
-*/
-#define INITIAL_APIC_ID_BITS  0xFF000000  // EBX[31:24] Bits 24-31 (8 bits) return the 8-bit unique 
-                                          // initial APIC ID for the processor this code is running on.
-                                          // Default value = 0xff if HT is not supported
-static unsigned char GetAPIC_ID() {
-	unsigned int regebx = 0;
-	__asm {
-		mov eax, 1
-		cpuid
-		mov regebx, ebx
-	}
-	return (unsigned char) ((regebx & INITIAL_APIC_ID_BITS) >> 24);
-}
-
-/*
-================
-CPUCount
-
-	logicalNum is the number of logical CPU per physical CPU
-    physicalNum is the total number of physical processor
-	returns one of the HT_* flags
-================
-*/
-#define HT_NOT_CAPABLE				0
-#define HT_ENABLED					1
-#define HT_DISABLED					2
-#define HT_SUPPORTED_NOT_ENABLED	3
-#define HT_CANNOT_DETECT			4
-
-int CPUCount( int &logicalNum, int &physicalNum ) {
-	int statusFlag;
-	SYSTEM_INFO info;
-
-	physicalNum = 1;
-	logicalNum = 1;
-	statusFlag = HT_NOT_CAPABLE;
-
-	info.dwNumberOfProcessors = 0;
-	GetSystemInfo (&info);
-
-	// Number of physical processors in a non-Intel system
-	// or in a 32-bit Intel system with Hyper-Threading technology disabled
-	physicalNum = info.dwNumberOfProcessors;  
-
-	unsigned char HT_Enabled = 0;
-
-	logicalNum = LogicalProcPerPhysicalProc();
-
-	if ( logicalNum >= 1 ) {	// > 1 doesn't mean HT is enabled in the BIOS
-		HANDLE hCurrentProcessHandle;
-		DWORD  dwProcessAffinity;
-		DWORD  dwSystemAffinity;
-		DWORD  dwAffinityMask;
-
-		// Calculate the appropriate  shifts and mask based on the 
-		// number of logical processors.
-
-		unsigned char i = 1, PHY_ID_MASK  = 0xFF, PHY_ID_SHIFT = 0;
-
-		while( i < logicalNum ) {
-			i *= 2;
- 			PHY_ID_MASK  <<= 1;
-			PHY_ID_SHIFT++;
-		}
-		
-		hCurrentProcessHandle = GetCurrentProcess();
-		GetProcessAffinityMask( hCurrentProcessHandle, &dwProcessAffinity, &dwSystemAffinity );
-
-		// Check if available process affinity mask is equal to the
-		// available system affinity mask
-		if ( dwProcessAffinity != dwSystemAffinity ) {
-			statusFlag = HT_CANNOT_DETECT;
-			physicalNum = -1;
-			return statusFlag;
-		}
-
-		dwAffinityMask = 1;
-		while ( dwAffinityMask != 0 && dwAffinityMask <= dwProcessAffinity ) {
-			// Check if this CPU is available
-			if ( dwAffinityMask & dwProcessAffinity ) {
-				if ( SetProcessAffinityMask( hCurrentProcessHandle, dwAffinityMask ) ) {
-					unsigned char APIC_ID, LOG_ID, PHY_ID;
-
-					Sleep( 0 ); // Give OS time to switch CPU
-
-					APIC_ID = GetAPIC_ID();
-					LOG_ID  = APIC_ID & ~PHY_ID_MASK;
-					PHY_ID  = APIC_ID >> PHY_ID_SHIFT;
-
-					if ( LOG_ID != 0 ) {
-						HT_Enabled = 1;
-					}
+				for (int i = 0; i <= nIds_; ++i)
+				{
+					__cpuidex(cpui.data(), i, 0);
+					data_.push_back(cpui);
 				}
-			}
-			dwAffinityMask = dwAffinityMask << 1;
-		}
-	        
-		// Reset the processor affinity
-		SetProcessAffinityMask( hCurrentProcessHandle, dwProcessAffinity );
-	    
-		if ( logicalNum == 1 ) {  // Normal P4 : HT is disabled in hardware
-			statusFlag = HT_DISABLED;
-		} else {
-			if ( HT_Enabled ) {
-				// Total physical processors in a Hyper-Threading enabled system.
-				physicalNum /= logicalNum;
-				statusFlag = HT_ENABLED;
-			} else {
-				statusFlag = HT_SUPPORTED_NOT_ENABLED;
-			}
-		}
-	}
-	return statusFlag;
-}
 
-/*
-================
-HasHTT
-================
-*/
-static bool HasHTT() {
-	unsigned regs[4];
-	int logicalNum, physicalNum, HTStatusFlag;
+				// Capture vendor string
+				char vendor[0x20];
+				memset(vendor, 0, sizeof(vendor));
+				*reinterpret_cast<int*>(vendor) = data_[0][1];
+				*reinterpret_cast<int*>(vendor + 4) = data_[0][3];
+				*reinterpret_cast<int*>(vendor + 8) = data_[0][2];
+				vendor_ = vendor;
+				if (vendor_ == "GenuineIntel")
+				{
+					isIntel_ = true;
+				}
+				else if (vendor_ == "AuthenticAMD")
+				{
+					isAMD_ = true;
+				}
 
-	// get CPU feature bits
-	CPUID( 1, regs );
+				// load bitset with flags for function 0x00000001
+				if (nIds_ >= 1)
+				{
+					f_1_ECX_ = data_[1][2];
+					f_1_EDX_ = data_[1][3];
+				}
 
-	// bit 28 of EDX denotes HTT existence
-	if ( !( regs[_REG_EDX] & ( 1 << 28 ) ) ) {
-		return false;
-	}
+				// load bitset with flags for function 0x00000007
+				if (nIds_ >= 7)
+				{
+					f_7_EBX_ = data_[7][1];
+					f_7_ECX_ = data_[7][2];
+				}
 
-	HTStatusFlag = CPUCount( logicalNum, physicalNum );
-	if ( HTStatusFlag != HT_ENABLED ) {
-		return false;
-	}
-	return true;
-}
+				// Calling __cpuid with 0x80000000 as the function_id argument
+				// gets the number of the highest valid extended ID.
+				__cpuid(cpui.data(), 0x80000000);
+				nExIds_ = cpui[0];
 
-/*
-================
-HasHTT
-================
-*/
-static bool HasDAZ() {
-	__declspec(align(16)) unsigned char FXSaveArea[512];
-	unsigned char *FXArea = FXSaveArea;
-	DWORD dwMask = 0;
-	unsigned regs[4];
+				char brand[0x40];
+				memset(brand, 0, sizeof(brand));
 
-	// get CPU feature bits
-	CPUID( 1, regs );
+				for (int i = 0x80000000; i <= nExIds_; ++i)
+				{
+					__cpuidex(cpui.data(), i, 0);
+					extdata_.push_back(cpui);
+				}
 
-	// bit 24 of EDX denotes support for FXSAVE
-	if ( !( regs[_REG_EDX] & ( 1 << 24 ) ) ) {
-		return false;
-	}
+				// load bitset with flags for function 0x80000001
+				if (nExIds_ >= 0x80000001)
+				{
+					f_81_ECX_ = extdata_[1][2];
+					f_81_EDX_ = extdata_[1][3];
+				}
 
-	memset( FXArea, 0, sizeof( FXSaveArea ) );
+				// Interpret CPU brand string if reported
+				if (nExIds_ >= 0x80000004)
+				{
+					memcpy(brand, extdata_[2].data(), sizeof(cpui));
+					memcpy(brand + 16, extdata_[3].data(), sizeof(cpui));
+					memcpy(brand + 32, extdata_[4].data(), sizeof(cpui));
+					brand_ = brand;
+				}
+			};
 
-	__asm {
-		mov		eax, FXArea
-		FXSAVE	[eax]
-	}
+			int nIds_;
+			int nExIds_;
+			std::string vendor_;
+			std::string brand_;
+			bool isIntel_;
+			bool isAMD_;
+			std::bitset<32> f_1_ECX_;
+			std::bitset<32> f_1_EDX_;
+			std::bitset<32> f_7_EBX_;
+			std::bitset<32> f_7_ECX_;
+			std::bitset<32> f_81_ECX_;
+			std::bitset<32> f_81_EDX_;
+			std::vector<std::array<int, 4>> data_;
+			std::vector<std::array<int, 4>> extdata_;
+		};
+	};
 
-	dwMask = *(DWORD *)&FXArea[28];						// Read the MXCSR Mask
-	return ( ( dwMask & ( 1 << 6 ) ) == ( 1 << 6 ) );	// Return if the DAZ bit is set
-}
+	// Initialize static member data
+	const InstructionSet::InstructionSet_Internal InstructionSet::CPU_Rep;
+
+
 
 /*
 ================================================================================================
@@ -573,69 +366,54 @@ Sys_GetCPUId
 cpuid_t GetCPUId() {
 	int flags;
 
-	// verify we're at least a Pentium or 486 with CPUID support
-	if ( !HasCPUID() ) {
-		return CPUID_UNSUPPORTED;
-	}
-
-	// check for an AMD
-	if ( IsAMD() ) {
-		flags = CPUID_AMD;
-	} else {
-		flags = CPUID_INTEL;
-	}
 
 	// check for Multi Media Extensions
-	if ( HasMMX() ) {
+	if (InstructionSet::MMX() ) {
 		flags |= CPUID_MMX;
 	}
 
 	// check for 3DNow!
-	if ( Has3DNow() ) {
+	if (InstructionSet::_3DNOW() ) {
 		flags |= CPUID_3DNOW;
 	}
 
 	// check for Streaming SIMD Extensions
-	if ( HasSSE() ) {
+	if (InstructionSet::SSE() ) {
 		flags |= CPUID_SSE | CPUID_FTZ;
 	}
 
 	// check for Streaming SIMD Extensions 2
-	if ( HasSSE2() ) {
+	if (InstructionSet::SSE2() ) {
 		flags |= CPUID_SSE2;
 	}
 
 	// check for Streaming SIMD Extensions 3 aka Prescott's New Instructions
-	if ( HasSSE3() ) {
+	if (InstructionSet::SSE3() ) {
 		flags |= CPUID_SSE3;
 	}
 
 	// check for Hyper-Threading Technology
-	if ( HasHTT() ) {
-		flags |= CPUID_HTT;
-	}
+	//if (InstructionSet::HTT() ) {
+	//	flags |= CPUID_HTT;
+	//}
 
 	// check for Conditional Move (CMOV) and fast floating point comparison (FCOMI) instructions
-	if ( HasCMOV() ) {
+	if (InstructionSet::CMOV() ) {
 		flags |= CPUID_CMOV;
 	}
 
 	// check for Denormals-Are-Zero mode
-	if ( HasDAZ() ) {
-		flags |= CPUID_DAZ;
-	}
+	//if (InstructionSet::DAZ() ) {
+	//	flags |= CPUID_DAZ;
+	//}
 
 	return (cpuid_t)flags;
 }
 
 
-
-
-
 void InitPlatform()
 {
 	Win32Info win32Info;
-
 	CoInitialize( NULL );
 
 	//
@@ -647,6 +425,10 @@ void InitPlatform()
 		GLog->Error( "Couldn't get OS info" );
 
 	string osVersion;
+
+	// on win10, GetVersionEx have been deprecated, so we can only get win8 here
+	// https://docs.microsoft.com/zh-cn/windows/win32/sysinfo/targeting-your-application-at-windows-8-1
+
 	if( win32Info.osversion.dwPlatformId == VER_PLATFORM_WIN32_NT ) {
 		if( win32Info.osversion.dwMajorVersion <= 4 ) {
 			osVersion = "WinNT (NT)";
@@ -660,6 +442,7 @@ void InitPlatform()
 			osVersion = "Windows 7";
 		} else if ( win32Info.osversion.dwMajorVersion == 6  && win32Info.osversion.dwMinorVersion == 2 ) {
 			osVersion = "Windows 8";
+
 		} else {
 			osVersion = "Unknown NT variant";
 		}
@@ -695,15 +478,20 @@ void InitPlatform()
 
 	string cpuInfo;
 
-	if ( win32Info.cpuid & CPUID_AMD ) {
-		cpuInfo += "AMD CPU";
-	} else if ( win32Info.cpuid & CPUID_INTEL ) {
-		cpuInfo += "Intel CPU";
-	} else if ( win32Info.cpuid & CPUID_UNSUPPORTED ) {
-		cpuInfo += "unsupported CPU";
-	} else {
-		cpuInfo += "generic CPU";
-	}
+	//if ( win32Info.cpuid & CPUID_AMD ) {
+	//	cpuInfo += "AMD CPU";
+	//} else if ( win32Info.cpuid & CPUID_INTEL ) {
+	//	cpuInfo += "Intel CPU";
+	//} else if ( win32Info.cpuid & CPUID_UNSUPPORTED ) {
+	//	cpuInfo += "unsupported CPU";
+	//} else {
+	//	cpuInfo += "generic CPU";
+	//}
+
+	cpuInfo += InstructionSet::Vendor();
+	cpuInfo += "  ";
+	cpuInfo += InstructionSet::Brand();
+
 
 	cpuInfo += " with ";
 	if ( win32Info.cpuid & CPUID_MMX ) {
@@ -740,14 +528,6 @@ void InitPlatform()
 	//}
 
 }
-
-
-
-
-
-
-
-
 
 
 

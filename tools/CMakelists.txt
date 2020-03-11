@@ -20,12 +20,14 @@ include_directories(../source/engine)
 include_directories(../source/ThirdParty)
 include_directories(../source/ThirdParty/TinyXml)
 include_directories(../source/ThirdParty/dxTools)
+include_directories(../source/ThirdParty/imgui)
 
 aux_source_directory(../source/engine srcs)
 aux_source_directory(../source/ThirdParty/TinyXml srcs)
 aux_source_directory(../source/ThirdParty/zip srcs)
 aux_source_directory(../source/ThirdParty/stb srcs)
 aux_source_directory(../source/ThirdParty/dxTools srcs)
+aux_source_directory(../source/ThirdParty/imgui srcs)
 
 
 # add_subdirectory(../code/thirdParty ../Build/thirdParty)
@@ -34,6 +36,10 @@ aux_source_directory(../source/ThirdParty/dxTools srcs)
 # set(EXECUTABLE_OUTPUT_PATH ../Binaries)
 
 if(CMAKE_HOST_WIN32)
+
+message("CMAKE_HOST_WIN32 " ${CMAKE_HOST_WIN32})
+aux_source_directory(../source/ThirdParty/imgui/dx11 srcs)
+aux_source_directory(../source/ThirdParty/imgui/win srcs)
 	# # # # include_directories(../code/win)
 	# # # # aux_source_directory(../code/win srcs)
 	# # # # link_directories(../libs/win32)

@@ -2,6 +2,7 @@
 #define GAQUATERNION_H
 
 #include <string>
+#include <Vector.h>
 
 namespace Aurora
 {
@@ -14,6 +15,7 @@ public:
 	Quaternion(T fw, T fx, T fy, T fz);
 	Quaternion(const Quaternion<T>& q);
 	Quaternion(T fx, T fy, T fz);
+	Quaternion(const Vector3<T>& v, T angle);
 
 	inline const Quaternion<T>& operator = (const Quaternion<T>& q);
 
@@ -40,11 +42,15 @@ public:
 
 	inline void Normalize();
 
-	float w, x, y, z;
+	const Quaternion<T>& RotationAxis(const Vector3<T>& v, T angle);
+	Vector3<T>&& Transform(const Vector3<T>& v) const;
 
+	const Quaternion<T> Inverse() const;
+	const Quaternion<T>& InverseSelf();
+
+	float w, x, y, z;
 	
 	static const Quaternion IDENTITY;
-
 };
 
 
@@ -60,6 +66,11 @@ template<typename T>
 Quaternion<T>::Quaternion(const Quaternion<T>& q)
 {
 	w = q.w;	x = q.x;	y = q.y;	z = q.z;
+}
+template<typename T>
+Quaternion<T>::Quaternion(const Vector3<T>& v, T angle)
+{
+	RotationAxis(v, angle);
 }
 //-------------------------------------------------------------------
 template<typename T>
@@ -217,6 +228,44 @@ Quaternion<T>::Normalize()
 	y *= invLen;
 	z *= invLen;
 }
+
+template<typename T>
+Vector3<T>&& Quaternion<T>::Transform(const Vector3<T>& v) const
+{
+	Vector3<T> b(x, y, z);
+	float b2 = b.x * b.x + b.y * b.y + b.z * b.z;
+	return move(v * (w * w - b2) + b * (v.Dot(b) * 2.0)
+		+ b.Cross(v) * (w * 2.0));
+}
+
+template<typename T>
+const Quaternion<T>& Quaternion<T>::RotationAxis(const Vector3<T>& v, T angle)
+{
+	T halfAngle = ((T)0.5) * angle;
+	T fSin = Math<T>::Sin(halfAngle);
+	w = Math<T>::Cos(halfAngle);
+	x = fSin * v.x;
+	y = fSin * v.y;
+	z = fSin * v.z;
+	return *this;
+}
+
+
+template<typename T>
+const Quaternion<T> Quaternion<T>::Inverse() const
+{
+	return Quaternion<T>(w, -x, -y, -z);
+}
+
+template<typename T>
+const Quaternion<T>& Quaternion<T>::InverseSelf()
+{
+	x = -x;
+	y = -y;
+	z = -z;
+	return *this;
+}
+
 //-------------------------------------------------------------------
 
 template<typename T>

@@ -16,7 +16,7 @@ namespace Aurora
 
 	void CDrawLineVertexShader::Initialize()
 	{
-		InitBase(BaseShader::VERTEX_SHADER, "..\\dev\\data\\shader\\HelperVS.shader");
+		InitBase(BaseShader::VERTEX_SHADER, "..\\dev\\data\\shader\\Helper.shader");
 	}
 
 
@@ -29,7 +29,7 @@ namespace Aurora
 
 	void CDrawLinePixelShader::Initialize()
 	{
-		InitBase(BaseShader::VERTEX_SHADER, "..\\dev\\data\\shader\\HelperVS.shader");
+		InitBase(BaseShader::PIXEL_SHADER, "..\\dev\\data\\shader\\Helper.shader");
 	}
 
 	CDrawLineVertexShader	DrawLineVertexShader;

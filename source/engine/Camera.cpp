@@ -258,17 +258,10 @@ ArcBall::GetTransformation(Matrix4f& t) const
 
 //=============================================================================================
 Camera::Camera():
-m_vEye(0.0f, 0.0f, 0.0f), m_vRight(1.0f, 0.0f, 0.0f), m_vUp(0.0f, 1.0f, 0.0f),m_vLookDir(0.0f, 0.0f, -1.0f),
-m_bUpdateView(true), m_fAspect(1.0f),m_fWidth(100.0f),m_fHeight(100.0f)
+m_fAspect(1.0f),m_fWidth(100.0f),m_fHeight(100.0f)
 {
 }
 
-Camera::Camera(const Vector3f& pos, const Vector3f& lookAt, const Vector3f& up)
-{
-	m_vEye = pos;
-	LookAt_ = lookAt;
-	m_vUp = up;
-}
 
 //---------------------------------------------------------------------------
 void Camera::SetViewPort(unsigned int Width,	unsigned int Height,
@@ -329,15 +322,6 @@ void Camera::SetViewVolume(float l, float r, float b, float t)
 	m_fT = t;
 }
 
-void Camera::SetTransform(const Matrix4f& matTransform)
-{
-	Vector3Transform(m_vEye, Vector3f::ZERO, matTransform);
-	Vector3Rotate(m_vRight, Vector3f::UNIT_X, matTransform);
-	Vector3Rotate(m_vUp, Vector3f::UNIT_Z, matTransform);
-	Vector3Rotate(m_vLookDir, Vector3f::UNIT_Y, matTransform);
-
-}
-
 
 //
 //void Camera::UpdateFromParentNode()
@@ -357,27 +341,9 @@ void Camera::SetTransform(const Matrix4f& matTransform)
 //////////////////////////////////////////////////////////////////////////
 
 //
-//const Matrix4f& CameraOrthoGetProjMatrix()	const
-//{
-//	if (m_bUpdateProj)
-//	{
-//		MatrixOrthoRH(m_matProj, m_fWidth, m_fHeight, m_fZn, m_fZf);
-//		m_bUpdateProj = false;
-//	}
-//	return m_matProj;
-//}
-//
-//
-//const Matrix4f& CameraOrthoOffCenter::GetProjMatrix()	const
-//{
-//	if (m_bUpdateProj)
-//	{
-//		MatrixOrthoOffCenterRH(m_matProj, m_fL, m_fR, m_fB, m_fT, m_fZn, m_fZf);
-//		m_bUpdateProj = false;
-//	}
-//	return m_matProj;
-//}
-//
+
+
+
 //const Matrix4f& CameraPerspectiveFov::GetProjMatrix()	const
 //{
 //	if (m_bUpdateProj)
@@ -409,9 +375,6 @@ void Camera::SetTransform(const Matrix4f& matTransform)
 //	return Ray(m_vEye, dir);
 //}
 //
-
-
-
 
 
 

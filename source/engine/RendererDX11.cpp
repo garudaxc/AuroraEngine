@@ -249,15 +249,11 @@ namespace Aurora
 
 		virtual Handle  CreateShader(const ShaderCode& code);
 
-
 		virtual Texture* CreateTexture(File* file);
 
 		virtual Texture* CreateTexture(Texture::Type type, const Texture::Desc& desc);
 
 		virtual RenderTarget* CreateRenderTarget(const RenderTarget::Desc& desc);
-
-
-		//////////////////////////////////////////////////////////////////////////
 
 
 		virtual void		Clear(int clearMask, const Color& clearColor = Color::BLUE, float fDepth = 1.0f, uint8 nStencil = 0);
@@ -294,8 +290,7 @@ namespace Aurora
 
 
 
-
-
+	extern HWND	MainHWnd;
 
 	static RendererDx11			GRendererDx11;
 
@@ -456,9 +451,9 @@ namespace Aurora
 
 	void CreateGlobalParameterBuffer();
 
-	IRenderDevice* IRenderDevice::CreateDevice(HWND hWnd, int nWidth, int nHeight)
+	IRenderDevice* IRenderDevice::CreateDevice(int nWidth, int nHeight)
 	{
-		if (!CreateDX11Device(hWnd)) {
+		if (!CreateDX11Device(MainHWnd)) {
 			return NULL;
 		}
 

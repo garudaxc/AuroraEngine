@@ -40,9 +40,7 @@ namespace Aurora
 		const string& GetName() const		{	return m_Name;	}
 		
 		virtual void Update();
-
-		const Matrix4f&	GetWorldTransform() const;
-
+		
 		void SetModel(Model* pModel)	{	m_pModel = pModel;	}
 
 		void SetTransform(const Transform& transform);

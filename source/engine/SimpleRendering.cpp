@@ -175,7 +175,10 @@ namespace Aurora
 			pEntity = pEntity->pNext;
 		}
 
-		GRenderDevice->Present();
+
+		HelperDraw.AddLine(Vector3f::ZERO, Vector3f::UNIT_X * 5.f, Color::GREEN, 0.f);
+		HelperDraw.AddLine(Vector3f::ZERO, Vector3f::UNIT_Z * 5.f, Color::BLUE, 0.f);
+		HelperDraw.Flush();
 
 	}
 

@@ -4,10 +4,16 @@
 #include "Application.h"
 #include "Console.h"
 
+
+
+
+LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 namespace Aurora
 {
 
 Application* Application::s_App = NULL;
+HWND	MainHWnd = NULL;
 
 Application::Application()
 {
@@ -62,17 +68,17 @@ bool Application::Create(const wchar_t* appName, int nWidth, int nHeight)
 	AdjustWindowRect(&rcWindow, dwWindowStyle, false);
 
 	// create the application window
-	m_hWnd = CreateWindowW(s_acWindowClass, appName, dwWindowStyle, 
+	MainHWnd = CreateWindowW(s_acWindowClass, appName, dwWindowStyle,
 		CW_USEDEFAULT, CW_USEDEFAULT, rcWindow.right - rcWindow.left, 
 		rcWindow.bottom - rcWindow.top, 0, 0, hInst, 0);
 
 	bool bRes = InitEnvironment();
 
 	// display the window
-	ShowWindow(m_hWnd, SW_SHOW);
-	UpdateWindow(m_hWnd);
+	ShowWindow(MainHWnd, SW_SHOW);
+	UpdateWindow(MainHWnd);
 
-	Console::Init(m_hWnd);
+	Console::Init(MainHWnd);
 //	Console::SwitchWindow();
 
 	return bRes;
@@ -88,7 +94,7 @@ bool Application::InitEnvironment()
 	this->OnInitApp();
 
 	m_pEngine = Engine::Create();
-	m_pEngine->Init(m_hWnd, m_nWindowWidth, m_nWindowHeight, this);
+	m_pEngine->Init(m_nWindowWidth, m_nWindowHeight, this);
 
 	RectSize windowSize = { m_nWindowWidth, m_nWindowHeight };
 	if (!this->OnCreateDevice(windowSize))
@@ -204,8 +210,12 @@ LRESULT Application::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 }
 
+
 LRESULT Application::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, uMsg, wParam, lParam))
+		return true;
+
 	static bool bIsResizing = false;
 	static uint nWidth = 0;
 	static uint nHeight = 0;

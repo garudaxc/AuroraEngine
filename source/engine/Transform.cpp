@@ -2,48 +2,59 @@
 
 
 namespace Aurora
-{
-	
-	void Transform::Init()
+{	
+
+
+	void Transform::SetTranslation(const Vector3f& vTrans)
 	{
-		m_vPosLocal = Vector3f::ZERO;
-		m_qRotLocal = Quaternionf::IDENTITY;
-		m_vScale = Vector3f::ONE;
+		Position_ = vTrans;
 	}
 
-	void Transform::SetLocalTranslation(const Vector3f& vTrans)
+	void Transform::SetRotation(const Quaternionf& qRot)
 	{
-		m_vPosLocal = vTrans;
+		Rotation_ = qRot;
 	}
 
-	void Transform::SetLocalRotation(const Quaternionf& qRot)
+	void Transform::SetScale(const Vector3f& vScale)
 	{
-		m_qRotLocal = qRot;
-	}
-
-	void Transform::SetLocalScale(const Vector3f& vScale)
-	{
-		m_vScale = vScale;
+		Scale_ = vScale;
 	}
 
 	void Transform::Rotate(const Quaternionf& qRot)
 	{
-		QuaternionMultiply(m_qRotLocal, qRot, m_qRotLocal);
+		QuaternionMultiply(Rotation_, qRot, Rotation_);
 	}
 
 	void Transform::Translate(const Vector3f& vDis)
 	{
-		m_vPosLocal += vDis;
+		Position_ += vDis;
 	}
 
-	void Transform::Update()
+	Matrix4f Transform::GetMatrix() const
 	{
-		m_vPosWorld = m_vPosLocal;
-		m_qRotWorld = m_qRotLocal;
-
-		MatrixTransform(m_mTransform, m_qRotWorld, m_vPosWorld);
+		Matrix4f transform;
+		MatrixTransform(transform, Rotation_, Position_);
+		return transform;
 	}
 
+	void Transform::LootAt(const Vector3f& eye, const Vector3f& lookAt, const Vector3f& up)
+	{
+		// transform "camera", not construct view matrix(inverse)
+		Position_ = eye;
+
+		Vector3f z = eye - lookAt;
+		z.Normalize();
+		Vector3f x = up.Cross(z);
+		x.Normalize();
+		Vector3f y = z.Cross(x);
+
+		Matrix4f t( x.x, x.y, x.z, 0.f,
+					y.x, y.y, y.z, 0.f,
+					z.x, z.y, z.z, 0.f,
+					0.f, 0.f, 0.f, 1.f);
+
+		QuaternionFromRotationMatrix(Rotation_, t);
+	}
 
 	//const Matrix4f& Camera::GetViewMatrix() const
 	//{
@@ -65,25 +76,33 @@ namespace Aurora
 	//	return m_matView;
 	//}
 
+	Vector3f Transform::UpDir() const
+	{
+		return Rotation_.Transform(Vector3f::UNIT_Z);
+	}
+	//------------------------------------------------------------------------
+	Vector3f Transform::ForwardDir() const
+	{
+		return Rotation_.Transform(Vector3f::UNIT_Y);
+	}
+	//------------------------------------------------------------------------
+	Vector3f Transform::RightDir() const
+	{
+		return Rotation_.Transform(Vector3f::UNIT_X);
+	}
+	
+	Transform	Transform::Inverse() const
+	{
+		Transform inv;
+		inv.Rotation_ = Rotation_.Inverse();
+		inv.Position_ = inv.Rotation_.Transform(-Position_);
+		return inv;
+	}
 
-	//Vector3f Camera::GetUpDir() const
-	//{
-	//	GetViewMatrix();
-	//	return Vector3f(m_matView._12, m_matView._22, m_matView._32);
-	//}
-	////------------------------------------------------------------------------
-	//Vector3f Camera::GetLookDir() const
-	//{
-	//	GetViewMatrix();
-	//	return Vector3f(-m_matView._13, -m_matView._23, -m_matView._33);
-	//}
-	////------------------------------------------------------------------------
-	//Vector3f Camera::GetRightDir() const
-	//{
-	//	GetViewMatrix();
-	//	return Vector3f(m_matView._11, m_matView._21, m_matView._31);
-	//}
-
-
+	const Transform& Transform::InverseSelf()
+	{
+		*this = Inverse();
+		return *this;
+	}
 
 }

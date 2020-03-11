@@ -5,6 +5,7 @@
 #include "Types.h"
 #include "Input.h"
 #include "Primitive.h"
+#include "Transform.h"
 
 namespace Aurora
 {
@@ -108,10 +109,7 @@ class Camera
 public:
 	Camera();
 	virtual ~Camera() {}
-
-	Camera(const Vector3f& pos, const Vector3f& lookAt, const Vector3f& up = Vector3f::UNIT_Y);
-
-
+	
 	void SetViewPort(unsigned int Width,	unsigned int Height,
 		unsigned int Left, unsigned int Top,
 		float MinZ, float MaxZ);
@@ -122,13 +120,6 @@ public:
 	void SetViewVolume(float width, float height)	{	m_fWidth = width; m_fHeight = height;}
 	void SetViewVolume(float l, float r, float b, float t);
 
-
-	const Vector3f& GetEyePos() const		{ return m_vEye; }
-	void	SetPosition(const Vector3f& pos) { m_vEye = pos; }
-	Vector3f GetUpDir() const;
-	Vector3f GetLookDir() const;
-	Vector3f GetRightDir() const;
-
 	float GetFov() const			{ return m_fFov; }
 	float GetAspect() const		{ return m_fAspect; }
 	float GetNearPlane() const	{ return m_fZn;	}
@@ -137,20 +128,9 @@ public:
 
 	const ViewPort& GetViewPort()	const	{ return m_ViewPort; }
 
-	void SetTransform(const Matrix4f& matTransform);
 
 	virtual void GetPickRay(Vector3f& origin, Vector3f& dir, const DeviceWindow* pWindow);
 
-
-	Vector3f m_vEye = Vector3f(0.f, -45.0f, 0.0f);
-	Vector3f m_vRight;
-	Vector3f m_vUp = Vector3f::UNIT_Z;
-	Vector3f m_vLookDir;
-
-	Vector3f LookAt_ = Vector3f(0.0f, 0.0f, 0.0f);
-
-	mutable Matrix4f m_matView;
-	mutable bool m_bUpdateView;
 
 	float m_fFov = Mathf::PI / 3.0f;
 	float m_fAspect;
@@ -162,8 +142,9 @@ public:
 	float m_fHeight;
 	float m_fL, m_fR, m_fB, m_fT;
 
-
 	ViewPort m_ViewPort;
+
+	Transform	Transform_;
 
 private:
 

@@ -35,15 +35,9 @@ namespace Aurora
 		m_Transform = transform;
 	}
 
-	const Matrix4f&	Entity::GetWorldTransform() const
-	{
-		const Matrix4f& matWorld = m_Transform.GetWorldTransform();
-		return matWorld;
-	}
 
 	void Entity::Update()
 	{
-		m_Transform.Update();
 	}
 
 	void Entity::Accept(RenderableVisitor& visitor)
@@ -88,20 +82,20 @@ namespace Aurora
 		const char* pStr = NULL;
 		if (pXmlTransform == NULL)
 		{
-			pStrategy->SetLocalTranslation(Vector3f::ZERO);
-			pStrategy->SetLocalRotation(Quaternionf::IDENTITY);
-			pStrategy->SetLocalScale(Vector3f(1.f, 1.f, 1.f));
+			pStrategy->SetTranslation(Vector3f::ZERO);
+			pStrategy->SetRotation(Quaternionf::IDENTITY);
+			pStrategy->SetScale(Vector3f(1.f, 1.f, 1.f));
 		} 
 		else
 		{
 			pStr = pXmlTransform->ToElement()->Attribute("Position");
-			pStrategy->SetLocalTranslation(ParseVec3(pStr));
+			pStrategy->SetTranslation(ParseVec3(pStr));
 
 			pStr = pXmlTransform->ToElement()->Attribute("Rotation");
-			pStrategy->SetLocalRotation(ParseRotation(pStr));
+			pStrategy->SetRotation(ParseRotation(pStr));
 
 			pStr = pXmlTransform->ToElement()->Attribute("Scale");
-			pStrategy->SetLocalScale(ParseVec3(pStr));
+			pStrategy->SetScale(ParseVec3(pStr));
 		}
 
 		return pStrategy;

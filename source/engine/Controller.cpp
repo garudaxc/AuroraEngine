@@ -10,19 +10,13 @@ static LinearFloatInterpolater gLinearFloatInterpolater;
 static LinearQuaternionInterpolater gLinearQuaternionInterpolater;
 
 
-
-
 void LinearFloatInterpolater::Interpolate(float* des, float* key0, float* key1, float fLerp,
 										uint nNumSrcFloats, uint nNumDesFloats)
 {
-	for (uint i = 0; i < nNumDesFloats; i++)
-	{
+	for (uint i = 0; i < nNumDesFloats; i++) {
 		des[i] = key0[i] + fLerp * (key1[i] - key0[i]);
 	}
 }
-
-
-
 
 
 void LinearQuaternionInterpolater::Interpolate(float* des, float* key0, float* key1, float fLerp,
@@ -34,53 +28,37 @@ void LinearQuaternionInterpolater::Interpolate(float* des, float* key0, float* k
 	Quaternionf* qKey0 = (Quaternionf*)key0;
 	Quaternionf* qKey1 = (Quaternionf*)key1;
 
-
 	QuaternionSlerp(*qDes, *qKey0, *qKey1, fLerp);
 }
 
-
-
-
 //////////////////////////////////////////////////////////////////////////
-
 
 
 float GetTimeRemainder(float time, float period, int playbackType)
 {
 	// calculate remainder of time in period of this animation
 	float fTime = time;
-	if (time < 0.0f)
-	{
+	if (time < 0.0f) {
 		// turn negative to positive
 		fTime = time - Mathf::Floor(time) * period;
 	}
-	if (playbackType == Controller::PLAYBACK_ONCE)
-	{
-		if (fTime > period)
-		{
+	if (playbackType == Controller::PLAYBACK_ONCE) {
+		if (fTime > period) {
 			return period;
-		}
-		else
-		{
+		} else {
 			return fTime;
 		}
-	}
-	else if (playbackType == Controller::PLAYBACK_LOOP)
-	{
+	} else if (playbackType == Controller::PLAYBACK_LOOP) {
 		return Mathf::Mod(fTime, period);
 	}
 	// PLAYBACK_PINGPONG
-	else
-	{
+	else {
 		float rate = fTime / period;
 		int integer_part = (int)Mathf::Floor(rate);
 		float fractional_part = rate - integer_part;
-		if (integer_part % 2 == 0)
-		{
+		if (integer_part % 2 == 0) {
 			return fractional_part * period;
-		}
-		else
-		{
+		} else {
 			return (1.0f - fractional_part) * period;
 		}
 
@@ -90,33 +68,25 @@ float GetTimeRemainder(float time, float period, int playbackType)
 
 float GetTrackTime(float fTime, float fStartTrackTime, float fEndTrackTime, uint playType)
 {
-	if (playType == Controller::PLAYBACK_ONCE)
-	{
-		if (fTime < fStartTrackTime)
-		{
+	if (playType == Controller::PLAYBACK_ONCE) {
+		if (fTime < fStartTrackTime) {
 			return fStartTrackTime;
 		}
 
-		if (fTime >= fEndTrackTime)
-		{
+		if (fTime >= fEndTrackTime) {
 			return fEndTrackTime - 0.001f;
 		}
 
 		return fTime;
 	}
-	else if (playType == Controller::PLAYBACK_LOOP)
-	{
+	else if (playType == Controller::PLAYBACK_LOOP) {
 		float t = Mathf::Mod(fTime - fStartTrackTime, fEndTrackTime - fStartTrackTime);
 
-		if (t < 0.0f)
-		{
+		if (t < 0.0f) {
 			return t + fEndTrackTime;
-		}
-		else
-		{
+		} else {
 			return t + fStartTrackTime;
 		}
-
 	}
 
 	assert(0);
@@ -138,14 +108,10 @@ Controller::Controller():m_PlaybackType(PLAYBACK_LOOP),m_bActive(false)
 
 void Controller::SetActive(bool bActive)
 {
-	if (bActive != m_bActive)
-	{
-		if (bActive)
-		{
+	if (bActive != m_bActive) {
+		if (bActive) {
 			s_nNumActiveControllers++;
-		}
-		else
-		{
+		} else {
 			s_nNumActiveControllers--;
 		}
 		m_bActive = bActive;
@@ -231,12 +197,10 @@ void FloatsController::SetKey(uint nFrame, float fTime, const float* pValue)
 
 	memcpy(&m_aFrames[nFrame][0], pValue, sizeof(float) * m_nNumFloats);
 
-	if (nFrame == 0)
-	{
+	if (nFrame == 0) {
 		m_fFirstKeyFrameTime = fTime;
 	}
-	else if (nFrame == m_nNumFrames - 1)
-	{
+	else if (nFrame == m_nNumFrames - 1) {
 		m_fLastKeyFrameTime = fTime;
 	}
 }
@@ -251,8 +215,7 @@ void FloatsController::SetTime(float fTime)
 void FloatsController::SetupInterpolation(float fTime)
 {
 	assert(GetNumFrames() > 0);
-	if (GetNumFrames() == 1)
-	{
+	if (GetNumFrames() == 1) {
 		m_FrameInter.nFrame0 = 0;
 		m_FrameInter.nFrame1 = 0;
 		m_FrameInter.fLerp = 0.0f;
@@ -294,8 +257,7 @@ void CubicBezierCurve(float* pOut, const float* p0, const float* p1, const float
 	float mu = 1.0f - u;
 	float mu2 = mu * mu;
 	float mu3 = mu2 * mu;
-	for (int i = 0; i < nNumFloats; i++)
-	{
+	for (int i = 0; i < nNumFloats; i++) {
 		pOut[i] = mu3 * p0[i] + 3.0f * (u * mu2 * p1[i] + u2 * mu * p2[i]) + u3 * p3[i];
 	}
 }
@@ -309,12 +271,10 @@ FloatsController* SampleBezierCurve(const BezierKey* keyFrames, int nNumKeyFrame
 
 	vector<int> samples(nNumKeyFrames - 1);
 	int nTotalSample = 0;
-	for (int i = 0; i < nNumKeyFrames - 1; i++)
-	{
+	for (int i = 0; i < nNumKeyFrames - 1; i++) {
 		float time = keyFrames[i + 1].t[1] - keyFrames[i].t[1];
 		int nSample = (int)(time * samplePerSec);
-		if (nSample == 0)
-		{
+		if (nSample == 0) {
 			nSample = 1;
 		}
 		samples[i] = nSample;
@@ -323,12 +283,10 @@ FloatsController* SampleBezierCurve(const BezierKey* keyFrames, int nNumKeyFrame
 
 	pController->Alloc(nTotalSample + 1, 1);
 	int nKeyIndex = 0;
-	for (int i = 0; i < nNumKeyFrames - 1; i++)
-	{
+	for (int i = 0; i < nNumKeyFrames - 1; i++) {
 		int nSample = samples[i];
 		float fStride = 1.0f / (float)nSample;
-		for (int j = 0; j < nSample; j++)
-		{
+		for (int j = 0; j < nSample; j++) {
 			float val[2];
 
 			float p0[2], p1[2], p2[2], p3[2];
@@ -393,8 +351,7 @@ void OrbitMouseController::OnMouseEvent(const MouseEvent& event)
 
 	static bool bControlDown = false;
 
-	if (event.Type == MouseEvent::MButtonDown)
-	{
+	if (event.Type == MouseEvent::MButtonDown) {
 		event.pWindow->SetCapture();
 		mouseDownX = event.xPos;
 		mouseDownY = event.yPos;
@@ -404,42 +361,31 @@ void OrbitMouseController::OnMouseEvent(const MouseEvent& event)
 
 		vTargetLast = m_vTarget;
 		
-		if (event.Param & MouseEvent::PM_Control)
-		{
+		if (event.Param & MouseEvent::PM_Control) {
 			bControlDown = true;
 		}
-	}
-	else if (event.Type == MouseEvent::MButtonUp)
-	{
+	} else if (event.Type == MouseEvent::MButtonUp) {
 		event.pWindow->ReleaseCapture();
 		bControlDown = false;
 	}
 	else if (event.Type == MouseEvent::MouseWheel)
 	{
-		if (event.zDelta > 0)
-		{
+		if (event.zDelta > 0) {
 			m_radius *= 0.95f;
-		}
-		else
-		{
+		} else {
 			m_radius *= 1.05f;	
 		}
 		Solve();		
 	}
-	else if (event.Type == MouseEvent::MouseMove)
-	{
-		if (event.Param & MouseEvent::PM_MButton)
-		{
-			if (bControlDown)
-			{
+	else if (event.Type == MouseEvent::MouseMove) {
+		if (event.Param & MouseEvent::PM_MButton) {
+			if (bControlDown) {
 				float dTheta = (float)(mouseDownX - event.xPos) * 0.005f;
 				float dPhi = (float)(mouseDownY - event.yPos) * 0.005f;
 
 				m_theta = thetaLast + dTheta;
 				m_phi = phiLast + dPhi;
-			}
-			else
-			{
+			} else {
 				Vector3f right, up;
 				Vector3Rotate(right, Vector3f::UNIT_X, m_qRot);
 				Vector3Rotate(up, Vector3f::UNIT_Y, m_qRot);
@@ -452,9 +398,7 @@ void OrbitMouseController::OnMouseEvent(const MouseEvent& event)
 
 			Solve();
 		}
-	}
-	else if (event.Type == MouseEvent::RButtonDown)
-	{
+	} else if (event.Type == MouseEvent::RButtonDown) {
 		m_theta = thetaLast;
 		m_phi = phiLast;
 		m_vTarget = vTargetLast;
@@ -542,7 +486,9 @@ void EditorCameraMover::Reset(const Vector3f& vPos)
 	m_theta = 0.0f;
 	m_phi = 0.0f;
 	SolveRotation();
-	MatrixTransform(m_mTransform, m_qRot, m_vPos);
+
+	Transform_.SetTranslation(m_vPos);
+	Transform_.SetRotation(m_qRot);
 }
 
 
@@ -570,24 +516,19 @@ void EditorCameraMover::OnMouseEvent(const MouseEvent& event)
 
 		vLastPos = m_vPos;
 
-		if (event.Param & MouseEvent::PM_Control)
-		{
+		if (event.Param & MouseEvent::PM_Control) {
 			bControlDown = true;
 		}
 
-		if (event.Param & MouseEvent::PM_Shift)
-		{
+		if (event.Param & MouseEvent::PM_Shift) {
 			bShiftDown = true;
 		}
-	}
-	else if (event.Type == MouseEvent::MButtonUp)
-	{
+	} else if (event.Type == MouseEvent::MButtonUp) {
 		event.pWindow->ReleaseCapture();
 		bControlDown = false;
 		bShiftDown = false;
-	}
-	else if ((event.Type == MouseEvent::MouseMove) &&
-			(event.Param & MouseEvent::PM_MButton))
+	} else if ((event.Type == MouseEvent::MouseMove) &&
+		(event.Param & MouseEvent::PM_MButton))
 	{
 		Vector3f right, up, front;
 		Vector3Rotate(front, Vector3f::UNIT_Y, m_qRot);
@@ -601,8 +542,7 @@ void EditorCameraMover::OnMouseEvent(const MouseEvent& event)
 		up = Vector3f::UNIT_Z;
 
 		//if (event.Param & MouseEvent::PM_Control)
-		if (bControlDown)
-		{
+		if (bControlDown) {
 			float dTheta = (float)(mouseDownX - event.xPos) * 0.005f;
 			float dPhi = (float)(mouseDownY - event.yPos) * 0.005f;
 
@@ -610,14 +550,10 @@ void EditorCameraMover::OnMouseEvent(const MouseEvent& event)
 			m_phi = phiLast + dPhi;
 
 			SolveRotation();
-		}
-		else if (bShiftDown)
-		{
+		} else if (bShiftDown) {
 			float toUp = (float)(event.yPos - mouseDownY) * m_fSpeed;
 			m_vPos = vLastPos + up * toUp;
-		}
-		else
-		{
+		} else {
 			float toRight = (float)(mouseDownX - event.xPos) * m_fSpeed;
 			float toFront = (float)(event.yPos - mouseDownY) * m_fSpeed;
 
@@ -626,7 +562,10 @@ void EditorCameraMover::OnMouseEvent(const MouseEvent& event)
 
 	}
 
-	MatrixTransform(m_mTransform, m_qRot, m_vPos);
+
+	Transform_.SetTranslation(m_vPos);
+	Transform_.SetRotation(m_qRot);
+	//MatrixTransform(m_mTransform, m_qRot, m_vPos);
 }
 
 void EditorCameraMover::SolveRotation()
@@ -652,5 +591,46 @@ void EditorCameraMover::SolveRotation()
 }
 
 
+
+MouseEvent lastEvent_;
+Transform  lastTransform_;
+bool lButtonDown_ = false;
+bool rButtonDown_ = false;
+
+void CameraControllerUE::OnMouseEvent(const MouseEvent& event)
+{
+	if (event.Type == MouseEvent::LButtonDown) {
+		lastEvent_ = event;
+		lastTransform_ = Transform_;
+		lButtonDown_ = true;
+	}
+
+	if (event.Type == MouseEvent::LButtonUp) {
+		lButtonDown_ = false;
+	}
+
+	if (event.Type == MouseEvent::MouseMove) {
+		int dx = event.xPos - lastEvent_.xPos;
+		int dy = event.yPos - lastEvent_.yPos;
+
+		
+
+		if (lButtonDown_) {
+
+
+			if (event.Param & MouseEvent::PM_Control) {
+			}
+			else {
+
+			}
+
+			
+			Quaternionf rot(Vector3f::UNIT_Z, dx * -0.01f);
+			Transform_ = lastTransform_;
+			Transform_.Rotate(rot);
+		}
+
+	}
+}
 
 }

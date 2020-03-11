@@ -630,13 +630,13 @@ yaxis = cross(zaxis, xaxis)
 
 	Vector3<real> z = vAt - vEye;
 	z.Normalize();
-	Vector3<real> x = CrossProduct(vUp, z);
+	Vector3<real> x = Cross(vUp, z);
 	x.Normalize();
-	Vector3<real> y = CrossProduct(z, x);
+	Vector3<real> y = Cross(z, x);
 	matrix.Set(x.x, y.x, z.x, 0.0f,
 			   x.y, y.y, z.y, 0.0f,
 			   x.z, y.z, z.z, 0.0f,
-			   -DotProduct(x, vEye), -DotProduct(y, vEye), -DotProduct(z, vEye), 1.0f);
+			   -Dot(x, vEye), -Dot(y, vEye), -Dot(z, vEye), 1.0f);
 	return matrix;
 }
 //-----------------------------------------------------------
@@ -658,13 +658,13 @@ yaxis = cross(zaxis, xaxis)
 
 	Vector3<real> z = vEye - vAt;
 	z.Normalize();
-	Vector3<real> x = CrossProduct(vUp, z);
+	Vector3<real> x = Vector3<real>::Cross(vUp, z);
 	x.Normalize();
-	Vector3<real> y = CrossProduct(z, x);
+	Vector3<real> y = Vector3<real>::Cross(z, x);
 	matrix.Set(x.x, y.x, z.x, 0.0f,
 			   x.y, y.y, z.y, 0.0f,
 			   x.z, y.z, z.z, 0.0f,
-			   -DotProduct(x, vEye), -DotProduct(y, vEye), -DotProduct(z, vEye), 1.0f);
+			   -Vector3<real>::Dot(x, vEye), -Vector3<real>::Dot(y, vEye), -Vector3<real>::Dot(z, vEye), 1.0f);
 	return matrix;
 }
 //-----------------------------------------------------------

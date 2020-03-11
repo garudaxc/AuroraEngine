@@ -10,7 +10,7 @@ namespace Aurora
 class DeviceWindow;
 struct MouseEvent
 {
-	enum EventType
+	enum EventType : int8
 	{
 		MouseMove = 0,
 		LButtonDown,

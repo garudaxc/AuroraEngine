@@ -155,7 +155,7 @@ namespace Aurora
 			DrawingEntity* pDrawEntity = GFrameMemoryBuffer->AllocDrawingEntity();
 
 			pDrawEntity->pEntity = pEntity;
-			pDrawEntity->mWorld = pEntity->GetWorldTransform();
+			pDrawEntity->mWorld = pEntity->GetTransfrom().GetMatrix();
 			pDrawEntity->pNext = pUpdateView->pDrawingEntity;
 			pUpdateView->pDrawingEntity = pDrawEntity;
 		}
@@ -167,8 +167,7 @@ namespace Aurora
 			DrawingLight* pDrawingLight = GFrameMemoryBuffer->AllocDrawingLight();
 			memset(pDrawingLight, 0, sizeof(DrawingLight));
 
-			pLight->m_Transform.Update();
-			pDrawingLight->mWorld = pLight->m_Transform.GetWorldTransform();
+			pDrawingLight->mWorld = pLight->m_Transform.GetMatrix();
 
 			pDrawingLight->Type		= pLight->Type;
 			pDrawingLight->cColor	= pLight->cBaseColor * pLight->fMultiplier;
@@ -190,8 +189,7 @@ namespace Aurora
 			pUpdateView->pDrawingLight = pDrawingLight;
 		}
 			   
-		pUpdateView->matView = Matrix4f::LookAtRH(
-			pCamera->m_vEye, pCamera->LookAt_, pCamera->m_vUp);
+		pUpdateView->matView = pCamera->Transform_.Inverse().GetMatrix();
 
 		pUpdateView->matProj = Matrix4f::PerspectiveFovRH(
 			pCamera->m_fFov, viewSize.Width / (float)viewSize.Height,
@@ -202,8 +200,6 @@ namespace Aurora
 	
 		pUpdateView->fNearPlane = pCamera->GetNearPlane();
 		pUpdateView->fFarPlane = pCamera->GetFarPlane();
-		pUpdateView->vEyePos = pCamera->GetEyePos();
-
 		//m_pCmdBuffer->pUpdateLock->Unlock();
 
 		//m_pCmdBuffer->pRenderLock->Lock();

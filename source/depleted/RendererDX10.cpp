@@ -106,12 +106,6 @@ namespace Aurora
 
 
 
-
-
-
-
-
-
 	Surface::Format FormatD3DToEngine(uint fmt)
 	{
 		static Surface::Format table[] = 
@@ -1270,15 +1264,17 @@ namespace Aurora
 	RendererDx10* gpDx10Renderer = NULL;
 
 
-	IRenderDevice* IRenderDevice::CreateDevice(HWND hWnd, int nWidth, int nHeight)
+	IRenderDevice* IRenderDevice::CreateDevice(int nWidth, int nHeight)
 	{
 		gpDx10Renderer = new RendererDx10(hWnd, nWidth, nHeight);
 		return gpDx10Renderer;
 	}
 
 
-	RendererDx10::RendererDx10(HWND hWnd, int nWidth, int nHeight)
+	RendererDx10::RendererDx10(int nWidth, int nHeight)
 	{
+		HWND hWnd = NULL;
+
 		m_pd3dDevice			= NULL;
 		m_pSwapChain			= NULL;
 		m_pRenderTargetView		= NULL;

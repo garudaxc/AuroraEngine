@@ -2,6 +2,7 @@
 #include "MathFunction.h"
 #include "Types.h"
 #include "Input.h"
+#include "Transform.h"
 
 namespace Aurora
 {
@@ -219,9 +220,7 @@ public:
 
 	void				SetSpeed(float speed)		{	m_fSpeed = speed;	}
 
-	const Vector3f&		GetPosition() const		{	return m_vPos;	}
-	const Quaternionf&	GetRotation() const		{	return m_qRot;	}
-	const Matrix4f&		GetTransfrom() const	{	return m_mTransform;	}
+	Transform		Transform_;
 
 private:
 	void		SolveRotation();
@@ -238,6 +237,15 @@ private:
 };
 
 
+class CameraControllerUE : public MouseEventListener
+{
+public:
 
+	virtual void		OnMouseEvent(const MouseEvent& event);
+	Transform		Transform_;
+	
+
+	float	FocusDistance_ = 1.f;
+};
 
 }

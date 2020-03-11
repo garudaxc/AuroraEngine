@@ -45,7 +45,6 @@ namespace Aurora
 	Light::Light(ELightType lightType)
 	{
 		Type = lightType;
-		m_Transform.Init();
 
 		cBaseColor = Color::WHITE;
 		fMultiplier = 1.f;

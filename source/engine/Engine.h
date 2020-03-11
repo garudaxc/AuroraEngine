@@ -1,6 +1,5 @@
 #pragma once
 #include "stdheader.h"
-#include <Windows.h>
 
 namespace Aurora
 {
@@ -43,21 +42,21 @@ namespace Aurora
 		static Engine*		Create();
 
 		~Engine();
-		void					Init(HWND hWnd, int nWidth, int nHeight, FrameListener* pListener);
-		void					Destroy();
+		void			Init(int nWidth, int nHeight, FrameListener* pListener);
+		void			Destroy();
 
-		IRenderDevice*			GetRenderer();
+		IRenderDevice*		GetRenderer();
 		Timer*				GetTimer();
 		ResourceManager*		GetResourceManager();
 
-		void					ResetDevice();
-		void					LostDevice();
+		void		ResetDevice();
+		void		LostDevice();
 
-		void					RenderOneFrame();
-		void					ResizeFrameBuffer(int width, int height);
-		int						IssuePickupTest(int x, int y, int windowSize);
+		void		RenderOneFrame();
+		void		ResizeFrameBuffer(int width, int height);
+		int			IssuePickupTest(int x, int y, int windowSize);
 
-		float					GetFPS() const;
+		float		GetFPS() const;
 
 	private:
 		Engine();
