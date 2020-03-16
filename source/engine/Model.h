@@ -20,17 +20,16 @@ namespace Aurora
 
 		void	Accept(RenderableVisitor& visitor);
 
+
 	protected:
 		string			m_Name;
 		Geometry*		m_pMesh;
 	};
 
 
-	class ModelManager
+	class CModelManager
 	{
 	public:
-		ModelManager();
-		~ModelManager();
 
 		void Initialize();
 		void Finalize();
@@ -38,9 +37,6 @@ namespace Aurora
 		Model*		GetModel(const ResourceID& id);
 
 		Model* GetDefaultModel()	{	return m_pDefault;	}
-		Model* GetDirLight()		{	return m_pDirLight;	}
-		Model* GetPointLight()		{	return m_pPointLight;	}
-		Model* GetSpotLight()		{	return m_pSpotLight;	}
 
 	private:
 		Model*		Find(const ResourceID& id);
@@ -48,12 +44,9 @@ namespace Aurora
 
 		map<ResourceID, Model*>		m_ResourcePool;
 
-		Model* m_pDefault;
-		Model* m_pDirLight;
-		Model* m_pPointLight;
-		Model* m_pSpotLight;
+		Model* m_pDefault = nullptr;
 	};
 
-	extern ModelManager GModelManager;
+	extern CModelManager ModelManager;
 
 }

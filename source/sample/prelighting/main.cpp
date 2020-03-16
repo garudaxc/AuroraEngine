@@ -34,12 +34,10 @@ void TestRapidjson()
 	GFileSys->SetRootPath("E:/develop/GaEngine/res", false);
 	Aurora::StringBuffer buffer("test.json");
 
-
 	Document document;
 	document.Parse(buffer.Ptr());
 
 	string s = document["hello"].GetString();
-
 	bool b = document["t"].GetBool();
 
 
@@ -65,6 +63,17 @@ void TestRapidjson()
 
 }
 
+
+Entity* CreateSimpleEntity()
+{
+	auto model = ModelManager.GetModel("resource:Model/White_GrenadeLauncher.model");	
+	auto entity =  EntityFactory.CreateEntity(model);
+	
+	entity->GetTransfrom().Rotate(Quaternionf(Vector3f::UNIT_X, Mathf::PI));
+	
+	return entity;
+
+}
 
 
 class MyApp : public Application, public KeyEventListener, public MouseEventListener
@@ -96,7 +105,6 @@ public:
 };
 
 
-
 bool MyApp::OnInitApp()
 {
 	return true;
@@ -119,17 +127,8 @@ bool MyApp::OnCreateDevice(const RectSize& mainView)
 	GEventDisPatcher->AddMouseEventListener(&cameraControl_);
 
 
-	TiXmlDocument doc;
-	bool bOK = doc.LoadFile("../res/world/TestWorld.world");
-	assert(bOK);
-
-	TiXmlElement* pXmlEntity = doc.FirstChildElement("World")->FirstChildElement("Entities")->FirstChildElement("Entity");
-	while(pXmlEntity) {
-		Entity* pEntity = EntityFactory::Get()->CreateEntity(pXmlEntity);
-		m_pEntity = pEntity;
-		m_pScene->AddEntity(pEntity);
-		pXmlEntity = pXmlEntity->NextSiblingElement("Entity");
-	}
+	auto entity = CreateSimpleEntity();
+	m_pScene->AddEntity(entity);
 
 	return true;
 	

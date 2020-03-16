@@ -73,12 +73,12 @@ namespace Aurora
 
 		GShaderManager.Initialize();
 
-		GModelManager.Initialize();
+		ModelManager.Initialize();
 
 		GPipeline.Initialize(nWidth, nHeight);
 		GSimpleRendering.Initialize();
 
-		EntityFactory::Initialize();
+		EntityFactory.Initialize();
 
 		m_pFrameListener = pListener;
 
@@ -92,14 +92,14 @@ namespace Aurora
 	{
 		GuiCleanup();
 
-		EntityFactory::Finalize();
+		EntityFactory.Finalize();
 
 		GPipeline.Finalize();
 
 		m_pResourceManager->CleanUp();
 		delete m_pResourceManager;
 
-		GModelManager.Finalize();
+		ModelManager.Finalize();
 
 		GMaterialInstanceManager.Finalize();
 

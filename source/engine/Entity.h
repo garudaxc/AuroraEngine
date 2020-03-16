@@ -59,17 +59,12 @@ namespace Aurora
 	};
 
 
-	class EntityFactory
+	class CEntityFactory
 	{
 	public:
-		EntityFactory()		{}
-		~EntityFactory()	{}
-
-		static void		Initialize();
-		static void		Finalize();
-
-		static EntityFactory*	Get();
-
+		void		Initialize();
+		void		Finalize();
+		
 		Entity*		CreateEntity(TiXmlElement* pXmlEntity);
 		Entity*		CreateEntity(Model* pModel);
 
@@ -79,8 +74,11 @@ namespace Aurora
 
 	private:
 
-
 	};
+
+	extern CEntityFactory EntityFactory;
+
+
 
 
 }

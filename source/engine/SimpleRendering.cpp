@@ -97,6 +97,9 @@ namespace Aurora
 	Texture* pTexture = nullptr;
 
 
+	Texture* TextureEnvCube = nullptr;
+
+
 	GlobalShaderParameter globalShaderParam_;
 
 
@@ -120,7 +123,8 @@ namespace Aurora
 
 	CSimpleVisitor    SimpleVisitor_;
 
-	
+	void InitRandomSampleing();
+
 	void SimpleRendering::Initialize()
 	{
 		VertexLayoutPosNormTangentTexHandle_ = CreateVertexLayoutHandle(VertexLayoutPosNormTangentTex);
@@ -136,7 +140,10 @@ namespace Aurora
 		globalShaderParam_.CreateBinding();
 
 		pTexture =  GTextureManager.GetTexture("resource:Model/T_White_GrenadeLauncher_D.TGA");
+		TextureEnvCube = GTextureManager.GetTexture("resource:sky_cube_mipmap.dds");
 		//pTexture =  GTextureManager.GetTexture("resource:test cube.dds");
+
+		InitRandomSampleing();
 
 	}
 
@@ -181,6 +188,47 @@ namespace Aurora
 		HelperDraw.Flush();
 
 	}
+
+
+	float HammersleySample[2048];
+
+
+	void InitRandomSampleing()
+	{
+		for (int i = 0; i < 2048; i++) {
+			HammersleySample[i] = Mathf::Rand01();
+		}
+
+		ShaderCode code;
+		char* shaderCode = "                     \
+												 \
+		cbuffer StaticBuffer: register(b1)	 \
+		{										 \
+			float2	HammersleySample[1024];				 \
+		};										 \
+		float4 Main(float4 pos : POSITION) : SV_POSITION		\
+		{													\
+			pos.xy += HammersleySample[0].xy;				\
+			return pos;						\
+		}														\
+			";
+
+		code.name = "Static Buffer";
+		code.text = shaderCode;
+		code.type = BaseShader::VERTEX_SHADER;
+
+		Handle handle = GRenderDevice->CreateShader(code);
+
+		ShaderParamterBindings bindings;
+		bindings.Name = "StaticBuffer";
+		bindings.Bindings.push_back(ShaderParamterBindingItem{ "HammersleySample", 0, HammersleySample });
+		bindings.handle = CreateShaderParameterBinding(handle, bindings);
+		
+		UpdateShaderParameter(bindings.handle);
+		BindGlobalParameter(bindings.handle);
+	}
+	
+
 
 
 

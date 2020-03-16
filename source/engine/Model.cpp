@@ -51,30 +51,20 @@ namespace Aurora
 
 	//////////////////////////////////////////////////////////////////////////
 
-	ModelManager GModelManager;
+	CModelManager ModelManager;
 
-	ModelManager::ModelManager()	{}
-	ModelManager::~ModelManager()	{}
 
-	void ModelManager::Initialize()
+	void CModelManager::Initialize()
 	{
-		m_pDefault		= NULL;
-		m_pDirLight		= NULL;
-		m_pPointLight	= NULL;
-		m_pSpotLight	= NULL;
-
-		//m_pDirLight = GetModel("asset:DirectionalLight.Model");
-		//m_pPointLight = GetModel("asset:PointLight.Model");
-		//m_pSpotLight = GetModel("asset:SpotLight.Model");
 	}
 
-	void ModelManager::Finalize()
+	void CModelManager::Finalize()
 	{
 		m_ResourcePool.clear();
 	}
 
 
-	Model* ModelManager::GetModel(const ResourceID& id)
+	Model* CModelManager::GetModel(const ResourceID& id)
 	{
 		Model* pModel = Find(id);
 		if (pModel == NULL)
@@ -84,7 +74,7 @@ namespace Aurora
 		return pModel;
 	}
 
-	Model* ModelManager::Find(const ResourceID& id)
+	Model* CModelManager::Find(const ResourceID& id)
 	{
 		map<ResourceID, Model*>::iterator it = m_ResourcePool.find(id);
 		if (it != m_ResourcePool.end())
@@ -94,7 +84,7 @@ namespace Aurora
 		return NULL;
 	}
 
-	Model* ModelManager::Load(const ResourceID& id)
+	Model* CModelManager::Load(const ResourceID& id)
 	{
 		string pathName = Util::ProcessPathName(id);
 

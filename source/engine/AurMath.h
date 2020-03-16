@@ -28,6 +28,7 @@ public:
 	static inline real Mod(real x, real y);
 	static inline real Exp(real value);
 	static inline real Log(real value);
+	static inline real Rand01();
 
 	static inline real Min(real val1, real val2);
 	static inline real Max(real val1, real val2);
@@ -144,6 +145,11 @@ template<>
 inline float Math<float>::Log(float value)
 {
 	return logf(value);
+}
+template<>
+inline float Math<float>::Rand01()
+{
+	return rand() / (float)RAND_MAX;
 }
 //--------------------------------------------------------
 template<>

@@ -12,6 +12,9 @@
 #endif
 
 
+
+
+
 cbuffer GlobalParameter: register(b0)	
 {										
 	float4x4 matView;					
@@ -19,9 +22,12 @@ cbuffer GlobalParameter: register(b0)
 	float4x4 matViewProj;			
 	float3	DirectionLight0;		
 	float4	LightColor0;			
-};				
+};
 
-
+cbuffer StaticBuffer: register(b1)	
+{									
+	float2	HammersleySample[1024];	
+};									
 
 
 /*

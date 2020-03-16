@@ -105,7 +105,7 @@ Entity* CreateEntityFromMeshData(const string& name, MeshBuildData* pData, Mater
 
 	pModel->SetMaterial(0, pMtlInst);
 
-	Entity* pEntity = EntityFactory::Get()->CreateEntity(pModel);
+	Entity* pEntity = EntityFactory.CreateEntity(pModel);
 	return pEntity;
 }
 
@@ -423,7 +423,7 @@ bool MyApp::OnCreateDevice()
 void MyApp::OnResizeFrameBuffer(int width, int height)
 {
 	Entity* pCameraEntity = m_pSceneView->GetCamera();
-	Camera* pCamera = EntityFactory::Get()->GetCameraObject(pCameraEntity);
+	Camera* pCamera = EntityFactory.GetCameraObject(pCameraEntity);
 	assert(pCamera);
 
 	pCamera->SetAspect(width / (float)height);
@@ -464,7 +464,7 @@ void MyApp::OnUpdate(float dt)
 	m_pCameraTransfrom->Update();
 	pCameraEntity->SetTransform(m_pCameraTransfrom->GetTransfrom());
 
-	Camera* pCamera = EntityFactory::Get()->GetCameraObject(pCameraEntity);
+	Camera* pCamera = EntityFactory.GetCameraObject(pCameraEntity);
 	//static bool b = false;
 	//if (!b)
 	//{

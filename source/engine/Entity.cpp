@@ -47,24 +47,13 @@ namespace Aurora
 
 
 	//////////////////////////////////////////////////////////////////////////
-	static EntityFactory* g_pEntityFactory = NULL;
-	void EntityFactory::Initialize()
+
+	void CEntityFactory::Initialize()
 	{
-		assert(g_pEntityFactory == NULL);
-		g_pEntityFactory = new EntityFactory();
 	}
 
-	void EntityFactory::Finalize()
+	void CEntityFactory::Finalize()
 	{
-		assert(g_pEntityFactory != NULL);
-		delete g_pEntityFactory;
-		g_pEntityFactory = NULL;
-	}
-
-	EntityFactory* EntityFactory::Get()
-	{
-		assert(g_pEntityFactory != NULL);
-		return g_pEntityFactory;
 	}
 
 
@@ -135,7 +124,7 @@ namespace Aurora
 			assert(pXmlModel);
 
 			const char* pModelName = pXmlModel->Attribute("Ref");
-			Model* pModel = GModelManager.GetModel(pModelName);
+			Model* pModel = ModelManager.GetModel(pModelName);
 			assert(pModel);
 
 			return pModel;
@@ -145,7 +134,7 @@ namespace Aurora
 	}
 
 
-	Entity* EntityFactory::CreateEntity(TiXmlElement* pXmlEntity)
+	Entity* CEntityFactory::CreateEntity(TiXmlElement* pXmlEntity)
 	{
 		const char* pName = pXmlEntity->Attribute("Name");
 		assert(pName);
@@ -171,7 +160,7 @@ namespace Aurora
 	}
 
 
-	Entity* EntityFactory::CreateEntity(Model* pModel)
+	Entity* CEntityFactory::CreateEntity(Model* pModel)
 	{
 		Entity* pEntity = new Entity(string(""));
 
@@ -190,5 +179,7 @@ namespace Aurora
 		return pEntity;
 	}
 
+
+	CEntityFactory EntityFactory;
 
 }

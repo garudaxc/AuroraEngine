@@ -161,15 +161,11 @@ namespace Aurora
 
 
 
-
-
 	Handle CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems);
 
 	
 	Handle CreateVertexBufferHandle(const void* data, int32 size);
 	Handle CreateIndexBufferHandle(const void* data, int32 size);
-
-
 
 
 
