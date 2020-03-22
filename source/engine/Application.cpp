@@ -14,6 +14,7 @@ namespace Aurora
 
 Application* Application::s_App = NULL;
 HWND	MainHWnd = NULL;
+HINSTANCE ModuleInstance = NULL;
 
 Application::Application()
 {
@@ -38,7 +39,7 @@ bool Application::Create(const wchar_t* appName, int nWidth, int nHeight)
 	GMainWindow.width	= nWidth;
 	GMainWindow.height = nHeight;
 
-	HINSTANCE hInst = ::GetModuleHandle(NULL);
+	ModuleInstance = ::GetModuleHandle(NULL);
 	static wchar_t s_acWindowClass[] = L"GaEngine Application";
 	// Register the window class
 	WNDCLASSEXW wc;
@@ -47,7 +48,7 @@ bool Application::Create(const wchar_t* appName, int nWidth, int nHeight)
 	wc.lpfnWndProc		= WndProc;
 	wc.cbClsExtra		= 0;
 	wc.cbWndExtra		= 0;
-	wc.hInstance		= hInst;
+	wc.hInstance		= ModuleInstance;
 	wc.hIcon			= NULL;
 	wc.hCursor			= ::LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground	= (HBRUSH)GetStockObject(WHITE_BRUSH);
@@ -70,7 +71,7 @@ bool Application::Create(const wchar_t* appName, int nWidth, int nHeight)
 	// create the application window
 	MainHWnd = CreateWindowW(s_acWindowClass, appName, dwWindowStyle,
 		CW_USEDEFAULT, CW_USEDEFAULT, rcWindow.right - rcWindow.left, 
-		rcWindow.bottom - rcWindow.top, 0, 0, hInst, 0);
+		rcWindow.bottom - rcWindow.top, 0, 0, ModuleInstance, 0);
 
 	bool bRes = InitEnvironment();
 

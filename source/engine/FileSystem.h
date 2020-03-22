@@ -50,6 +50,14 @@ namespace Aurora
 
 	};
 
+	class FileDeleteFunc
+	{
+	public:
+		void operator () (File* p) { if (p) p->Close(); }
+	};
+
+	typedef unique_ptr<File, FileDeleteFunc>   FilePtr;
+
 
 	class FileSystem
 	{

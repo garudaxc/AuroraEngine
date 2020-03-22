@@ -371,14 +371,14 @@ namespace Aurora
 			//}
 		}
 
-		m_op.pMtlInst->SetVariableValue("vDiffuse", color.Ptr());
+		//m_op.pMtlInst->SetVariableValue("vDiffuse", color.Ptr());
 
 		//m_op.nPrimType = RenderOperator::PT_LINELIST;
 		//m_op.nNumVertices = 24;
 		//m_op.nStartIndex = 0;
 		//m_op.nPrimitiveCount = 12;
 
-		RenderOp(m_op, pickupId, pQuery);
+		//RenderOp(m_op, pickupId, pQuery);
 	}
 
 

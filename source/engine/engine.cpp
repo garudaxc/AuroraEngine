@@ -19,6 +19,9 @@
 
 namespace Aurora
 {
+	const char* ENGINE_NAME = "Aurora Engine";
+	const char* ENGINE_VERSION = "0.1";
+
 
 	static Engine* g_pEngine;
 

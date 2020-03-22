@@ -1108,13 +1108,12 @@ Geometry* MeshManager::Load(const ResourceID& id)
 	}
 
 	if (ext == "mesh") {
-		auto file = GFileSys->OpenFile(pathName);
-		if (file == nullptr) {
+		FilePtr file(GFileSys->OpenFile(pathName));
+		if (!file) {
 			// todo default mesh
 			return pMesh;
 		}
-		pMesh->Load(file);
-		file->Close();
+		pMesh->Load(file.get());
 
 	}
 

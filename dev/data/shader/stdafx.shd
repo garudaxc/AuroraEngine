@@ -1,7 +1,4 @@
-//#define _LINEAR_DEPTH_
-//#define _SPOTLIGHT_TEX_PROJ_
-//#define _POINTLIGHT_TEX_PROJ_
-
+#include "GlobalDefine.shader"
 
 #ifndef USE_TANGENT
 #define USE_TANGENT 0
@@ -14,20 +11,18 @@
 
 
 
-
-cbuffer GlobalParameter: register(b0)	
-{										
-	float4x4 matView;					
-	float4x4 matProj;				
-	float4x4 matViewProj;			
-	float3	DirectionLight0;		
-	float4	LightColor0;			
-};
-
 cbuffer StaticBuffer: register(b1)	
 {									
 	float2	HammersleySample[1024];	
 };									
+
+
+
+float2 Hammersley(int i, int NumSamples)
+{
+    return HammersleySample[i];
+}
+
 
 
 /*

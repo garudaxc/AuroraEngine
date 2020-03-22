@@ -38,6 +38,7 @@ namespace Aurora
 		void		Bind();
 
 		Matrix4f	MatrixView;
+		Matrix4f	MatrixInvView;
 		Matrix4f	MatrixProj;
 		Matrix4f	MatrixViewProj;
 
@@ -64,6 +65,7 @@ namespace Aurora
 
 		//ShaderParamterBindingItem 
 		bindings_.Bindings.push_back(ShaderParamterBindingItem{ "matView", 0, MatrixView.Ptr() });
+		bindings_.Bindings.push_back(ShaderParamterBindingItem{ "matInvView", 0, MatrixInvView.Ptr() });
 		bindings_.Bindings.push_back(ShaderParamterBindingItem{ "matProj", 0, MatrixProj.Ptr() });
 		bindings_.Bindings.push_back(ShaderParamterBindingItem{ "matViewProj", 0, MatrixViewProj.Ptr() });
 
@@ -77,13 +79,13 @@ namespace Aurora
 	void GlobalShaderParameter::Bind()
 	{
 		MatrixView.TransposeSelf();
+		MatrixInvView = MatrixView.Inverse();
+
 		MatrixProj.TransposeSelf();
 		MatrixViewProj.TransposeSelf();
 		UpdateShaderParameter(bindings_.handle);
 		BindGlobalParameter(bindings_.handle);
 	}
-
-
 
 
 	ModelShaderVS modelvs_;
@@ -164,7 +166,7 @@ namespace Aurora
 
 		modelvs_.BindShader();
 		modelps_.BindShader();
-		modelps_.BindTextureToRender(pTexture);
+		modelps_.BindTextureToRender(pTexture, TextureEnvCube);
 		rasterState.BindToDevice();
 
 		DrawingEntity* pEntity = view->pDrawingEntity;

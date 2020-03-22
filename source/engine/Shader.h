@@ -209,11 +209,13 @@ public:
 
 	void	CreateBindings();
 
-	void	BindTextureToRender(Texture* texture);
+	void	BindTextureToRender(Texture* texture, Texture* envTex);
 	
 private:
 
 	ShaderTextureBinding texBinding_;
+
+	ShaderTextureBinding texEnvTex_;
 };
 
 

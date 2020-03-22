@@ -10,7 +10,6 @@ namespace Aurora
 	class CDrawLineVertexShader : public BaseShader
 	{
 	public:
-
 		void	Initialize();
 	};
 
@@ -199,6 +198,10 @@ namespace Aurora
 		{
 			ResourceBufferMapper vbMapper(VertexBuffer_);
 			ResourceBufferMapper ibMapper(IndexBuffer_);
+			if (vbMapper.Ptr() == nullptr || ibMapper.Ptr() == nullptr) {
+				FigureBufferPointer = 0;
+				return;
+			}
 
 
 			int32 pos = 0;

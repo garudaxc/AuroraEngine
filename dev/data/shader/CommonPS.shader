@@ -1,7 +1,7 @@
-﻿#define		PI			3.14159265
-#define		HALF_PI		1.570796325‬
-#define		INV_PI		0.3183098865
 
+#define		PI			3.14159265
+#define		HALF_PI		1.570796325?
+#define		INV_PI		0.3183098865
 
 // x : near plane
 // y : far plane
@@ -42,13 +42,13 @@ half3 Reflect(half3 normal, half3 light)
 }
 
 
-void PackGBuffer(out half4 c0, out half4 c1, 
-				 half3 normal, float depth, 
-				 float gloss, float specularLevel)
+void PackGBuffer(out half4 c0, out half4 c1,
+	half3 normal, float depth,
+	float gloss, float specularLevel)
 {
 	float3 n = PackNormal(normal);
 	c0 = half4(n, 0.f);
-	
+
 	/*float d = input.dep * 16777215.0 / 65536.0;
 	float fr = frac(d);
 	float r = (d - fr) / 255.0;
@@ -56,13 +56,13 @@ void PackGBuffer(out half4 c0, out half4 c1,
 	fr = frac(d);
 	float g = (d - fr) / 255.0;
 	float b = fr * 256.0 / 255.0;*/
-	
-	
+
+
 	float d = depth * 65536.0 / 256.0;
 	float fr = frac(d);
 	float r = (d - fr) / 255.0;
-	float g = fr * 256.0 / 255.0;	
-	
+	float g = fr * 256.0 / 255.0;
+
 	c1.rgba = half4(r, g, gloss, specularLevel * 0.33333);
 }
 
@@ -102,26 +102,26 @@ half4 GetLightBufferColor(LightPixelShaderMidst input)
 
 
 float GetDepth(LightPixelShaderMidst input)
-{	
+{
 	/*float3 rawval = floor( 255.0 * input.texDepth.rgb + 0.5);
-	
+
 	return dot( rawval, float3(0.996093809371817670572857294849,
 	0.0038909914428586627756752238080039,
 	1.5199185323666651467481343000015e-5) *
 	0.003921568627450980392156862745098);*/
-	
-	
+
+
 	/*float3 rawval = input.texDepth.rgb;
-	
+
 	return dot( rawval, float3(0.996093809371817670572857294849,
 	0.0038909914428586627756752238080039,
 	1.5199185323666651467481343000015e-5));*/
-	
-	
+
+
 	float2 rawval = input.texDepth.rg;
-	
-	return dot( rawval, float2(0.99610894941634241245136186770428,
-							0.0038910505836575875486381322957198));
+
+	return dot(rawval, float2(0.99610894941634241245136186770428,
+		0.0038910505836575875486381322957198));
 }
 
 
@@ -146,7 +146,7 @@ void FillLightPSMidst(out LightPixelShaderMidst output, float2 vPos)
 
 float3 GetWorldFromEyeDir(LightPixelShaderMidst input, float3 eyeDir)
 {
-	float depth = GetDepth(input);	
+	float depth = GetDepth(input);
 	float dist = lerp(CameraParam.x, CameraParam.y, depth);
 	eyeDir /= dot(eyeDir, CameraLookDir);
 	return CameraPos + eyeDir * dist;
@@ -156,9 +156,9 @@ float3 GetWorldFromEyeDir(LightPixelShaderMidst input, float3 eyeDir)
 half ComputeSpec(LightPixelShaderMidst input, float3 lightDir, float3 pixelWorldPos, float atten)
 {
 	float3 eyeDir = normalize(CameraPos - pixelWorldPos);
-	
+
 	float3 refDir = Reflect(input.normal, lightDir);
-	
+
 	half spec = pow(saturate(dot(eyeDir, refDir)), input.specPower) * atten * input.specStrength;
 
 	return spec;

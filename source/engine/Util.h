@@ -6,31 +6,30 @@
 namespace Aurora
 {
 
-
+	enum EEncoding : int8
+	{
+		Encoding_ANSI,
+		Encoding_Unicode,
+		Encoding_BigEndianUnicode,
+		Encoding_UTF_8,
+	};
 
 	class Util
 	{
 	public:
-		Util(void) {}
-		~Util(void) {}
 
 		static void			MemMap(const void* pSrc, uint srcStride, void* pDes, 
 			uint desStride, uint byteToMap, uint count);
 
-
 		static uint			MakeFOURCC(const char* pStr);
 
-
 		static std::string	GetFileNameExt(const std::string& fileName);
+		static string		GetPath(const string& pathName);
 
 		static string		ProcessPathName(const string& pathName);
 
+		static EEncoding	GetEncoding(const int8* str);
 	};
-
-
-	//TiXmlElement* LinkNewXmlElement(TiXmlElement* pParent, const char* name);
-	//TiXmlText* LinkNewXmlText(TiXmlElement* pParent, const char* text);
-
 
 
 

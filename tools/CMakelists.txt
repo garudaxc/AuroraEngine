@@ -1,19 +1,13 @@
 cmake_minimum_required(VERSION 3.15)
-set(platform x86)
 set(PROJ_NAME AuroraEngine)
-# set(PROJECT_BINARY_DIR ../Intermediate)
 
 project(${PROJ_NAME})
 
-message("MSVC15 " ${MSVC15})
-message("MSVC16 " ${MSVC16})
-message("MSVC17 " ${MSVC17})
-message("MSVC18 " ${MSVC18})
 message("CMAKE_HOST_WIN32 " ${CMAKE_HOST_WIN32})
-
 message("project name " ${CMAKE_PROJECT_NAME})
 message("project binary dir " ${PROJECT_BINARY_DIR})
-# message("CMAKE_CURRENT_SOURCE_DIR " ${CMAKE_CURRENT_SOURCE_DIR})
+message("use vulkan " ${USE_VULKAN})
+message("use DX11 " ${USE_DX11})
 
 
 include_directories(../source/engine)
@@ -30,38 +24,77 @@ aux_source_directory(../source/ThirdParty/dxTools srcs)
 aux_source_directory(../source/ThirdParty/imgui srcs)
 
 
-# add_subdirectory(../code/thirdParty ../Build/thirdParty)
-
-# set(LIBRARY_OUTPUT_PATH ../Build/Libs) 
-# set(EXECUTABLE_OUTPUT_PATH ../Binaries)
-
 if(CMAKE_HOST_WIN32)
-
-message("CMAKE_HOST_WIN32 " ${CMAKE_HOST_WIN32})
-aux_source_directory(../source/ThirdParty/imgui/dx11 srcs)
-aux_source_directory(../source/ThirdParty/imgui/win srcs)
-	# # # # include_directories(../code/win)
-	# # # # aux_source_directory(../code/win srcs)
-	# # # # link_directories(../libs/win32)
+	message("CMAKE_HOST_WIN32 " ${CMAKE_HOST_WIN32})
+	aux_source_directory(../source/ThirdParty/imgui/win srcs)
+		# # # # include_directories(../code/win)
+		# # # # aux_source_directory(../code/win srcs)
+		# # # # link_directories(../libs/win32)
 endif(CMAKE_HOST_WIN32)
 
+if(USE_DX11)
+	aux_source_directory(../source/ThirdParty/imgui/dx11 srcs)
+	aux_source_directory(../source/engine/DX11 srcs)
+endif(USE_DX11)
+
+
+if(USE_VULKAN)
+	if(NOT DEFINED ENV{VULKAN_SDK})
+		message(FATAL_ERROR "not defined environment variable:VULKAN_SDK") 
+	else()
+		message("found vulkan sdk path " $ENV{VULKAN_SDK})
+	endif()
+	
+	add_definitions(-DVK_USE_PLATFORM_WIN32_KHR -DVULKAN_HPP_NO_EXCEPTIONS)
+
+	include_directories($ENV{VULKAN_SDK}/Include)
+	link_directories($ENV{VULKAN_SDK}/Lib)
+
+	aux_source_directory(../source/ThirdParty/imgui/vulkan srcs)
+	aux_source_directory(../source/engine/vulkan srcs)
+endif(USE_VULKAN)
+
+
+
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-add_executable(${PROJ_NAME} WIN32 ${srcs} ../source/sample/prelighting/main.cpp)
 
-target_link_libraries(${PROJ_NAME} winmm.lib)
+function(DefineAProject projectName projsrc)
+	add_executable(${ARGV0} WIN32 ${srcs} ${ARGV1})
+	target_link_libraries(${ARGV0} winmm.lib)
+	set_target_properties(${ARGV0} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
+	set_target_properties(${ARGV0} PROPERTIES PDB_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
+	set_target_properties(${ARGV0} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
+endfunction()
 
+
+DefineAProject(SampleDX11 ../source/sample/prelighting/main.cpp)
+DefineAProject(SampleVulkan ../source/sample/vulkan/SampleVulkan.cpp)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# set(PROJECT_BINARY_DIR ../Intermediate)
+
+# message("CMAKE_CURRENT_SOURCE_DIR " ${CMAKE_CURRENT_SOURCE_DIR})
 
 # set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# set(LIBRARY_OUTPUT_PATH ../Build/Libs) 
+# set(EXECUTABLE_OUTPUT_PATH ../Binaries)
 
-set_target_properties(${PROJ_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
-set_target_properties(${PROJ_NAME} PROPERTIES PDB_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
-
-set_target_properties(${PROJ_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
 #set_target_properties(${PROJ_NAME} PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
-
 # set_target_properties(${PROJ_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries/win)
 # set_target_properties(${PROJ_NAME} PROPERTIES PDB_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries/win)
 

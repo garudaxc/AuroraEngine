@@ -36,6 +36,21 @@ namespace Aurora
 	}
 
 
+	string Util::GetPath(const string& pathName)
+	{
+		string tmp = pathName;
+		//transform(tmp.begin(), tmp.end(), tmp.begin(), tolower);
+		replace(tmp.begin(), tmp.end(), '\\', '/');
+
+		auto pos = tmp.rfind('/');
+		if (pos == -1) {
+			return "";
+		}
+		
+		return tmp.substr(0, pos + 1);
+	}
+
+
 	string Util::ProcessPathName(const string& pathName)
 	{
 		string tmp = pathName;
@@ -53,6 +68,20 @@ namespace Aurora
 
 		assert(0);
 		return tmp;
+	}
+
+
+	EEncoding Util::GetEncoding(const int8* str)
+	{
+		if (str[0] == 0xEF && str[1] == 0xBB) {
+			return Encoding_UTF_8;
+		} else if (str[0] == 0xFE && str[1] == 0xFF) {
+			return Encoding_BigEndianUnicode;
+		} else if (str[0] == 0xFF && str[1] == 0xFE) {
+			return Encoding_Unicode;
+		}
+
+		return Encoding_ANSI;
 	}
 
 	//TiXmlElement* LinkNewXmlElement(TiXmlElement* pParent, const char* name)

@@ -1,31 +1,19 @@
 #include "stdHeader.h"
-
 #include <d3d11.h>
-//#include <d3dx11.h>
+#include <d3d11_1.h>
+#include <d3d11_2.h>
+#include <d3d11_3.h>
+#include <d3d11_4.h>
 #include <DXGI.h>
 #include <D3Dcompiler.h>
-
-
 #include "Renderer.h"
-#include "Types.h"
-#include "Geometry.h"
-#include "Texture.h"
-
 #include "Console.h"
-#include "Engine.h"
-#include "Material.h"
 #include "Shader.h"
 #include "Log.h"
-#include "RendererObject.h"
-#include "Shader.h"
 #include "Util.h"
 #include "RendererObject.h"
 #include "Pipeline.h"
-#include "MaterialInstance.h"
-
 #include "RenderState.h"
-
-
 #include "stb/stb_image.h"
 #include "FileSystem.h"
 #include "DDSTextureLoader.h"
@@ -35,18 +23,65 @@
 #pragma comment (lib, "d3dcompiler.lib") 
 #pragma comment (lib, "DXGUID.lib") 
 
-//#ifdef _DEBUG
-//#pragma comment (lib, "d3dx11d.lib") 
-//#else
-//#pragma comment (lib, "d3dx11.lib") 
-//#endif
 
 
 
 namespace Aurora
 {
 
+	class MyInclude : public ID3DInclude
+	{
+	public:
+		virtual HRESULT Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes);
+		virtual HRESULT Close(LPCVOID pData) { return S_OK; }
 
+		vector<unique_ptr<int8[]>>	cache_;
+		string	path_;
+	};
+
+	void ReplaceShaderInclude(unique_ptr<int8[]>& data, int32* size);
+
+
+
+	HRESULT MyInclude::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes)
+	{
+		if (stricmp(pFileName, "Replace.shader") == 0) {
+			unique_ptr<int8[]> data;
+			int32 size = 0;
+
+			ReplaceShaderInclude(data, &size);
+
+			*ppData = data.get();
+			*pBytes = size;
+
+			cache_.push_back(move(data));
+			return S_OK;
+		}
+
+
+		string pathName = path_ + pFileName;
+		
+		FILE* file = nullptr;
+		if (fopen_s(&file, pathName.c_str(), "rb")) {
+			GLog->Error("open shader include file %s failed!", pathName.c_str());
+			return E_FAIL;
+		}
+
+		fseek(file, 0, SEEK_END);
+		uint32 size = ftell(file);
+		fseek(file, 0, SEEK_SET);
+
+		unique_ptr<int8[]> data(new int8[size + 1]());
+		fread_s(data.get(), size, 1, size, file);
+		fclose(file);
+
+		//auto encode = Util::GetEncoding(data.get());
+		*ppData = data.get();
+		*pBytes = size;	
+
+		cache_.push_back(move(data));
+		return S_OK;
+	}
 
 	// wchar_t to string
 	void Wchar_tToString(std::string& szDst, wchar_t* wchar)
@@ -293,10 +328,15 @@ namespace Aurora
 	extern HWND	MainHWnd;
 
 	static RendererDx11			GRendererDx11;
+	IRenderDevice*				GRenderDevice = NULL;
 
 	ID3D11Device* D3D11Device = NULL;
+	ID3D11Device3* D3D11Device3 = nullptr;
+
 	ID3D11DeviceContext* ImmediateContext = NULL;
 	static IDXGISwapChain* SwapChain = NULL;
+
+
 	static ID3D11RenderTargetView* RenderTargetView = NULL;
 	static ID3D11Texture2D* DepthStencil = NULL;
 	static ID3D11DepthStencilView* DepthStencilView = NULL;
@@ -348,6 +388,7 @@ namespace Aurora
 
 		D3D_FEATURE_LEVEL featureLevels[] =
 		{
+			D3D_FEATURE_LEVEL_11_1,
 			D3D_FEATURE_LEVEL_11_0,
 			D3D_FEATURE_LEVEL_10_1,
 			D3D_FEATURE_LEVEL_10_0,
@@ -379,6 +420,24 @@ namespace Aurora
 		if (FAILED(hr)) {
 			GLog->Error("D3D11CreateDeviceAndSwapChain failed! hr = %d", hr);
 			return false;
+		}
+		
+		const char* featureLevelsName[] = {
+			"11.1",
+			"11.0",
+			"10.1",
+			"10.0",
+			"unknow"
+		};
+
+		auto featureItem = find(featureLevels, featureLevels + numFeatureLevels, featureLevel);
+		int featureIndex = distance(featureLevels, featureItem);
+		GLog->Info("D3D11 device created with feature level %s", featureLevelsName[featureIndex]);
+
+
+		hr = D3D11Device->QueryInterface(__uuidof (ID3D11Device3), (void**)&D3D11Device3);
+		if (FAILED(hr) || D3D11Device3 == NULL) {
+			GLog->Error("Query ID3D11Device3 interface failed!");
 		}
 
 		// Create a render target view
@@ -520,8 +579,15 @@ namespace Aurora
 
 		}
 
+		MyInclude includeObject;
+		includeObject.path_ = Util::GetPath(code.name);
+
+		//HRESULT hr = D3DCompile(code.text.c_str(), code.text.length(), code.name.c_str(),
+		//	&macros[0], D3D_COMPILE_STANDARD_FILE_INCLUDE, "Main",
+		//	target, flag, 0, &pCompiledShader, &pError);
+
 		HRESULT hr = D3DCompile(code.text.c_str(), code.text.length(), code.name.c_str(),
-			&macros[0], D3D_COMPILE_STANDARD_FILE_INCLUDE, "Main",
+			&macros[0], &includeObject, "Main",
 			target, flag, 0, &pCompiledShader, &pError);
 
 
@@ -611,10 +677,9 @@ namespace Aurora
 		vector<ShaderParameterBindInfo>	Bindings;
 	};
 
-	void CreateGlobalParameterBuffer()
-	{
-		ShaderCode code;
-		char* shaderCode = "                     \
+
+
+	string GlobalParameterDef = "\
 												 \
 		cbuffer GlobalParameter: register(b0)	 \
 		{										 \
@@ -624,6 +689,30 @@ namespace Aurora
 			float3	DirectionLight0;			 \
 			float4	LightColor0;				 \
 		};										 \
+";
+	
+
+	void ReplaceShaderInclude(unique_ptr<int8[]>& data, int32* size)
+	{
+		*size = GlobalParameterDef.size();
+		data.reset(new int8[*size]);
+		memcpy_s(data.get(), *size, GlobalParameterDef.c_str(), *size);
+	}
+
+
+
+	void CreateGlobalParameterBuffer()
+	{
+		string pathName = "..\\dev\\data\\shader\\GlobalDefine.shader";
+		FilePtr file(GFileSys->OpenFile(pathName));
+		if (!file) {
+			return;
+		}
+		
+		ShaderCode code;
+		code.text = file->ReadAsString();
+
+		code.text += "\
 		float4 Main(float4 pos : POSITION) : SV_POSITION		\
 		{														\
 			return pos + LightColor0;						\
@@ -631,7 +720,6 @@ namespace Aurora
 			";
 
 		code.name = "Global Buffer";
-		code.text = shaderCode;
 		code.type = BaseShader::VERTEX_SHADER;
 
 		Handle handle = GRendererDx11.CreateShader(code);

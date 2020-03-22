@@ -267,15 +267,13 @@ void BaseShader::InitBase(ShaderType type, const string& pathname)
 	type_ = type;
 	pathname_ = pathname;
 
-	auto file = GFileSys->OpenFile(pathname_);
+	FilePtr file(GFileSys->OpenFile(pathname_));
 
 	ShaderCode code;
 	code.text = file->ReadAsString();
 	code.type = type_;
 	code.name = pathname_;
-
-	file->Close();
-
+	
 	if (type_ == VERTEX_SHADER) {
 		code.defines.push_back(make_pair("VERTEX_SHADER", "1"));
 	}
@@ -360,15 +358,21 @@ void ModelShaderPS::CreateBindings()
 	//bindings_.handle = CreateShaderParameterBinding(handle_, bindings_);
 	texBinding_.Name = "g_txDiffuse";
 	texBinding_.handle = CreateShaderTextureBinding(handle_, texBinding_);
+
+	texEnvTex_.Name = "g_txEnv";
+	texEnvTex_.handle = CreateShaderTextureBinding(handle_, texEnvTex_);
 }
 
 
-void ModelShaderPS::BindTextureToRender(Texture* texture)
+void ModelShaderPS::BindTextureToRender(Texture* texture, Texture* envTex)
 {
 	if (texBinding_.handle >= 0) {
 		BindTexture(texBinding_.handle, texture);
 	}
 
+	if (texEnvTex_.handle >= 0) {
+		BindTexture(texEnvTex_.handle, envTex);
+	}
 }
 
 

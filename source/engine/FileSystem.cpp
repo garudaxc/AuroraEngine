@@ -169,11 +169,10 @@ namespace Aurora
 //=========================================================
 
 
-	StringBuffer::StringBuffer(const string& pathname)
+	StringBuffer::StringBuffer(const string& pathName)
 	{
-		auto file = GFileSys->OpenFile(pathname);
-		ReadFile(file);
-		file->Close();
+		FilePtr file(GFileSys->OpenFile(pathName));
+		ReadFile(file.get());
 	}
 
 	StringBuffer::StringBuffer(File* file)

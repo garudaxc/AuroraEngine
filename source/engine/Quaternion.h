@@ -43,7 +43,7 @@ public:
 	inline void Normalize();
 
 	const Quaternion<T>& RotationAxis(const Vector3<T>& v, T angle);
-	Vector3<T>&& Transform(const Vector3<T>& v) const;
+	Vector3<T> Transform(const Vector3<T>& v) const;
 
 	const Quaternion<T> Inverse() const;
 	const Quaternion<T>& InverseSelf();
@@ -230,11 +230,11 @@ Quaternion<T>::Normalize()
 }
 
 template<typename T>
-Vector3<T>&& Quaternion<T>::Transform(const Vector3<T>& v) const
+Vector3<T> Quaternion<T>::Transform(const Vector3<T>& v) const
 {
 	Vector3<T> b(x, y, z);
 	float b2 = b.x * b.x + b.y * b.y + b.z * b.z;
-	return move(v * (w * w - b2) + b * (v.Dot(b) * 2.0)
+	return (v * (w * w - b2) + b * (v.Dot(b) * 2.0)
 		+ b.Cross(v) * (w * 2.0));
 }
 

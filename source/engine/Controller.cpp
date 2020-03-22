@@ -612,7 +612,6 @@ void CameraControllerUE::OnMouseEvent(const MouseEvent& event)
 	if (event.Type == MouseEvent::MouseMove) {
 		int dx = event.xPos - lastEvent_.xPos;
 		int dy = event.yPos - lastEvent_.yPos;
-
 		
 
 		if (lButtonDown_) {
@@ -623,11 +622,12 @@ void CameraControllerUE::OnMouseEvent(const MouseEvent& event)
 			else {
 
 			}
-
-			
+						
 			Quaternionf rot(Vector3f::UNIT_Z, dx * -0.01f);
 			Transform_ = lastTransform_;
 			Transform_.Rotate(rot);
+			
+			Transform_.SetTranslation(rot.Transform(Transform_.GetTranslation()));
 		}
 
 	}

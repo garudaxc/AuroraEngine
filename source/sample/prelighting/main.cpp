@@ -24,9 +24,6 @@
 
 
 using namespace Aurora;
-using namespace std;
-
-
 
 
 void TestRapidjson()

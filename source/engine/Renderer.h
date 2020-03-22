@@ -33,7 +33,8 @@ namespace Aurora
 			PT_TRIANGLESTRIP,
 		};
 
-		RenderOperator() {};
+		RenderOperator() {}
+
 		RenderOperator(Handle VertexLayout, Handle VertexBuffer, Handle IndexBuffer,
 			EPrimitiveType PrimType, int32 BaseVertexIndex, uint StartIndex,
 			int32 IndexCount, uint32 VertexStride) 

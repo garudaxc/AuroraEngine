@@ -162,25 +162,21 @@ Texture* TextureManager::Load(const ResourceID& id)
 {
 	string pathName = Util::ProcessPathName(id);
 
-	auto file = GFileSys->OpenFile(pathName);
-	if (file == nullptr) {
+	FilePtr file(GFileSys->OpenFile(pathName));
+	if (!file) {
 		return nullptr;
 	}
 
-	Texture* pTexture = GRenderDevice->CreateTexture(file);
+	Texture* pTexture = GRenderDevice->CreateTexture(file.get());
 
-	file->Close();
-
-	if (pTexture == NULL)
-	{
+	if (pTexture == nullptr) {
 		// log crate texture failed
-		return NULL;
+		return nullptr;
 	}
 
 	m_ResourcePool.insert(make_pair(id, pTexture));
 	return pTexture;
 }
-
 
 
 

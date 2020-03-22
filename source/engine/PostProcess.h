@@ -26,7 +26,6 @@ private:
 	MaterialInstance*				m_pMatInst;
 	MaterialInstance*				m_pBlurHInst;
 	MaterialInstance*				m_pBlurVInst;
-	RenderOperator					m_op;
 
 	vector<VertexPT>				m_VertBuff;
 	vector<uint16>					m_Index;
