@@ -67,9 +67,7 @@ static PFN_vkGetDeviceProcAddr g_gdpa = NULL;
 
 namespace Aurora
 {
-
-
-
+	   
 
 	// for debug
 	enum RESOURCE_FLAG:int32
@@ -402,6 +400,15 @@ namespace Aurora
 	};
 
 
+
+
+	struct vktexcube_vs_uniform {
+		// Must start with MVP
+		float mvp[4][4];
+		float position[12 * 3][4];
+		float attr[12 * 3][4];
+	};
+
 	typedef struct {
 		vk::Image image;
 		vk::CommandBuffer cmd;
@@ -524,6 +531,8 @@ namespace Aurora
 		}
 		return VK_TRUE;
 	}
+
+	bool memory_type_from_properties(uint32_t typeBits, vk::MemoryPropertyFlags requirements_mask, uint32_t* typeIndex);
 
 
 
@@ -1309,6 +1318,109 @@ namespace Aurora
 		}
 	}
 
+
+
+
+
+
+	static const float g_vertex_buffer_data[] = {
+		-1.0f,-1.0f,-1.0f,  // -X side
+		-1.0f,-1.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f,-1.0f,
+		-1.0f,-1.0f,-1.0f,
+
+		-1.0f,-1.0f,-1.0f,  // -Z side
+		 1.0f, 1.0f,-1.0f,
+		 1.0f,-1.0f,-1.0f,
+		-1.0f,-1.0f,-1.0f,
+		-1.0f, 1.0f,-1.0f,
+		 1.0f, 1.0f,-1.0f,
+
+		-1.0f,-1.0f,-1.0f,  // -Y side
+		 1.0f,-1.0f,-1.0f,
+		 1.0f,-1.0f, 1.0f,
+		-1.0f,-1.0f,-1.0f,
+		 1.0f,-1.0f, 1.0f,
+		-1.0f,-1.0f, 1.0f,
+
+		-1.0f, 1.0f,-1.0f,  // +Y side
+		-1.0f, 1.0f, 1.0f,
+		 1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f,-1.0f,
+		 1.0f, 1.0f, 1.0f,
+		 1.0f, 1.0f,-1.0f,
+
+		 1.0f, 1.0f,-1.0f,  // +X side
+		 1.0f, 1.0f, 1.0f,
+		 1.0f,-1.0f, 1.0f,
+		 1.0f,-1.0f, 1.0f,
+		 1.0f,-1.0f,-1.0f,
+		 1.0f, 1.0f,-1.0f,
+
+		-1.0f, 1.0f, 1.0f,  // +Z side
+		-1.0f,-1.0f, 1.0f,
+		 1.0f, 1.0f, 1.0f,
+		-1.0f,-1.0f, 1.0f,
+		 1.0f,-1.0f, 1.0f,
+		 1.0f, 1.0f, 1.0f,
+	};
+
+	static const float g_uv_buffer_data[] = {
+		0.0f, 1.0f,  // -X side
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+		1.0f, 0.0f,
+		0.0f, 0.0f,
+		0.0f, 1.0f,
+
+		1.0f, 1.0f,  // -Z side
+		0.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+		0.0f, 0.0f,
+
+		1.0f, 0.0f,  // -Y side
+		1.0f, 1.0f,
+		0.0f, 1.0f,
+		1.0f, 0.0f,
+		0.0f, 1.0f,
+		0.0f, 0.0f,
+
+		1.0f, 0.0f,  // +Y side
+		0.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+
+		1.0f, 0.0f,  // +X side
+		0.0f, 0.0f,
+		0.0f, 1.0f,
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+
+		0.0f, 0.0f,  // +Z side
+		0.0f, 1.0f,
+		1.0f, 0.0f,
+		0.0f, 1.0f,
+		1.0f, 1.0f,
+		1.0f, 0.0f,
+	};
+	// clang-format on
+
+
+	Matrix4f matMVP;
+
+	void VulkanSetMatrixMVP(const Matrix4f& m)
+	{
+		matMVP = m;
+	}
+
+
 	void prepare_cube_data_buffers() {
 		//mat4x4 VP;
 		//mat4x4_mul(VP, projection_matrix, view_matrix);
@@ -1316,50 +1428,50 @@ namespace Aurora
 		//mat4x4 MVP;
 		//mat4x4_mul(MVP, VP, model_matrix);
 
-		//vktexcube_vs_uniform data;
-		//memcpy(data.mvp, MVP, sizeof(MVP));
-		////    dumpMatrix("MVP", MVP)
+		vkcube_vs_uniform data;
+		memcpy(data.mvp, matMVP.Ptr(), sizeof(matMVP));
+		//    dumpMatrix("MVP", MVP)
 
-		//for (int32_t i = 0; i < 12 * 3; i++) {
-		//	data.position[i][0] = g_vertex_buffer_data[i * 3];
-		//	data.position[i][1] = g_vertex_buffer_data[i * 3 + 1];
-		//	data.position[i][2] = g_vertex_buffer_data[i * 3 + 2];
-		//	data.position[i][3] = 1.0f;
-		//	data.attr[i][0] = g_uv_buffer_data[2 * i];
-		//	data.attr[i][1] = g_uv_buffer_data[2 * i + 1];
-		//	data.attr[i][2] = 0;
-		//	data.attr[i][3] = 0;
-		//}
+		for (int32_t i = 0; i < 12 * 3; i++) {
+			data.position[i][0] = g_vertex_buffer_data[i * 3];
+			data.position[i][1] = g_vertex_buffer_data[i * 3 + 1];
+			data.position[i][2] = g_vertex_buffer_data[i * 3 + 2];
+			data.position[i][3] = 1.0f;
+			data.color[i][0] = g_uv_buffer_data[2 * i];
+			data.color[i][1] = g_uv_buffer_data[2 * i + 1];
+			data.color[i][2] = 0;
+			data.color[i][3] = 0;
+		}
 
-		//auto const buf_info = vk::BufferCreateInfo().setSize(sizeof(data)).setUsage(vk::BufferUsageFlagBits::eUniformBuffer);
+		auto const buf_info = vk::BufferCreateInfo().setSize(sizeof(data)).setUsage(vk::BufferUsageFlagBits::eUniformBuffer);
 
-		//for (unsigned int i = 0; i < swapchainImageCount; i++) {
-		//	auto result = device.createBuffer(&buf_info, nullptr, &swapchain_image_resources[i].uniform_buffer);
-		//	VERIFY(result == vk::Result::eSuccess);
+		for (unsigned int i = 0; i < swapchainImageCount; i++) {
+			auto result = device.createBuffer(&buf_info, nullptr, &swapchain_image_resources[i].uniform_buffer);
+			VERIFY(result == vk::Result::eSuccess);
 
-		//	vk::MemoryRequirements mem_reqs;
-		//	device.getBufferMemoryRequirements(swapchain_image_resources[i].uniform_buffer, &mem_reqs);
+			vk::MemoryRequirements mem_reqs;
+			device.getBufferMemoryRequirements(swapchain_image_resources[i].uniform_buffer, &mem_reqs);
 
-		//	auto mem_alloc = vk::MemoryAllocateInfo().setAllocationSize(mem_reqs.size).setMemoryTypeIndex(0);
+			auto mem_alloc = vk::MemoryAllocateInfo().setAllocationSize(mem_reqs.size).setMemoryTypeIndex(0);
 
-		//	bool const pass = memory_type_from_properties(
-		//		mem_reqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-		//		&mem_alloc.memoryTypeIndex);
-		//	VERIFY(pass);
+			bool const pass = memory_type_from_properties(
+				mem_reqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+				&mem_alloc.memoryTypeIndex);
+			VERIFY(pass);
 
-		//	result = device.allocateMemory(&mem_alloc, nullptr, &swapchain_image_resources[i].uniform_memory);
-		//	VERIFY(result == vk::Result::eSuccess);
+			result = device.allocateMemory(&mem_alloc, nullptr, &swapchain_image_resources[i].uniform_memory);
+			VERIFY(result == vk::Result::eSuccess);
 
-		//	result = device.mapMemory(swapchain_image_resources[i].uniform_memory, 0, VK_WHOLE_SIZE, vk::MemoryMapFlags(),
-		//		&swapchain_image_resources[i].uniform_memory_ptr);
-		//	VERIFY(result == vk::Result::eSuccess);
+			result = device.mapMemory(swapchain_image_resources[i].uniform_memory, 0, VK_WHOLE_SIZE, vk::MemoryMapFlags(),
+				&swapchain_image_resources[i].uniform_memory_ptr);
+			VERIFY(result == vk::Result::eSuccess);
 
-		//	memcpy(swapchain_image_resources[i].uniform_memory_ptr, &data, sizeof data);
+			memcpy(swapchain_image_resources[i].uniform_memory_ptr, &data, sizeof(data));
 
-		//	result =
-		//		device.bindBufferMemory(swapchain_image_resources[i].uniform_buffer, swapchain_image_resources[i].uniform_memory, 0);
-		//	VERIFY(result == vk::Result::eSuccess);
-		//}
+			result =
+				device.bindBufferMemory(swapchain_image_resources[i].uniform_buffer, swapchain_image_resources[i].uniform_memory, 0);
+			VERIFY(result == vk::Result::eSuccess);
+		}
 	}
 
 	bool memory_type_from_properties(uint32_t typeBits, vk::MemoryPropertyFlags requirements_mask, uint32_t* typeIndex) {
@@ -1464,13 +1576,6 @@ namespace Aurora
 	}
 
 
-
-	struct vktexcube_vs_uniform {
-		// Must start with MVP
-		float mvp[4][4];
-		float position[12 * 3][4];
-		float attr[12 * 3][4];
-	};
 
 	void prepare_descriptor_set() {
 		auto const alloc_info =
