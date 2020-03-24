@@ -137,10 +137,9 @@ namespace Aurora
 	static CRendererVulkan			RendererVulkan;
 	IRenderDevice* GRenderDevice = &RendererVulkan;
 
-
-
-
-
+	vk::Instance vkInst_;
+	vk::PhysicalDevice gpu;
+	vk::Device device;
 
 
 
@@ -168,8 +167,6 @@ namespace Aurora
 	PFN_vkCmdInsertDebugUtilsLabelEXT CmdInsertDebugUtilsLabelEXT;
 	PFN_vkSetDebugUtilsObjectNameEXT SetDebugUtilsObjectNameEXT;
 	VkDebugUtilsMessengerEXT dbg_messenger;
-
-
 
 
 
@@ -401,14 +398,6 @@ namespace Aurora
 
 
 
-
-	struct vktexcube_vs_uniform {
-		// Must start with MVP
-		float mvp[4][4];
-		float position[12 * 3][4];
-		float attr[12 * 3][4];
-	};
-
 	typedef struct {
 		vk::Image image;
 		vk::CommandBuffer cmd;
@@ -426,12 +415,9 @@ namespace Aurora
 	vk::SurfaceKHR surface;
 	bool prepared;
 	bool use_staging_buffer;
-	bool use_xlib;
-	bool separate_present_queue;
 
-	vk::Instance vkInst_;
-	vk::PhysicalDevice gpu;
-	vk::Device device;
+
+
 	vk::Queue graphics_queue;
 	vk::Queue present_queue;
 	uint32_t graphics_queue_family_index;
@@ -439,11 +425,12 @@ namespace Aurora
 	vk::Semaphore image_acquired_semaphores[FRAME_LAG];
 	vk::Semaphore draw_complete_semaphores[FRAME_LAG];
 	vk::Semaphore image_ownership_semaphores[FRAME_LAG];
-	vk::PhysicalDeviceProperties gpu_props;
 	std::unique_ptr<vk::QueueFamilyProperties[]> queue_props;
 	vk::PhysicalDeviceMemoryProperties memory_properties;
 
 
+	vk::PhysicalDeviceProperties gpu_props;
+	vk::PhysicalDeviceFeatures physDevFeatures;
 
 
 
@@ -478,7 +465,6 @@ namespace Aurora
 
 	uint32_t current_buffer;
 	uint32_t queue_family_count;
-
 
 
 
@@ -652,14 +638,8 @@ namespace Aurora
 				"Do you have a compatible Vulkan installable client driver (ICD) installed?\n"
 				"Please look at the Getting Started guide for additional information.\n",
 				"vkCreateInstance Failure");
-#elif defined(VK_USE_PLATFORM_METAL_EXT)
-			ERR_EXIT("vkEnumerateInstanceExtensionProperties failed to find the " VK_EXT_METAL_SURFACE_EXTENSION_NAME
-				" extension.\n\nDo you have a compatible "
-				"Vulkan installable client driver (ICD) installed?\nPlease "
-				"look at the Getting Started guide for additional "
-				"information.\n",
-				"vkCreateInstance Failure");
 #endif
+			
 		}
 		auto const app = vk::ApplicationInfo()
 			.setPApplicationName(ENGINE_NAME)
@@ -796,8 +776,6 @@ namespace Aurora
 			VERIFY(vkResult == VK_SUCCESS);
 		}
 
-
-
 		gpu.getProperties(&gpu_props);
 
 		/* Call with nullptr data to get count */
@@ -810,7 +788,6 @@ namespace Aurora
 		// Query fine-grained feature support for this device.
 		//  If app has specific feature requirements it should check supported
 		//  features based on this query
-		vk::PhysicalDeviceFeatures physDevFeatures;
 		gpu.getFeatures(&physDevFeatures);
 	}
 
@@ -869,8 +846,7 @@ namespace Aurora
 
 		graphics_queue_family_index = graphicsQueueFamilyIndex;
 		present_queue_family_index = presentQueueFamilyIndex;
-		separate_present_queue = (graphics_queue_family_index != present_queue_family_index);
-
+		VERIFY(graphics_queue_family_index == present_queue_family_index);
 
 
 		float const priorities[1] = { 0.0 };
@@ -889,25 +865,11 @@ namespace Aurora
 			.setPpEnabledExtensionNames((const char* const*)extension_names)
 			.setPEnabledFeatures(nullptr);
 
-		if (separate_present_queue) {
-			queues[1].setQueueFamilyIndex(present_queue_family_index);
-			queues[1].setQueueCount(1);
-			queues[1].setPQueuePriorities(priorities);
-			deviceInfo.setQueueCreateInfoCount(2);
-		}
-
 		auto result = gpu.createDevice(&deviceInfo, nullptr, &device);
 		VERIFY(result == vk::Result::eSuccess);
 
-
-
 		device.getQueue(graphics_queue_family_index, 0, &graphics_queue);
-		if (!separate_present_queue) {
-			present_queue = graphics_queue;
-		}
-		else {
-			device.getQueue(present_queue_family_index, 0, &present_queue);
-		}
+		present_queue = graphics_queue;
 
 		// Get the list of VkFormat's that are supported:
 		uint32_t formatCount;
@@ -950,15 +912,14 @@ namespace Aurora
 			result = device.createSemaphore(&semaphoreCreateInfo, nullptr, &draw_complete_semaphores[i]);
 			VERIFY(result == vk::Result::eSuccess);
 
-			if (separate_present_queue) {
-				result = device.createSemaphore(&semaphoreCreateInfo, nullptr, &image_ownership_semaphores[i]);
-				VERIFY(result == vk::Result::eSuccess);
-			}
 		}
 		frame_index = 0;
 
 		// Get Memory information and properties
 		gpu.getMemoryProperties(&memory_properties);
+		GLog->Info("vulkan memory properties type count %d heap count %d", 
+			memory_properties.memoryTypeCount, memory_properties.memoryHeapCount);
+
 	}
 
 
@@ -1003,57 +964,34 @@ namespace Aurora
 		commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 		commandBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, 1,
 			&swapchain_image_resources[current_buffer].descriptor_set, 0, nullptr);
-		float viewport_dimension;
+		//float viewport_dimension;
 		float viewport_x = 0.0f;
 		float viewport_y = 0.0f;
-		if (width < height) {
-			viewport_dimension = (float)width;
-			viewport_y = (height - width) / 2.0f;
-		}
-		else {
-			viewport_dimension = (float)height;
-			viewport_x = (width - height) / 2.0f;
-		}
+		//if (width < height) {
+		//	viewport_dimension = (float)width;
+		//	viewport_y = (height - width) / 2.0f;
+		//}
+		//else {
+		//	viewport_dimension = (float)height;
+		//	viewport_x = (width - height) / 2.0f;
+		//}
 		auto const viewport = vk::Viewport()
 			.setX(viewport_x)
 			.setY(viewport_y)
-			.setWidth((float)viewport_dimension)
-			.setHeight((float)viewport_dimension)
+			.setWidth((float)width)
+			.setHeight((float)height)
 			.setMinDepth((float)0.0f)
 			.setMaxDepth((float)1.0f);
 		commandBuffer.setViewport(0, 1, &viewport);
 
 		vk::Rect2D const scissor(vk::Offset2D(0, 0), vk::Extent2D(width, height));
 		commandBuffer.setScissor(0, 1, &scissor);
-		commandBuffer.draw(12 * 3, 1, 0, 0);
+		//commandBuffer.draw(12 * 3, 1, 0, 0);
+		commandBuffer.draw(3, 1, 0, 0);
 		// Note that ending the renderpass changes the image's layout from
 		// COLOR_ATTACHMENT_OPTIMAL to PRESENT_SRC_KHR
 		commandBuffer.endRenderPass();
 
-		if (separate_present_queue) {
-			// We have to transfer ownership from the graphics queue family to
-			// the
-			// present queue family to be able to present.  Note that we don't
-			// have
-			// to transfer from present queue family back to graphics queue
-			// family at
-			// the start of the next frame because we don't care about the
-			// image's
-			// contents at that point.
-			auto const image_ownership_barrier =
-				vk::ImageMemoryBarrier()
-				.setSrcAccessMask(vk::AccessFlags())
-				.setDstAccessMask(vk::AccessFlags())
-				.setOldLayout(vk::ImageLayout::ePresentSrcKHR)
-				.setNewLayout(vk::ImageLayout::ePresentSrcKHR)
-				.setSrcQueueFamilyIndex(graphics_queue_family_index)
-				.setDstQueueFamilyIndex(present_queue_family_index)
-				.setImage(swapchain_image_resources[current_buffer].image)
-				.setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
-
-			commandBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eBottomOfPipe, vk::PipelineStageFlagBits::eBottomOfPipe,
-				vk::DependencyFlagBits(), 0, nullptr, 0, nullptr, 1, &image_ownership_barrier);
-		}
 
 		result = commandBuffer.end();
 		VERIFY(result == vk::Result::eSuccess);
@@ -1537,39 +1475,48 @@ namespace Aurora
 	}
 
 	void prepare_descriptor_layout() {
-		vk::DescriptorSetLayoutBinding const layout_bindings[2] = { vk::DescriptorSetLayoutBinding()
-																	   .setBinding(0)
-																	   .setDescriptorType(vk::DescriptorType::eUniformBuffer)
-																	   .setDescriptorCount(1)
-																	   .setStageFlags(vk::ShaderStageFlagBits::eVertex)
-																	   .setPImmutableSamplers(nullptr),
-																   vk::DescriptorSetLayoutBinding()
-																	   .setBinding(1)
-																	   .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
-																	   .setDescriptorCount(texture_count)
-																	   .setStageFlags(vk::ShaderStageFlagBits::eFragment)
-																	   .setPImmutableSamplers(nullptr) };
+		//vk::DescriptorSetLayoutBinding const layout_bindings[2] = { vk::DescriptorSetLayoutBinding()
+		//															   .setBinding(0)
+		//															   .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+		//															   .setDescriptorCount(1)
+		//															   .setStageFlags(vk::ShaderStageFlagBits::eVertex)
+		//															   .setPImmutableSamplers(nullptr),
+		//														   vk::DescriptorSetLayoutBinding()
+		//															   .setBinding(1)
+		//															   .setDescriptorType(vk::DescriptorType::eCombinedImageSampler)
+		//															   .setDescriptorCount(texture_count)
+		//															   .setStageFlags(vk::ShaderStageFlagBits::eFragment)
+		//															   .setPImmutableSamplers(nullptr) };
 
-		auto const descriptor_layout = vk::DescriptorSetLayoutCreateInfo().setBindingCount(2).setPBindings(layout_bindings);
+		vk::DescriptorSetLayoutBinding const layout_bindings[] = { vk::DescriptorSetLayoutBinding()
+															   .setBinding(0)
+															   .setDescriptorType(vk::DescriptorType::eUniformBuffer)
+															   .setDescriptorCount(1)
+															   .setStageFlags(vk::ShaderStageFlagBits::eVertex)
+															   .setPImmutableSamplers(nullptr) };
+
+		auto const descriptor_layout = vk::DescriptorSetLayoutCreateInfo().setBindingCount(1).setPBindings(layout_bindings);
 
 		auto result = device.createDescriptorSetLayout(&descriptor_layout, nullptr, &desc_layout);
 		VERIFY(result == vk::Result::eSuccess);
 
 		auto const pPipelineLayoutCreateInfo = vk::PipelineLayoutCreateInfo().setSetLayoutCount(1).setPSetLayouts(&desc_layout);
-
 		result = device.createPipelineLayout(&pPipelineLayoutCreateInfo, nullptr, &pipeline_layout);
 		VERIFY(result == vk::Result::eSuccess);
 	}
 
 	void prepare_descriptor_pool() {
-		vk::DescriptorPoolSize const poolSizes[2] = {
-			vk::DescriptorPoolSize().setType(vk::DescriptorType::eUniformBuffer).setDescriptorCount(swapchainImageCount),
-			vk::DescriptorPoolSize()
-				.setType(vk::DescriptorType::eCombinedImageSampler)
-				.setDescriptorCount(swapchainImageCount * texture_count) };
+		//vk::DescriptorPoolSize const poolSizes[2] = {
+		//	vk::DescriptorPoolSize().setType(vk::DescriptorType::eUniformBuffer).setDescriptorCount(swapchainImageCount),
+		//	vk::DescriptorPoolSize()
+		//		.setType(vk::DescriptorType::eCombinedImageSampler)
+		//		.setDescriptorCount(swapchainImageCount * texture_count) };
+
+		vk::DescriptorPoolSize const poolSizes[] = {
+	vk::DescriptorPoolSize().setType(vk::DescriptorType::eUniformBuffer).setDescriptorCount(swapchainImageCount)};
 
 		auto const descriptor_pool =
-			vk::DescriptorPoolCreateInfo().setMaxSets(swapchainImageCount).setPoolSizeCount(2).setPPoolSizes(poolSizes);
+			vk::DescriptorPoolCreateInfo().setMaxSets(swapchainImageCount).setPoolSizeCount(1).setPPoolSizes(poolSizes);
 
 		auto result = device.createDescriptorPool(&descriptor_pool, nullptr, &desc_pool);
 		VERIFY(result == vk::Result::eSuccess);
@@ -1581,7 +1528,7 @@ namespace Aurora
 		auto const alloc_info =
 			vk::DescriptorSetAllocateInfo().setDescriptorPool(desc_pool).setDescriptorSetCount(1).setPSetLayouts(&desc_layout);
 
-		auto buffer_info = vk::DescriptorBufferInfo().setOffset(0).setRange(sizeof(vktexcube_vs_uniform));
+		auto buffer_info = vk::DescriptorBufferInfo().setOffset(0).setRange(sizeof(vkcube_vs_uniform));
 
 		vk::DescriptorImageInfo tex_descs[texture_count];
 		for (uint32_t i = 0; i < texture_count; i++) {
@@ -1596,10 +1543,10 @@ namespace Aurora
 		writes[0].setDescriptorType(vk::DescriptorType::eUniformBuffer);
 		writes[0].setPBufferInfo(&buffer_info);
 
-		writes[1].setDstBinding(1);
-		writes[1].setDescriptorCount(texture_count);
-		writes[1].setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
-		writes[1].setPImageInfo(tex_descs);
+		//writes[1].setDstBinding(1);
+		//writes[1].setDescriptorCount(texture_count);
+		//writes[1].setDescriptorType(vk::DescriptorType::eCombinedImageSampler);
+		//writes[1].setPImageInfo(tex_descs);
 
 		for (unsigned int i = 0; i < swapchainImageCount; i++) {
 			auto result = device.allocateDescriptorSets(&alloc_info, &swapchain_image_resources[i].descriptor_set);
@@ -1607,8 +1554,8 @@ namespace Aurora
 
 			buffer_info.setBuffer(swapchain_image_resources[i].uniform_buffer);
 			writes[0].setDstSet(swapchain_image_resources[i].descriptor_set);
-			writes[1].setDstSet(swapchain_image_resources[i].descriptor_set);
-			device.updateDescriptorSets(2, writes, 0, nullptr);
+			//writes[1].setDstSet(swapchain_image_resources[i].descriptor_set);
+			device.updateDescriptorSets(1, writes, 0, nullptr);
 		}
 	}
 
@@ -1819,15 +1766,100 @@ namespace Aurora
 
 		return module;
 	}
+	
 
 
+	void draw() {
+		// Ensure no more than FRAME_LAG renderings are outstanding
+		device.waitForFences(1, &fences[frame_index], VK_TRUE, UINT64_MAX);
+		device.resetFences(1, &fences[frame_index]);
+
+		vk::Result result;
+		do {
+			result =
+				device.acquireNextImageKHR(swapchain, UINT64_MAX, image_acquired_semaphores[frame_index], vk::Fence(), &current_buffer);
+			if (result == vk::Result::eErrorOutOfDateKHR) {
+				// demo->swapchain is out of date (e.g. the window was resized) and
+				// must be recreated:
+				//resize();
+
+				GLog->Warning("acquireNextImageKHR eErrorOutOfDateKHR");
+			}
+			else if (result == vk::Result::eSuboptimalKHR) {
+				// swapchain is not as optimal as it could be, but the platform's
+				// presentation engine will still present the image correctly.
+				break;
+			}
+			else if (result == vk::Result::eErrorSurfaceLostKHR) {
+				//inst.destroySurfaceKHR(surface, nullptr);
+				//create_surface();
+				//resize();
+				GLog->Warning("acquireNextImageKHR eErrorSurfaceLostKHR");
+			}
+			else {
+				VERIFY(result == vk::Result::eSuccess);
+			}
+		} while (result != vk::Result::eSuccess);
+
+		//update_data_buffer();
+
+		// Wait for the image acquired semaphore to be signaled to ensure
+		// that the image won't be rendered to until the presentation
+		// engine has fully released ownership to the application, and it is
+		// okay to render to the image.
+		vk::PipelineStageFlags const pipe_stage_flags = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		auto const submit_info = vk::SubmitInfo()
+			.setPWaitDstStageMask(&pipe_stage_flags)
+			.setWaitSemaphoreCount(1)
+			.setPWaitSemaphores(&image_acquired_semaphores[frame_index])
+			.setCommandBufferCount(1)
+			.setPCommandBuffers(&swapchain_image_resources[current_buffer].cmd)
+			.setSignalSemaphoreCount(1)
+			.setPSignalSemaphores(&draw_complete_semaphores[frame_index]);
+
+		result = graphics_queue.submit(1, &submit_info, fences[frame_index]);
+		VERIFY(result == vk::Result::eSuccess);
 
 
+		// If we are using separate queues we have to wait for image ownership,
+		// otherwise wait for draw complete
+		auto const presentInfo = vk::PresentInfoKHR()
+			.setWaitSemaphoreCount(1)
+			.setPWaitSemaphores(&draw_complete_semaphores[frame_index])
+			.setSwapchainCount(1)
+			.setPSwapchains(&swapchain)
+			.setPImageIndices(&current_buffer);
+
+		result = present_queue.presentKHR(&presentInfo);
+		frame_index += 1;
+		frame_index %= FRAME_LAG;
+		if (result == vk::Result::eErrorOutOfDateKHR) {
+			// swapchain is out of date (e.g. the window was resized) and
+			// must be recreated:
+			//resize();
+			GLog->Warning("acquireNextImageKHR eErrorOutOfDateKHR");
+		}
+		else if (result == vk::Result::eSuboptimalKHR) {
+			// swapchain is not as optimal as it could be, but the platform's
+			// presentation engine will still present the image correctly.
+		}
+		else if (result == vk::Result::eErrorSurfaceLostKHR) {
+			//inst.destroySurfaceKHR(surface, nullptr);
+			//create_surface();
+			//resize();
+			GLog->Warning("acquireNextImageKHR eErrorSurfaceLostKHR");
+		}
+		else {
+			VERIFY(result == vk::Result::eSuccess);
+		}
+	}
 
 
 
 	IRenderDevice* IRenderDevice::CreateDevice(int nWidth, int nHeight)
 	{
+		width = nWidth;
+		height = nHeight;
 		init_vk();
 		init_vk_swapchain();
 		prepare();
@@ -1912,9 +1944,69 @@ namespace Aurora
 	}
 
 
+
+	struct VulkanBufferInfo
+	{
+		int Occupied = 0;
+		vk::Buffer	buffer;
+		vk::DeviceMemory	memory;
+	};
+	
+
+	vector<VulkanBufferInfo>	DeviceBuffers_;
+
+
 	Handle CreateVertexBufferHandle(const void* data, int32 size)
 	{
-		return 0;
+		vk::BufferCreateInfo createInfo;
+		createInfo.setSize(size).setSharingMode(vk::SharingMode::eExclusive)
+			.setUsage(vk::BufferUsageFlagBits::eVertexBuffer);
+
+		auto res = device.createBuffer(createInfo);
+		if (res.result != vk::Result::eSuccess) {
+			GLog->Error("vulkan create buffer failed result :%d", res.result);
+			return -1;
+		}
+
+		vk::MemoryRequirements mem_reqs;
+		device.getBufferMemoryRequirements(res.value, &mem_reqs);
+
+		uint32 memoryTypeIndex = 0;
+		bool const pass = memory_type_from_properties(mem_reqs.memoryTypeBits, 
+			vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+			&memoryTypeIndex);
+		VERIFY(pass);
+
+		auto mem_alloc = vk::MemoryAllocateInfo().
+			setAllocationSize(mem_reqs.size).
+			setMemoryTypeIndex(memoryTypeIndex);
+
+		vk::DeviceMemory memory;
+
+		auto result = device.allocateMemory(&mem_alloc, nullptr, &memory);
+		VERIFY(result == vk::Result::eSuccess);
+
+		if (data != nullptr) {
+			void* pData = nullptr;
+			result = device.mapMemory(memory, 0, VK_WHOLE_SIZE, vk::MemoryMapFlags(), &pData);
+			VERIFY(result == vk::Result::eSuccess);
+
+			memcpy(pData, data, size);
+			device.unmapMemory(memory);
+		}
+		
+		result = device.bindBufferMemory(res.value, memory, 0);
+		VERIFY(result == vk::Result::eSuccess);
+
+		VulkanBufferInfo deviceBuffer;
+		deviceBuffer.buffer = res.value;
+		deviceBuffer.memory = memory;
+		deviceBuffer.Occupied = 1;
+		
+		int slot = FindAvailableSlot(DeviceBuffers_);
+		DeviceBuffers_[slot] = deviceBuffer;
+
+		return slot;
 	}
 
 
@@ -1940,6 +2032,7 @@ namespace Aurora
 
 	void CRendererVulkan::Present()
 	{
+		draw();
 	}
 
 	RenderTarget* CRendererVulkan::GetFrameBuffer()
@@ -2007,9 +2100,104 @@ namespace Aurora
 
 	
 
+
+	vk::Format MapVulkanVertexElemType(Vertex::ElemType type)
+	{
+		switch (type)
+		{
+		case Aurora::Vertex::TYPE_FLOAT:
+			return vk::Format::eR32Sfloat;
+		case Aurora::Vertex::TYPE_FLOAT2:
+			return vk::Format::eR32G32Sfloat;
+		case Aurora::Vertex::TYPE_FLOAT3:
+			return vk::Format::eR32G32B32Sfloat;
+		case Aurora::Vertex::TYPE_FLOAT4:
+			return vk::Format::eR32G32B32A32Sfloat;
+		case Aurora::Vertex::TYPE_UBYTE4_UINT:
+			return vk::Format::eR8G8B8A8Uint;
+		case Aurora::Vertex::TYPE_UBYTE4_UNORM:
+			return vk::Format::eR8G8B8A8Unorm;
+		case Aurora::Vertex::TYPE_USHORT_UINT:
+			return vk::Format::eR16Uint;
+		case Aurora::Vertex::TYPE_UINT:
+			return vk::Format::eR32Uint;
+		default:
+
+			assert(0);
+			return vk::Format::eR32Sfloat;
+		}
+	}
+
+	vk::PrimitiveTopology MapVulkanPrimitiveType(RenderOperator::EPrimitiveType type) 
+	{
+		switch (type)
+		{
+		case Aurora::RenderOperator::PT_POINTLIST:
+			return vk::PrimitiveTopology::ePointList;
+		case Aurora::RenderOperator::PT_LINELIST:
+			return vk::PrimitiveTopology::eLineList;
+		case Aurora::RenderOperator::PT_LINESTRIP:
+			return vk::PrimitiveTopology::eLineStrip;
+		case Aurora::RenderOperator::PT_TRIANGLELIST:
+			return vk::PrimitiveTopology::eTriangleList;
+		case Aurora::RenderOperator::PT_TRIANGLESTRIP:
+			return vk::PrimitiveTopology::eTriangleStrip;
+		default:
+			assert(0);
+			return vk::PrimitiveTopology::eTriangleList;
+		}
+	}
+
+
+
+
+	struct VertexLayoutInfo
+	{
+		int Occupied = 0;
+		int stride = 0;
+		int binding = 0;
+		vector< vk::VertexInputBindingDescription>	bindingDescs;
+		vector< vk::VertexInputAttributeDescription> inputAttriDescs;
+	};
+
+
+	vector<VertexLayoutInfo>	VertexLayoutInfos_;
+
+
+	
+
 	Handle CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems)
 	{
-		return 0;
+
+		vector< vk::VertexInputAttributeDescription> inputAttriDescs;
+		int loc = 0;
+		int offset = 0;
+		for (auto it = layoutItems.begin(); it != layoutItems.end(); ++it) {
+			vk::VertexInputAttributeDescription  desc;
+			desc.setBinding(0)
+				.setLocation(loc++)
+				.setOffset(offset)
+				.setFormat(MapVulkanVertexElemType((Vertex::ElemType)it->type));
+
+			inputAttriDescs.push_back(desc);
+			offset += Geometry::GetSizeOfType((Vertex::ElemType)it->type);
+		}
+
+		vk::VertexInputBindingDescription bindingDescription;
+		bindingDescription.setBinding(0).setInputRate(vk::VertexInputRate::eVertex).setStride(offset);
+
+		VertexLayoutInfo info;
+		info.binding = 0;
+		info.stride = offset;
+		info.bindingDescs.clear();
+		info.bindingDescs.push_back(bindingDescription);
+		info.inputAttriDescs = inputAttriDescs;
+		info.Occupied = 1;
+
+		int slot = FindAvailableSlot(VertexLayoutInfos_);
+		VertexLayoutInfos_[slot] = info;
+
+		return slot;
 	}
 
 
