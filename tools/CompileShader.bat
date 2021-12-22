@@ -18,8 +18,15 @@ rem echo %~dp0
 %~d0
 cd %~dp0
 
-%glslang% ..\dev\data\shader\VulkanSample.vert -o ..\dev\CompiledShader\VulkanSample_vert.spv
-%glslang% ..\dev\data\shader\VulkanSample.frag -o ..\dev\CompiledShader\VulkanSample_frag.spv
+set outputDir=..\dev\CompiledShader
+
+IF not exist %outputDir% (
+rem	echo output dir %outputDir% not exist
+	md %outputDir%
+)
+
+%glslang% ..\dev\data\shader\VulkanSample.vert -o %outputDir%\VulkanSample_vert.spv
+%glslang% ..\dev\data\shader\VulkanSample.frag -o %outputDir%\VulkanSample_frag.spv
 
 echo done!
 

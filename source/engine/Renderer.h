@@ -146,6 +146,9 @@ namespace Aurora
 
 	};
 
+	//void SetPipeline(Handle );
+
+
 
 	Handle CreateShaderParameterBinding(Handle shaderHandle, const ShaderParamterBindings& bindings);
 
@@ -159,8 +162,6 @@ namespace Aurora
 	void BindTexture(Handle binding, Texture* texture);
 
 	void BindGlobalParameter(Handle handle);
-
-
 
 	Handle CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems);
 
