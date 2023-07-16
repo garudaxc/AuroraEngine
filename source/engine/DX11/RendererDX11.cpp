@@ -32,8 +32,8 @@ namespace Aurora
 	class MyInclude : public ID3DInclude
 	{
 	public:
-		virtual HRESULT Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes);
-		virtual HRESULT Close(LPCVOID pData) { return S_OK; }
+		virtual HRESULT DECLSPEC_NOTHROW STDMETHODCALLTYPE Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes) override;
+		virtual HRESULT DECLSPEC_NOTHROW STDMETHODCALLTYPE Close(LPCVOID pData) override { return S_OK; }
 
 		vector<unique_ptr<int8[]>>	cache_;
 		string	path_;

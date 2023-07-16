@@ -1404,6 +1404,8 @@ namespace Aurora
 		auto vsModule = CreateShaderModule("../dev/CompiledShader/VulkanSample_vert.spv");
 		auto psModule = CreateShaderModule("../dev/CompiledShader/VulkanSample_frag.spv");
 
+		assert(vsModule && psModule);
+
 		vk::PipelineShaderStageCreateInfo const shaderStageInfo[2] = {
 			vk::PipelineShaderStageCreateInfo().setStage(vk::ShaderStageFlagBits::eVertex).setModule(vsModule).setPName("main"),
 			vk::PipelineShaderStageCreateInfo().setStage(vk::ShaderStageFlagBits::eFragment).setModule(psModule).setPName("main") };

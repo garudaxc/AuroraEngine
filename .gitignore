@@ -3,9 +3,11 @@
 *.sdf
 *.user
 *.suo
-.DS_Store
-.vs
-.spv
+*.spv
+
+**/.DS_Store
+**/.idea
+**/.vs
 
 bin/
 Binaries/
