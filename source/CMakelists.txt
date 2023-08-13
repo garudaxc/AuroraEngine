@@ -10,31 +10,57 @@ message("use vulkan " ${USE_VULKAN})
 message("use DX11 " ${USE_DX11})
 
 
-include_directories(../source/engine)
-include_directories(../source/ThirdParty)
-include_directories(../source/ThirdParty/TinyXml)
-include_directories(../source/ThirdParty/dxTools)
-include_directories(../source/ThirdParty/imgui)
+macro(source_group_by_dir source_files)
+    if(MSVC)
+        set(sgbd_cur_dir ${CMAKE_CURRENT_SOURCE_DIR})
+		
+        foreach(sgbd_file ${${source_files}})
+            string(REGEX REPLACE ${sgbd_cur_dir}/\(.*\) \\1 sgbd_fpath ${sgbd_file})
+            string(REGEX REPLACE "\(.*\)/.*" \\1 sgbd_group_name ${sgbd_fpath})
+            string(COMPARE EQUAL ${sgbd_fpath} ${sgbd_group_name} sgbd_nogroup)
+            string(REPLACE "/" "\\" sgbd_group_name ${sgbd_group_name})
+            if(sgbd_nogroup)
+                set(sgbd_group_name "\\")
+            endif(sgbd_nogroup)
+            source_group(${sgbd_group_name} FILES ${sgbd_file})
+        endforeach(sgbd_file)
+    endif(MSVC)
+endmacro(source_group_by_dir)
 
-aux_source_directory(../source/engine srcs)
-aux_source_directory(../source/ThirdParty/TinyXml srcs)
-aux_source_directory(../source/ThirdParty/zip srcs)
-aux_source_directory(../source/ThirdParty/stb srcs)
-aux_source_directory(../source/ThirdParty/dxTools srcs)
-aux_source_directory(../source/ThirdParty/imgui srcs)
+
+message("project binary dir " ${PROJECT_BINARY_DIR})
+message("CMAKE_CURRENT_SOURCE_DIR " ${CMAKE_CURRENT_SOURCE_DIR})
+
+include_directories(engine)
+include_directories(ThirdParty)
+include_directories(ThirdParty/TinyXml)
+include_directories(ThirdParty/dxTools)
+include_directories(ThirdParty/imgui)
+
+aux_source_directory(engine srcs)
+aux_source_directory(ThirdParty/TinyXml srcs)
+aux_source_directory(ThirdParty/zip srcs)
+aux_source_directory(ThirdParty/stb srcs)
+aux_source_directory(ThirdParty/dxTools srcs)
+aux_source_directory(ThirdParty/imgui srcs)
+
+
+file(GLOB H_FILES "engine/*.h" "ThirdParty/TinyXml/*.h" "ThirdParty/zip/*.h" "ThirdParty/stb/*.h" "ThirdParty/dxTools/*.h" "ThirdParty/imgui/*.h")
+
 
 
 if(CMAKE_HOST_WIN32)
 	message("CMAKE_HOST_WIN32 " ${CMAKE_HOST_WIN32})
-	aux_source_directory(../source/ThirdParty/imgui/win srcs)
+	aux_source_directory(ThirdParty/imgui/win srcs)
+	aux_source_directory(platform/windows srcs)
 		# # # # include_directories(../code/win)
 		# # # # aux_source_directory(../code/win srcs)
 		# # # # link_directories(../libs/win32)
 endif(CMAKE_HOST_WIN32)
 
 if(USE_DX11)
-	aux_source_directory(../source/ThirdParty/imgui/dx11 srcs)
-	aux_source_directory(../source/engine/DX11 srcs)
+	aux_source_directory(ThirdParty/imgui/dx11 srcs)
+	aux_source_directory(engine/DX11 srcs)
 endif(USE_DX11)
 
 
@@ -50,8 +76,8 @@ if(USE_VULKAN)
 	include_directories($ENV{VULKAN_SDK}/Include)
 	link_directories($ENV{VULKAN_SDK}/Lib)
 
-	aux_source_directory(../source/ThirdParty/imgui/vulkan srcs)
-	aux_source_directory(../source/engine/vulkan srcs)
+	aux_source_directory(ThirdParty/imgui/vulkan srcs)
+	aux_source_directory(engine/vulkan srcs)
 endif(USE_VULKAN)
 
 
@@ -59,7 +85,11 @@ endif(USE_VULKAN)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 function(DefineAProject projectName projsrc)
-	add_executable(${ARGV0} WIN32 ${srcs} ${ARGV1})
+	
+	source_group_by_dir(srcs)
+	source_group_by_dir(H_FILES)
+	
+	add_executable(${ARGV0} WIN32 ${srcs} ${H_FILES} ${ARGV1})
 	target_link_libraries(${ARGV0} winmm.lib)
 	set_target_properties(${ARGV0} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
 	set_target_properties(${ARGV0} PROPERTIES PDB_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
@@ -67,15 +97,8 @@ function(DefineAProject projectName projsrc)
 endfunction()
 
 
-DefineAProject(SampleDX11 ../source/sample/prelighting/main.cpp)
-DefineAProject(SampleVulkan ../source/sample/vulkan/SampleVulkan.cpp)
-
-
-
-
-
-
-
+DefineAProject(SampleDX11 sample/prelighting/main.cpp)
+# DefineAProject(SampleVulkan sample/vulkan/SampleVulkan.cpp)
 
 
 

@@ -67,7 +67,7 @@ namespace Aurora
 	Model* CModelManager::GetModel(const ResourceID& id)
 	{
 		Model* pModel = Find(id);
-		if (pModel == NULL)
+		if (pModel == nullptr)
 		{
 			return Load(id);
 		}
@@ -81,7 +81,7 @@ namespace Aurora
 		{
 			return it->second;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	Model* CModelManager::Load(const ResourceID& id)
@@ -93,20 +93,20 @@ namespace Aurora
 		if (!bOK)
 		{
 			// log open log file failed
-			return NULL;
+			return nullptr;
 		}
 
 		TiXmlElement* pXmlModel = doc.FirstChild()->ToElement();
 		if (strcmp(pXmlModel->Value(), "Model") != 0)
 		{
 			GLog->Error("file \"%s\"is not a Model file!", id.c_str());
-			return NULL;
+			return nullptr;
 		}
 
 		string name = pXmlModel->Attribute("name");
 		Model* pModel = new Model(name);		
 
-		Geometry* pGeometry = NULL;
+		Geometry* pGeometry = nullptr;
 		{
 			string meshId = pXmlModel->FirstChild("Mesh")->FirstChild()->ToText()->Value();
 			pGeometry = GMeshManager.GetMesh(meshId);
@@ -121,7 +121,7 @@ namespace Aurora
 			TiXmlElement* pXmlInst = pXmlMtl->FirstChildElement();
 
 			int idx = 0;
-			while (pXmlInst != NULL)
+			while (pXmlInst != nullptr)
 			{
 				string id = pXmlInst->FirstChild()->ToText()->Value();
 

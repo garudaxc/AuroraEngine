@@ -6,7 +6,7 @@ namespace Aurora
 class Resource
 {
 public:
-	virtual void*			GetBindID()		{	return NULL;	}
+	virtual void*			GetBindID()		{	return nullptr;	}
 	virtual ~Resource()	{}
 	virtual void			OnReset()		{}
 	virtual void			OnLost()		{}
@@ -50,7 +50,7 @@ class ResourcePtr
 {
 public:
 	ResourcePtr(const ResourcePtr<ResType>& ob);
-	explicit ResourcePtr(ResPtrHolder* pResHolder = NULL);
+	explicit ResourcePtr(ResPtrHolder* pResHolder = nullptr);
 	~ResourcePtr();
 
 	ResourcePtr<ResType>& operator = (const ResourcePtr<ResType>& ob);
@@ -140,7 +140,7 @@ ResType* ResourcePtr<ResType>::Get() const
 template <class ResType>
 ResourcePtr<ResType>::operator bool() const
 {
-	return (m_pResHolder != NULL);
+	return (m_pResHolder != nullptr);
 }
 
 //////////////////////////////////////////////////////////////////////////

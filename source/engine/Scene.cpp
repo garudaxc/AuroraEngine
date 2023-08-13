@@ -39,7 +39,7 @@ namespace Aurora
 
 	void RenderCmdBuffer::Init()
 	{
-		RenderView = NULL;
+		RenderView = nullptr;
 
 		pRenderLock = CreateThreadLock();
 		pUpdateLock = CreateThreadLock();
@@ -90,7 +90,7 @@ namespace Aurora
 		if (m_bMultiThread)
 		{
 			m_pTask = new UpdateTask();
-			m_pThread = CreateThread(NULL, NULL, false);
+			m_pThread = CreateThread(nullptr, nullptr, false);
 			m_pThread->AddTask(m_pTask, this);
 		}
 	}
@@ -144,8 +144,8 @@ namespace Aurora
 
 
 		SceneView* pUpdateView = GFrameMemoryBuffer->AllocSceneView();
-		pUpdateView->pDrawingEntity = NULL;
-		pUpdateView->pDrawingLight = NULL;
+		pUpdateView->pDrawingEntity = nullptr;
+		pUpdateView->pDrawingLight = nullptr;
 
 		for (vector<Entity*>::iterator it = m_Entitys.begin(); it != m_Entitys.end(); ++it)
 		{

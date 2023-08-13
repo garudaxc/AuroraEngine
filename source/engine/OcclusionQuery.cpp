@@ -7,7 +7,7 @@ namespace Aurora
 	OcclusionQuery::OcclusionQuery():
 m_nCurrentOccludedId(-1),m_nCurrentObjectId(-1)
 ,m_x0(0),m_y0(0),m_x1(0),m_y1(0),
-m_State(State_End)//,m_pQuery(NULL)
+m_State(State_End)//,m_pQuery(nullptr)
 	{
 
 	}

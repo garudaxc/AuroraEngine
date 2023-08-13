@@ -11,10 +11,11 @@
 
 bin/
 Binaries/
-build/
+intermediate/
 External/
 res/
 gen/
+tools/out/
 source/ThirdParty/FCollada
 
 dev/lib

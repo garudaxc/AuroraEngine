@@ -68,8 +68,8 @@ namespace Aurora
 	{
 		Transform* pStrategy = new Transform();
 
-		const char* pStr = NULL;
-		if (pXmlTransform == NULL)
+		const char* pStr = nullptr;
+		if (pXmlTransform == nullptr)
 		{
 			pStrategy->SetTranslation(Vector3f::ZERO);
 			pStrategy->SetRotation(Quaternionf::IDENTITY);
@@ -92,7 +92,7 @@ namespace Aurora
 
 	/*RenderStrategy* CreateRenderStrategy(TiXmlElement* pXmlRenderStrategy)
 	{
-		RenderStrategy* pRenderStrategy = NULL;
+		RenderStrategy* pRenderStrategy = nullptr;
 		const char* pType = pXmlRenderStrategy->Attribute("Type");
 		if (strcmp(pType ,"Model") == 0)
 		{
@@ -116,7 +116,7 @@ namespace Aurora
 
 	Model* CreateModel(TiXmlElement* pXmlRendering)
 	{
-		RenderStrategy* pRenderStrategy = NULL;
+		RenderStrategy* pRenderStrategy = nullptr;
 		const char* pType = pXmlRendering->Attribute("Type");
 		if (strcmp(pType ,"Model") == 0)
 		{
@@ -130,7 +130,7 @@ namespace Aurora
 			return pModel;
 		}
 
-		return NULL;
+		return nullptr;
 	}
 
 
@@ -165,7 +165,7 @@ namespace Aurora
 		Entity* pEntity = new Entity(string(""));
 
 		{
-			Transform* pStrategy = CreateTransfromStrategy(NULL);
+			Transform* pStrategy = CreateTransfromStrategy(nullptr);
 			pEntity->SetTransform(*pStrategy);
 		}
 

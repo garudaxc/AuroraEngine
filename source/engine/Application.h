@@ -34,13 +34,13 @@ public:
 protected:
 	static Application*	s_App;
 
-	Engine*		m_pEngine;
+	Engine*		Engine;
 
-	int			m_nWindowWidth;
-	int			m_nWindowHeight;
+	int			WindowWidth;
+	int			WindowHeight;
 
-	long		m_lTimeStart;
-	long		m_lTimeEnd;
+	long		TimeStart;
+	long		TimeEnd;
 
 private:
 	// message call back

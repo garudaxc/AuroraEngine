@@ -12,9 +12,9 @@ LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 namespace Aurora
 {
 
-Application* Application::s_App = NULL;
-HWND	MainHWnd = NULL;
-HINSTANCE ModuleInstance = NULL;
+Application* Application::s_App = nullptr;
+HWND	GMainHWnd = nullptr;
+HINSTANCE ModuleInstance = nullptr;
 
 Application::Application()
 {
@@ -33,13 +33,13 @@ Application::Create
 */
 bool Application::Create(const wchar_t* appName, int nWidth, int nHeight)
 {
-	m_nWindowWidth	= nWidth;
-	m_nWindowHeight	= nHeight;
+	WindowWidth	= nWidth;
+	WindowHeight	= nHeight;
 
 	GMainWindow.width	= nWidth;
 	GMainWindow.height = nHeight;
 
-	ModuleInstance = ::GetModuleHandle(NULL);
+	ModuleInstance = ::GetModuleHandle(nullptr);
 	static wchar_t s_acWindowClass[] = L"GaEngine Application";
 	// Register the window class
 	WNDCLASSEXW wc;
@@ -49,12 +49,12 @@ bool Application::Create(const wchar_t* appName, int nWidth, int nHeight)
 	wc.cbClsExtra		= 0;
 	wc.cbWndExtra		= 0;
 	wc.hInstance		= ModuleInstance;
-	wc.hIcon			= NULL;
-	wc.hCursor			= ::LoadCursor(NULL, IDC_ARROW);
+	wc.hIcon			= nullptr;
+	wc.hCursor			= ::LoadCursor(nullptr, IDC_ARROW);
 	wc.hbrBackground	= (HBRUSH)GetStockObject(WHITE_BRUSH);
-	wc.lpszMenuName		= NULL;
+	wc.lpszMenuName		= nullptr;
 	wc.lpszClassName	= s_acWindowClass;
-	wc.hIconSm			= NULL;
+	wc.hIconSm			= nullptr;
 
 	::RegisterClassExW(&wc);
 
@@ -69,17 +69,17 @@ bool Application::Create(const wchar_t* appName, int nWidth, int nHeight)
 	AdjustWindowRect(&rcWindow, dwWindowStyle, false);
 
 	// create the application window
-	MainHWnd = CreateWindowW(s_acWindowClass, appName, dwWindowStyle,
+	GMainHWnd = CreateWindowW(s_acWindowClass, appName, dwWindowStyle,
 		CW_USEDEFAULT, CW_USEDEFAULT, rcWindow.right - rcWindow.left, 
 		rcWindow.bottom - rcWindow.top, 0, 0, ModuleInstance, 0);
 
 	bool bRes = InitEnvironment();
 
 	// display the window
-	ShowWindow(MainHWnd, SW_SHOW);
-	UpdateWindow(MainHWnd);
+	ShowWindow(GMainHWnd, SW_SHOW);
+	UpdateWindow(GMainHWnd);
 
-	Console::Init(MainHWnd);
+	Console::Init(GMainHWnd);
 //	Console::SwitchWindow();
 
 	return bRes;
@@ -94,14 +94,14 @@ bool Application::InitEnvironment()
 {
 	this->OnInitApp();
 
-	m_pEngine = Engine::Create();
-	m_pEngine->Init(m_nWindowWidth, m_nWindowHeight, this);
+	Engine = Engine::Create();
+	Engine->Init(WindowWidth, WindowHeight, this);
 
-	RectSize windowSize = { m_nWindowWidth, m_nWindowHeight };
+	RectSize windowSize = { WindowWidth, WindowHeight };
 	if (!this->OnCreateDevice(windowSize))
 		return false;
 
-	m_pEngine->ResetDevice();
+	Engine->ResetDevice();
 
 	return true;
 }
@@ -114,11 +114,11 @@ Application::CleanEnvironment()
 */
 void Application::CleanEnvironment()
 {
-	m_pEngine->LostDevice();
+	Engine->LostDevice();
 
 	this->OnDestroyDevice();
 
-	m_pEngine->Destroy();
+	Engine->Destroy();
 
 	Console::Destroy();
 }
@@ -133,13 +133,13 @@ void Application::Run()
     bool bGotMsg;
     MSG  msg;
     msg.message = WM_NULL;
-    PeekMessage( &msg, NULL, 0U, 0U, PM_NOREMOVE );
+    PeekMessage( &msg, nullptr, 0U, 0U, PM_NOREMOVE );
 
     while( WM_QUIT != msg.message  )
     {
         // Use PeekMessage() if the app is active, so we can use idle time to
         // render the scene. Else, use GetMessage() to avoid eating CPU time.
-        bGotMsg = ( PeekMessage( &msg, NULL, 0U, 0U, PM_REMOVE ) != 0 );
+        bGotMsg = ( PeekMessage( &msg, nullptr, 0U, 0U, PM_REMOVE ) != 0 );
 
 		if (Console::IsShowing() && msg.message == WM_KEYDOWN)
 		{
@@ -161,13 +161,13 @@ void Application::Run()
                 // Yield some CPU time to other processes
            //     Sleep( 100 ); // 100 milliseconds
            // }
-			if (m_pEngine->GetTimer()->IsStopped())
+			if (Engine->GetTimer()->IsStopped())
 			{
 				Sleep(100);
 			}
 			else
 			{
-				m_pEngine->RenderOneFrame();
+				Engine->RenderOneFrame();
 			}
 
         }
@@ -176,14 +176,14 @@ void Application::Run()
 
 void Application::StartTiming()
 {	
-	m_lTimeStart = clock();
+	TimeStart = clock();
 }
 
 float Application::EndTiming(char* text, bool bTextout)
 {
-	m_lTimeEnd = clock();
+	TimeEnd = clock();
 
-	float elepsed = (m_lTimeEnd - m_lTimeStart) / (float)CLOCKS_PER_SEC;
+	float elepsed = (TimeEnd - TimeStart) / (float)CLOCKS_PER_SEC;
 	if (bTextout)
 	{
 		std::stringstream ss;
@@ -201,7 +201,7 @@ LRESULT Application::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// call engine's event routin
 	EngineWndProc(hWnd, uMsg, wParam, lParam);
 
-	if (s_App != NULL)
+	if (s_App != nullptr)
 	{
 		return s_App->MsgProc(hWnd, uMsg, wParam, lParam);
 	}
@@ -218,8 +218,8 @@ LRESULT Application::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return true;
 
 	static bool bIsResizing = false;
-	static uint nWidth = 0;
-	static uint nHeight = 0;
+	static int nWidth = 0;
+	static int nHeight = 0;
 
 	switch (uMsg)
 	{
@@ -261,20 +261,20 @@ LRESULT Application::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_ENTERSIZEMOVE:
 		{
 			//Console::AppendText("enter size\n");
-			m_pEngine->GetTimer()->Stop();
+			Engine->GetTimer()->Stop();
 			bIsResizing = true;
 		}
 		break;
 	case WM_EXITSIZEMOVE:
 		{
 			//Console::AppendText("exit size\n");
-			m_pEngine->GetTimer()->Start();
+			Engine->GetTimer()->Start();
 			bIsResizing = false;
-			if (m_nWindowWidth != nWidth || m_nWindowHeight != nHeight)
+			if (WindowWidth != nWidth || WindowHeight != nHeight)
 			{
-				m_nWindowWidth = nWidth;
-				m_nWindowHeight = nHeight;
-				m_pEngine->ResizeFrameBuffer(nWidth, nHeight);
+				WindowWidth = nWidth;
+				WindowHeight = nHeight;
+				Engine->ResizeFrameBuffer(nWidth, nHeight);
 			}
 		}
 		break;
@@ -290,15 +290,15 @@ LRESULT Application::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else if (wParam == SIZE_MAXIMIZED)
 			{
 				Console::AppendText("sizing SIZE_MAXIMIZED\n");
-				if (m_pEngine->GetTimer()->IsStopped())
+				if (Engine->GetTimer()->IsStopped())
 				{
-					m_pEngine->GetTimer()->Start();
+					Engine->GetTimer()->Start();
 				}
-				else if (m_nWindowWidth != nWidth || m_nWindowHeight != nHeight)
+				else if (WindowWidth != nWidth || WindowHeight != nHeight)
 				{
-					m_nWindowWidth = nWidth;
-					m_nWindowHeight = nHeight;
-					m_pEngine->ResizeFrameBuffer(nWidth, nHeight);
+					WindowWidth = nWidth;
+					WindowHeight = nHeight;
+					Engine->ResizeFrameBuffer(nWidth, nHeight);
 				}
 			}
 			else if (wParam == SIZE_MAXSHOW)
@@ -308,25 +308,25 @@ LRESULT Application::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else if (wParam == SIZE_MINIMIZED)
 			{
 				Console::AppendText("sizing SIZE_MINIMIZED\n");
-				m_pEngine->GetTimer()->Stop();
+				Engine->GetTimer()->Stop();
 			}
 			else if (wParam == SIZE_RESTORED)
 			{
 				Console::AppendText("sizing SIZE_RESTORED\n");
-				if (bIsResizing || !m_pEngine)
+				if (bIsResizing || !Engine)
 				{
 					break;
 				}
 
-				if (m_pEngine->GetTimer() && m_pEngine->GetTimer()->IsStopped())
+				if (Engine->GetTimer() && Engine->GetTimer()->IsStopped())
 				{
-					m_pEngine->GetTimer()->Start();
+					Engine->GetTimer()->Start();
 				}
-				else if (m_nWindowWidth != nWidth || m_nWindowHeight != nHeight)
+				else if (WindowWidth != nWidth || WindowHeight != nHeight)
 				{
-					m_nWindowWidth = nWidth;
-					m_nWindowHeight = nHeight;
-					m_pEngine->ResizeFrameBuffer(nWidth, nHeight);
+					WindowWidth = nWidth;
+					WindowHeight = nHeight;
+					Engine->ResizeFrameBuffer(nWidth, nHeight);
 				}
 			}
 		}
@@ -334,15 +334,19 @@ LRESULT Application::MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_ACTIVATEAPP:
 		/*if (wParam == TRUE)
 		{
-			m_pEngine->GetTimer()->Start();
+			Engine->GetTimer()->Start();
 			Console::AppendText("actived\n");
 		}
 		else if (wParam == FALSE)
 		{
-			m_pEngine->GetTimer()->Stop();
+			Engine->GetTimer()->Stop();
 			Console::AppendText("deactived\n");
 		}*/
 
+		break;
+		
+	default:
+		
 		break;
 	}
 

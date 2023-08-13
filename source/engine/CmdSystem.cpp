@@ -85,7 +85,7 @@ namespace Aurora
 
 	CommandSystemLocal::CommandSystemLocal()
 	{
-		m_pCmds = NULL;
+		m_pCmds = nullptr;
 	}
 
 	CommandSystemLocal::~CommandSystemLocal()
@@ -109,7 +109,7 @@ namespace Aurora
 		if (args.NumArgs() == 0)
 			return;
 
-		for (CommandInfo* c = m_pCmds; c != NULL; c = c->next)
+		for (CommandInfo* c = m_pCmds; c != nullptr; c = c->next)
 		{
 			if (c->name == args.Args(0))
 			{

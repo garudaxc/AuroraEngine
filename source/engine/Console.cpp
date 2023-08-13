@@ -82,7 +82,7 @@ void Console::Init(HWND hParentWnd)
 	int swidth, sheight;
 
 	g_ConData.hParentWnd = hParentWnd;
-	HINSTANCE hInst = ::GetModuleHandle(NULL);
+	HINSTANCE hInst = ::GetModuleHandle(nullptr);
 	WNDCLASSEXW wc;
 	memset(&wc, 0, sizeof( wc ));
 
@@ -92,12 +92,12 @@ void Console::Init(HWND hParentWnd)
 	wc.cbClsExtra		= 0;
 	wc.cbWndExtra		= 0;
 	wc.hInstance		= hInst;
-	wc.hIcon			= NULL;
-	wc.hCursor			= ::LoadCursor(NULL, IDC_ARROW);
+	wc.hIcon			= nullptr;
+	wc.hCursor			= ::LoadCursor(nullptr, IDC_ARROW);
 	wc.hbrBackground	= (HBRUSH)GetStockObject(WHITE_BRUSH);
-	wc.lpszMenuName		= NULL;
+	wc.lpszMenuName		= nullptr;
 	wc.lpszClassName	= DEDCLASS;
-	wc.hIconSm			= NULL;
+	wc.hIconSm			= nullptr;
 
 	if (!RegisterClassExW(&wc))
 		return;
@@ -119,10 +119,10 @@ void Console::Init(HWND hParentWnd)
 	g_ConData.windowHeight = rect.bottom - rect.top + 1;
 
 	g_ConData.hWnd = CreateWindowExW(styleEx, DEDCLASS, L"Console", style,( swidth - 600 ) / 2, ( sheight - 450 ) / 2 ,
-		rect.right - rect.left + 1, rect.bottom - rect.top + 1, NULL, NULL, hInst, NULL );
+		rect.right - rect.left + 1, rect.bottom - rect.top + 1, nullptr, nullptr, hInst, nullptr );
 	::SetWindowLong(g_ConData.hWnd, GWL_EXSTYLE, WS_EX_TOPMOST | ::GetWindowLong(g_ConData.hWnd, GWL_EXSTYLE));
 
-	if (g_ConData.hWnd == NULL)
+	if (g_ConData.hWnd == nullptr)
 	{
 
 
@@ -141,18 +141,18 @@ void Console::Init(HWND hParentWnd)
 	//
 	// create the input line
 	//
-	g_ConData.hInput  = CreateWindowW(L"edit", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | 
-		ES_LEFT | ES_AUTOVSCROLL, 6, 10, 526, 20, g_ConData.hWnd, NULL, hInst, NULL);
+	g_ConData.hInput  = CreateWindowW(L"edit", nullptr, WS_CHILD | WS_VISIBLE | WS_BORDER | 
+		ES_LEFT | ES_AUTOVSCROLL, 6, 10, 526, 20, g_ConData.hWnd, nullptr, hInst, nullptr);
 	SendMessage(g_ConData.hInput, WM_SETFONT, (WPARAM)g_ConData.hfBufferFont, 0);
 
 
-	g_ConData.hwndBuffer = CreateWindowW(L"edit", NULL, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | 
+	g_ConData.hwndBuffer = CreateWindowW(L"edit", nullptr, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | 
 												ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY,
-												6, 40, 526, 354, g_ConData.hWnd, NULL, hInst, NULL);
+												6, 40, 526, 354, g_ConData.hWnd, nullptr, hInst, nullptr);
 	SendMessage(g_ConData.hwndBuffer, WM_SETFONT, (WPARAM)g_ConData.hfBufferFont, 0);
 
-	g_ConData.hwndButtonClear = CreateWindowW(L"button", NULL, BS_PUSHBUTTON | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-		400, 400, 72, 24, g_ConData.hWnd, (HMENU)CLEAR_ID, hInst, NULL);
+	g_ConData.hwndButtonClear = CreateWindowW(L"button", nullptr, BS_PUSHBUTTON | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+		400, 400, 72, 24, g_ConData.hWnd, (HMENU)CLEAR_ID, hInst, nullptr);
 	SendMessage(g_ConData.hwndButtonClear, WM_SETFONT, (WPARAM)g_ConData.hfBufferFont, 0 );
 	SendMessage(g_ConData.hwndButtonClear, WM_SETTEXT, 0, (LPARAM)L"Clear");
 
@@ -235,7 +235,7 @@ void Console::AppendText(const char *pMsg)
 	SendMessage(g_ConData.hwndBuffer, EM_SCROLLCARET, 0, 0);
 	SendMessage(g_ConData.hwndBuffer, EM_REPLACESEL, 0, (LPARAM)wbuffer);
 
-	if (g_ConData.s_pRedirect != NULL)
+	if (g_ConData.s_pRedirect != nullptr)
 	{
 		(*g_ConData.s_pRedirect) += pMsg;
 	}

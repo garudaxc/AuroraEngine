@@ -10,7 +10,7 @@ namespace Aurora
 {
 
 
-	//// 测试两平面的交界相对于某一个方向是否为边界
+	//// 锟斤拷锟斤拷锟斤拷平锟斤拷慕锟斤拷锟斤拷锟斤拷锟斤拷某一锟斤拷锟斤拷锟斤拷锟角凤拷为锟竭斤拷
 	//bool TestEdge(const Plane& p0, const Plane& p1, const Vector3f& dir)
 	//{
 	//	float t0 = Vector3f::Dot(p0.n, dir);
@@ -49,7 +49,7 @@ namespace Aurora
 
 	const int VERTEX_BUFFER_SIZE = 1024;
 
-	LineRenderer::LineRenderer():m_pMatInst(NULL)
+	LineRenderer::LineRenderer():m_pMatInst(nullptr)
 	{
 
 	}
@@ -145,7 +145,7 @@ namespace Aurora
 //
 //		Vector3f insidePoint = (nearPos + farPos) / 2.0f;
 //
-//		// 前一个面顺着边，后一个面逆着边
+//		// 前一锟斤拷锟斤拷顺锟脚边ｏ拷锟斤拷一锟斤拷锟斤拷锟斤拷锟脚憋拷
 //		vector<pair<Frustum::PlaneID, Frustum::PlaneID>> planePair;
 //		planePair.push_back(make_pair(Frustum::PID_FRONT, Frustum::PID_TOP));
 //		planePair.push_back(make_pair(Frustum::PID_FRONT, Frustum::PID_RIGHT));
@@ -186,7 +186,7 @@ namespace Aurora
 //				edgeIndex[numEdge * 2 + 1] = index[i * 2 + 1];
 //				numEdge++;
 //
-//				// 如果是第一个平面，边是顺着的，如果是第二个平面，边是逆着的
+//				// 锟斤拷锟斤拷堑锟揭伙拷锟狡斤拷妫拷锟斤拷锟剿筹拷诺模锟斤拷锟斤拷锟角第讹拷锟斤拷平锟芥，锟斤拷锟斤拷锟斤拷锟脚碉拷
 //				Vector3f edgeDir;
 //				if (Vector3f::Dot(frustum.planes[twoPlane.first].n, dir) > 0.0f)
 //				{
@@ -235,14 +235,14 @@ namespace Aurora
 //
 //		m_op.nPrimitiveCount = (uint)points.size() / 2;
 //		m_op.pSystemVertBuff = points[0].Ptr();
-//		m_op.pSystemIndexBuff = NULL;
+//		m_op.pSystemIndexBuff = nullptr;
 //		HALExecuteOperator(m_op);
 //
 //		//show normal
 //		m_op.pMtlInst->SetValueF("Color", Color::GREEN.Ptr(), 4);
 //		m_op.nPrimitiveCount = (uint)normals.size() / 2;
 //		m_op.pSystemVertBuff = normals[0].Ptr();
-//		m_op.pSystemIndexBuff = NULL;
+//		m_op.pSystemIndexBuff = nullptr;
 //		m_op.nPrimType = RenderOperator::PT_LINELIST;
 //		HALExecuteOperator(m_op);
 //
@@ -292,7 +292,7 @@ namespace Aurora
 //		m_op.pMtlInst->SetValueF("Color", color.Ptr(), 4);
 //
 //		m_op.pSystemVertBuff = (float*)pPos;
-//		m_op.pSystemIndexBuff = NULL;
+//		m_op.pSystemIndexBuff = nullptr;
 //		m_op.nNumVertices = nNumPoint;
 //		m_op.nStartIndex = 0;
 //		m_op.nPrimitiveCount = nNumPoint / 2;
@@ -307,7 +307,7 @@ namespace Aurora
 //		m_op.pMtlInst->SetValueF("Color", color.Ptr(), 4);
 //
 //		m_op.pSystemVertBuff = (float*)pPos;
-//		m_op.pSystemIndexBuff = NULL;
+//		m_op.pSystemIndexBuff = nullptr;
 //		m_op.nNumVertices = nNumPoint;
 //		m_op.nStartIndex = 0;
 //		m_op.nPrimitiveCount = nNumPoint - 1;
@@ -513,7 +513,7 @@ namespace Aurora
 
 		//memset(&m_op, 0, sizeof(m_op));
 		//m_op.pVertexBuffer = m_pVertexBuffer;
-		//m_op.pMtlInst = NULL;
+		//m_op.pMtlInst = nullptr;
 		//m_op.VertLayout = VertexLayout_PT;
 		//m_op.nPrimType = RenderOperator::PT_TRIANGLELIST;
 		//m_op.nVertexStride = sizeof(VertexPT);
@@ -561,7 +561,7 @@ namespace Aurora
 
 //////////////////////////////////////////////////////////////////////////
 
-	HelperRenderer::HelperRenderer():m_pLineRenderer(NULL),m_pQuadRenderer(NULL)
+	HelperRenderer::HelperRenderer():m_pLineRenderer(nullptr),m_pQuadRenderer(nullptr)
 	{
 	}
 
@@ -570,7 +570,7 @@ namespace Aurora
 		if (m_pLineRenderer)
 		{
 			delete m_pLineRenderer;
-			m_pLineRenderer = NULL;
+			m_pLineRenderer = nullptr;
 		}
 	}
 
@@ -593,12 +593,12 @@ namespace Aurora
 
 	void HelperRenderer::AddLine(const Vector3f& a, const Vector3f& b, const Color& color)
 	{
-		m_pLineRenderer->DrawLine(a, b, color, 0, NULL);
+		m_pLineRenderer->DrawLine(a, b, color, 0, nullptr);
 	}
 
 	void HelperRenderer::AddAABB(const Vector3f& vMin, const Vector3f& vMax, const Color& color)
 	{
-		m_pLineRenderer->DrawAABB(vMin, vMax, color, 0, NULL);
+		m_pLineRenderer->DrawAABB(vMin, vMax, color, 0, nullptr);
 	}
 
 	HelperRenderer GHelperRenderer;

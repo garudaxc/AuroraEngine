@@ -651,7 +651,7 @@ void Geometry::ComputeTangentSpace()
 //void Geometry::ComputeAABB()
 //{
 //	Vector3f* pPos = (Vector3f*)GetStreamBufferByUsage(USAGE_POSITION);
-//	if (pPos == NULL)
+//	if (pPos == nullptr)
 //	{
 //		return;
 //	}
@@ -801,7 +801,7 @@ Geometry* StandardMesh::CreatePlane(int nRow, int nCol, const Matrix4f &matTrans
 	int		nTri	= nCol * nRow * 2;
 
 	Geometry* pMesh = new Geometry(nVert, nTri);
-	assert(pMesh != NULL);
+	assert(pMesh != nullptr);
 
 	Vector3f* pPos		= (Vector3f*)pMesh->AddStream(Vertex::USAGE_POSITION, Vertex::TYPE_FLOAT3);
 	Vector3f* pNormal	= (Vector3f*)pMesh->AddStream(Vertex::USAGE_NORMAL, Vertex::TYPE_FLOAT3);
@@ -866,7 +866,7 @@ Geometry* StandardMesh::CreatePlane(int nRow, int nCol, const Matrix4f &matTrans
 Geometry* StandardMesh::CreateBox(bool bInside, const Matrix4f& matTrans)
 {
 	Geometry* pMesh = new Geometry(8, 12);
-	assert(pMesh != NULL);
+	assert(pMesh != nullptr);
 
 	Vector3f* pPos		= (Vector3f*)pMesh->AddStream(Vertex::USAGE_POSITION, Vertex::TYPE_FLOAT3);
 	Vector3f* pNormal	= (Vector3f*)pMesh->AddStream(Vertex::USAGE_NORMAL, Vertex::TYPE_FLOAT3);
@@ -921,7 +921,7 @@ Geometry* StandardMesh::CreateSphere(uint32 slice, uint32 stack, bool bInside, c
 	int nTri  = 2 * slice * (stack - 1);
 
 	Geometry* pMesh = new Geometry(nVert, nTri);
-	assert(pMesh != NULL);
+	assert(pMesh != nullptr);
 
 	Vector3f* pPos		= (Vector3f*)pMesh->AddStream(Vertex::USAGE_POSITION, Vertex::TYPE_FLOAT3);
 	Vector3f* pNormal	= (Vector3f*)pMesh->AddStream(Vertex::USAGE_NORMAL, Vertex::TYPE_FLOAT3);
@@ -1075,7 +1075,7 @@ MeshManager::~MeshManager()
 Geometry* MeshManager::GetMesh(const ResourceID& id)
 {
 	Geometry* pMesh = Find(id);
-	if (pMesh == NULL)
+	if (pMesh == nullptr)
 	{
 		return Load(id);
 	}
@@ -1089,7 +1089,7 @@ Geometry* MeshManager::Find(const ResourceID& id)
 	{
 		return it->second;
 	}
-	return NULL;
+	return nullptr;
 }
 
 Geometry* MeshManager::Load(const ResourceID& id)

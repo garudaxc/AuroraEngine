@@ -305,8 +305,8 @@ MaterialInstance* MaterialInstLib::GetMaterialInst(const string& id)
 	//return pMatInst;
 
 
-	MaterialInstance* pMatInst;
-	return pMatInst;
+	// MaterialInstance* pMatInst;
+	return nullptr;
 }
 
 
@@ -487,7 +487,7 @@ MaterialInstance* MaterialInstanceManager::GetMaterialInstance(const ResourceID&
 	set<string> instId = MaterialDef;
 	instId.insert(id);
 	MaterialInstance* pMtlInst = Find(instId);
-	if (pMtlInst == NULL)
+	if (pMtlInst == nullptr)
 	{
 		return Load(id, MaterialDef);
 	}
@@ -501,7 +501,7 @@ MaterialInstance* MaterialInstanceManager::Find(const set<string>& id)
 	{
 		return it->second;
 	}
-	return NULL;
+	return nullptr;
 }
 
 
@@ -527,7 +527,7 @@ MaterialInstance* MaterialInstanceManager::CreateInstanceFromTemplate(MaterialTe
 
 ShaderVariableValue* MaterialInstanceManager::CreateValueFromVarible(ShaderVariable* pVariable)
 {
-	ShaderVariableValue* pValue = NULL;
+	ShaderVariableValue* pValue = nullptr;
 
 	if (pVariable->GetType() == SVT_VECTOR ||
 		pVariable->GetType() == SVT_SCALAR ||
@@ -545,7 +545,7 @@ ShaderVariableValue* MaterialInstanceManager::CreateValueFromVarible(ShaderVaria
 
 ShaderVariableValue* MaterialInstanceManager::CreateDefiendVariable(ShaderVariable* pVariable)
 {
-	ShaderVariableValue* pValue = NULL;
+	ShaderVariableValue* pValue = nullptr;
 	if (pVariable->GetName() == "mMatWorld")
 	{
 		pValue = new WorldMatrixShaderVarValue(pVariable, &shaderManager);
@@ -595,24 +595,24 @@ MaterialInstance* MaterialInstanceManager::Load(const ResourceID& id, const set<
 	if (!bOk)
 	{
 		GLog->Error("open material instance file \"%s\" failed!", id.c_str());
-		return NULL;
+		return nullptr;
 	}
 
 	TiXmlElement* pXmlMtlInst = doc.FirstChild()->ToElement();
 	if (strcmp(pXmlMtlInst->Value(), "MaterialInstance") != 0)
 	{
 		GLog->Error("file \"%s\"is not a material instance file!", id.c_str());
-		return NULL;
+		return nullptr;
 	}
 
 //	string name = pXmlMtlInst->Attribute("name");
 	string templateName = pXmlMtlInst->Attribute("Template");
 
 	MaterialTemplate* pMtlTemplate = GMaterialTemplateManager.GetMaterialTemplate(templateName, MaterialDef);
-	//if (pMtlTemplate == NULL)
+	//if (pMtlTemplate == nullptr)
 	//{
 	//	// log can't create material template
-	//	return NULL;
+	//	return nullptr;
 	//}
 
 	MaterialInstance* pInstance = CreateInstanceFromTemplate(pMtlTemplate);
@@ -654,7 +654,7 @@ MaterialInstance* MaterialInstanceManager::Load(const ResourceID& id, const set<
 			//		string id = pXmlValue->FirstChild()->ToText()->Value();
 
 			//		Texture* pTexture = GTextureManager.GetTexture(id);
-			//		if (pTexture != NULL)
+			//		if (pTexture != nullptr)
 			//		{
 			//			pValue->SetValue(pTexture);
 			//		}
@@ -690,8 +690,8 @@ m_pMtlTemplate(pMtlTemplate),m_VariableValues(definedVariables)
 	bReciveShadow	= 1;
 	bCastShadow		= 1;
 
-	m_pTexDiffuse = NULL;
-	m_pTexBump = NULL;
+	m_pTexDiffuse = nullptr;
+	m_pTexBump = nullptr;
 }
 
 MaterialInstance::~MaterialInstance()
@@ -709,12 +709,12 @@ bool MaterialInstance::SetVariableValue(const string& name, const void* pValue)
 {
 	ShaderVariableValue* pVariable = FindVariableValue(name);
 
-	if (pVariable == NULL)
+	if (pVariable == nullptr)
 	{
 		pVariable = CreateVariable(name);
 	}
 
-	if (pVariable == NULL)
+	if (pVariable == nullptr)
 	{
 		return false;
 	}
@@ -737,7 +737,7 @@ ShaderVariableValue* MaterialInstance::FindVariableValue(const string& name)
 			return m_VariableValues[i];
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 void MaterialInstance::Apply(uint nTechnique)
@@ -774,7 +774,7 @@ ShaderVariableValue* MaterialInstance::CreateVariable(const string& name)
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 

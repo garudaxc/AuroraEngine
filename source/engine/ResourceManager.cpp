@@ -12,7 +12,7 @@ namespace Aurora
 
 ResPtrHolder::ResPtrHolder(Resource* pResource):m_pResource(pResource),m_nRefCount(0)
 {
-	//assert(pResource != NULL);
+	//assert(pResource != nullptr);
 }
 
 ResPtrHolder::~ResPtrHolder()
@@ -53,7 +53,7 @@ int ResourceManager::ClearUnrefResource()
 ResourcePtr<Texture> ResourceManager::GetTexture(const IDType& id)
 {
 	ResPtrHolder* pHolder = Find(id);
-	if (pHolder == NULL)
+	if (pHolder == nullptr)
 	{
 		pHolder = CreateTextureFromFile(id);
 		assert(pHolder);
@@ -71,14 +71,14 @@ ResPtrHolder* ResourceManager::Find(const IDType& id)
 	{
 		return it->second;
 	}
-	return NULL;
+	return nullptr;
 }
 
 ResPtrHolder* ResourceManager::CreateTextureFromFile(const IDType& id)
 {
 	//Texture* pTex = ->CreateTexture(id);
 
-	//if (pTex != NULL)
+	//if (pTex != nullptr)
 	//{
 	//	ResPtrHolder* pHolder = new ResPtrHolder(pTex);
 	//	m_Resources.insert(make_pair(id, pHolder));
@@ -86,13 +86,13 @@ ResPtrHolder* ResourceManager::CreateTextureFromFile(const IDType& id)
 	//}
 
 	// return default holder
-	return NULL;
+	return nullptr;
 }
 
 ResourcePtr<Geometry> ResourceManager::GetGeometryData(const IDType& id)
 {
 	ResPtrHolder* pHolder = Find(id);
-	if (pHolder == NULL)
+	if (pHolder == nullptr)
 	{
 		pHolder = Find(DEFAULT_GEOM);
 	}
@@ -118,7 +118,7 @@ void ResourceManager::AddGeometryData(const IDType& id, Geometry* pGeom)
 
 ResourcePtr<RenderTarget> ResourceManager::AddRenderTarget(const IDType& id, RenderTarget* pRT)
 {	
-	assert(Find(id) == NULL);
+	assert(Find(id) == nullptr);
 
 	ResPtrHolder* pHolder = new ResPtrHolder(pRT);
 	m_Resources.insert(make_pair(id, pHolder));
@@ -128,7 +128,7 @@ ResourcePtr<RenderTarget> ResourceManager::AddRenderTarget(const IDType& id, Ren
 //ResourcePtr<Material> ResourceManager::GetMaterial(const IDType& id)
 //{
 //	ResPtrHolder* pHolder = Find(id);
-//	//if (pHolder == NULL)
+//	//if (pHolder == nullptr)
 //	//{
 //	//	//assert(0);
 //	//	Material* pMaterial = LoadMatreial(id);
@@ -140,10 +140,10 @@ ResourcePtr<RenderTarget> ResourceManager::AddRenderTarget(const IDType& id, Ren
 //
 //ResourcePtr<Material> ResourceManager::AddMaterial(const IDType& id, Material* pMaterial)
 //{	
-//	assert(Find(id) == NULL);
+//	assert(Find(id) == nullptr);
 //
 //	//ResPtrHolder* pHolder = new ResPtrHolder(pMaterial);
-//	ResPtrHolder* pHolder = new ResPtrHolder(NULL);
+//	ResPtrHolder* pHolder = new ResPtrHolder(nullptr);
 //	m_Resources.insert(make_pair(id, pHolder));
 //	return ResourcePtr<Material>(pHolder);
 //}
@@ -158,7 +158,7 @@ ResourcePtr<RenderTarget> ResourceManager::AddRenderTarget(const IDType& id, Ren
 ResourcePtr<RenderTarget> ResourceManager::GetRenderTarget(const IDType& id)
 {
 	ResPtrHolder* pHolder = Find(id);
-	if (pHolder == NULL)
+	if (pHolder == nullptr)
 	{
 		//assert(0);
 	}

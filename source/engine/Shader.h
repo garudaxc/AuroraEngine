@@ -99,7 +99,7 @@ public:
 
 	ShaderConstTable*		GetShaderConstTable() const;
 
-	virtual void*			GetBindID() const		{	return NULL;	}
+	virtual void*			GetBindID() const		{	return nullptr;	}
 
 
 	void*					HALHandle;

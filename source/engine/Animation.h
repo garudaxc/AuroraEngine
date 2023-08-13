@@ -112,7 +112,7 @@ public:
 	void					ResetAnimation();
 	const AnimationSet*		GetAnimationSet() const { return m_pAnimSet; }
 
-	bool					IsActive() const { return m_pAnimSet != NULL; }
+	bool					IsActive() const { return m_pAnimSet != nullptr; }
 
 	bool					GetEnable() const { return m_bEnable; }
 	void					SetEnable(bool bEnable) { m_bEnable = bEnable; }
@@ -173,7 +173,7 @@ public:
 
 	bool				SetAnimationTrack(int nTrack, AnimationSet* pAnimSet);
 	AnimationTrack*		GetAnimationTrack(int nTrack) { return &m_aAnimTracks[nTrack]; }
-	bool				HasAnimationTrack(int nTrack) const { return m_aAnimTracks[nTrack].GetAnimationSet() != NULL; }
+	bool				HasAnimationTrack(int nTrack) const { return m_aAnimTracks[nTrack].GetAnimationSet() != nullptr; }
 
 	void				ResetAnimationTrack(int nTrack);
 	void				ResetAllAnimation();

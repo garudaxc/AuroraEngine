@@ -1,4 +1,4 @@
-#include "stdHeader.h"
+ï»¿#include "stdHeader.h"
 #include "Texture.h"
 #include "Renderer.h"
 #include "Console.h"
@@ -141,7 +141,7 @@ void TextureManager::Finalize()
 Texture* TextureManager::GetTexture(const ResourceID& id)
 {
 	Texture* pTexture = Find(id);
-	if (pTexture == NULL)
+	if (pTexture == nullptr)
 	{
 		return Load(id);
 	}
@@ -155,7 +155,7 @@ Texture* TextureManager::Find(const ResourceID& id)
 	{
 		return it->second;
 	}
-	return NULL;
+	return nullptr;
 }
 
 Texture* TextureManager::Load(const ResourceID& id)
@@ -183,28 +183,28 @@ Texture* TextureManager::Load(const ResourceID& id)
 //
 //bool FrameBuffer::SaveRenderTargetToDXT1_R32F(const string& pathName)
 //{
-//	// ÊµÏÖ¹ý³Ì£º
-//	// ½«RenderTarget¿½±´µ½Ò»ÕÅR32F¸ñÊ½µÄsurfaceÖÐ
-//	// ÐÂ½¨Ò»ÕÅR8G8B8¸ñÊ½µÄsurface½«R32×ª»»¹ýÀ´
-//	// ½«surface±£´æµ½ÄÚ´æÖÐµÄÎÆÀí
-//	// ½«ÄÚ´æÖÐµÄÎÆÀí´ò¿ªÎªDXT1¸ñÊ½
-//	// ½«DXT1¸ñÊ½µÄÎÆÀí±£´æµ½ÎÄ¼þ
+//	// Êµï¿½Ö¹ï¿½ï¿½Ì£ï¿½
+//	// ï¿½ï¿½RenderTargetï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½R32Fï¿½ï¿½Ê½ï¿½ï¿½surfaceï¿½ï¿½
+//	// ï¿½Â½ï¿½Ò»ï¿½ï¿½R8G8B8ï¿½ï¿½Ê½ï¿½ï¿½surfaceï¿½ï¿½R32×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+//	// ï¿½ï¿½surfaceï¿½ï¿½ï¿½æµ½ï¿½Ú´ï¿½ï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½
+//	// ï¿½ï¿½ï¿½Ú´ï¿½ï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªDXT1ï¿½ï¿½Ê½
+//	// ï¿½ï¿½DXT1ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½æµ½ï¿½Ä¼ï¿½
 //
 //
 //	IDirect3DSurface9* pSrcRT = m_pFrameBuffer;
-//	IDirect3DSurface9* pR32F = NULL;
-//	IDirect3DSurface9* pRGB = NULL;
-//	LPD3DXBUFFER pMemTex = NULL;
+//	IDirect3DSurface9* pR32F = nullptr;
+//	IDirect3DSurface9* pRGB = nullptr;
+//	LPD3DXBUFFER pMemTex = nullptr;
 //	IDirect3DDevice9* pDevice = Global::GetRenderer()->GetDevice();
 //
-//	// ±ãÓÚ³ö´íºóÌø³ö£¬Ö´ÐÐÇåÀí´úÂë
+//	// ï¿½ï¿½ï¿½Ú³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //	while (1)
 //	{
 //
 //		D3DSURFACE_DESC desc;
 //		memset(&desc, 0, sizeof(desc));
 //		pSrcRT->GetDesc(&desc);
-//		HRESULT hr = pDevice->CreateOffscreenPlainSurface(desc.Width, desc.Height, desc.Format, D3DPOOL_SYSTEMMEM, &pR32F, NULL);
+//		HRESULT hr = pDevice->CreateOffscreenPlainSurface(desc.Width, desc.Height, desc.Format, D3DPOOL_SYSTEMMEM, &pR32F, nullptr);
 //		if (FAILED(hr))
 //		{
 //			Console::AppendText("Create Off Screen Plain Surface failed!\n");
@@ -212,7 +212,7 @@ Texture* TextureManager::Load(const ResourceID& id)
 //		}
 //
 //
-//		hr = pDevice->CreateOffscreenPlainSurface(desc.Width, desc.Height, D3DFMT_X8R8G8B8, D3DPOOL_SYSTEMMEM, &pRGB, NULL);
+//		hr = pDevice->CreateOffscreenPlainSurface(desc.Width, desc.Height, D3DFMT_X8R8G8B8, D3DPOOL_SYSTEMMEM, &pRGB, nullptr);
 //		if (FAILED(hr))
 //		{
 //			Console::AppendText("Create Off Screen Plain Surface failed!\n");
@@ -226,14 +226,14 @@ Texture* TextureManager::Load(const ResourceID& id)
 //			break;
 //		}
 //
-//		//D3DXSaveSurfaceToFileA(pathName.c_str(), D3DXIFF_DDS, pR32F, NULL, NULL);
+//		//D3DXSaveSurfaceToFileA(pathName.c_str(), D3DXIFF_DDS, pR32F, nullptr, nullptr);
 //		//break;
 //
 //		D3DLOCKED_RECT lockedR32, lockedRGB;
 //		memset(&lockedR32, 0, sizeof(lockedR32));
 //		memset(&lockedRGB, 0, sizeof(lockedRGB));
-//		pR32F->LockRect(&lockedR32, NULL, D3DLOCK_READONLY);
-//		pRGB->LockRect(&lockedRGB, NULL, D3DLOCK_READONLY);
+//		pR32F->LockRect(&lockedR32, nullptr, D3DLOCK_READONLY);
+//		pRGB->LockRect(&lockedRGB, nullptr, D3DLOCK_READONLY);
 //		assert(lockedR32.Pitch == desc.Width * 4);
 //		assert(lockedRGB.Pitch == desc.Width * 4);
 //
@@ -245,8 +245,8 @@ Texture* TextureManager::Load(const ResourceID& id)
 //			{
 //				float value = *pFloat++ * 255;
 //
-//				// ½«¸¡µãÊý±àÂëµ½Èý¸öÍ¨µÀÖÐ
-//				// DXT1¸ñÊ½gÍ¨µÀÓµÓÐ¸ü¶àµÄÐÅÏ¢
+//				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ëµ½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½
+//				// DXT1ï¿½ï¿½Ê½gÍ¨ï¿½ï¿½Óµï¿½Ð¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
 //				*pPixel++ = (unsigned char)(value);				// b
 //				*pPixel++ = (unsigned char)(value + 0.5f);		// g
 //				*pPixel++ = (unsigned char)(value + 0.75f);		// r
@@ -259,10 +259,10 @@ Texture* TextureManager::Load(const ResourceID& id)
 //		pRGB->UnlockRect();
 //
 //		pR32F->Release();
-//		pR32F = NULL;
+//		pR32F = nullptr;
 //
 //
-//		hr = D3DXSaveSurfaceToFileInMemory(&pMemTex, D3DXIFF_DDS, pRGB, NULL, NULL);
+//		hr = D3DXSaveSurfaceToFileInMemory(&pMemTex, D3DXIFF_DDS, pRGB, nullptr, nullptr);
 //		if (FAILED(hr))
 //		{
 //			Console::AppendText("Save Surface To File I nMemory failed!\n");
@@ -270,11 +270,11 @@ Texture* TextureManager::Load(const ResourceID& id)
 //		}
 //
 //		pRGB->Release();
-//		pRGB = NULL;
+//		pRGB = nullptr;
 //
-//		LPDIRECT3DTEXTURE9 pTexture = NULL;
+//		LPDIRECT3DTEXTURE9 pTexture = nullptr;
 //		hr = D3DXCreateTextureFromFileInMemoryEx(pDevice, pMemTex->GetBufferPointer(), pMemTex->GetBufferSize(), desc.Width, desc.Height,
-//			D3DX_DEFAULT, 0, D3DFMT_DXT1, D3DPOOL_SYSTEMMEM, D3DX_DEFAULT ,D3DX_DEFAULT , 0, NULL, NULL, &pTexture);
+//			D3DX_DEFAULT, 0, D3DFMT_DXT1, D3DPOOL_SYSTEMMEM, D3DX_DEFAULT ,D3DX_DEFAULT , 0, nullptr, nullptr, &pTexture);
 //		if (FAILED(hr))
 //		{
 //			Console::AppendText("Create Texture From File In Memory failed!\n");
@@ -282,28 +282,28 @@ Texture* TextureManager::Load(const ResourceID& id)
 //		}
 //
 //		pMemTex->Release();
-//		pMemTex = NULL;
+//		pMemTex = nullptr;
 //
 //		D3DSURFACE_DESC texDesc;
 //		memset(&texDesc, 0, sizeof(texDesc));
 //		pTexture->GetLevelDesc(0, &texDesc);
 //		assert(texDesc.Format == D3DFMT_DXT1);
 //
-//		D3DXSaveTextureToFileA(pathName.c_str(), D3DXIFF_DDS, pTexture, NULL);
+//		D3DXSaveTextureToFileA(pathName.c_str(), D3DXIFF_DDS, pTexture, nullptr);
 //
 //		pTexture->Release();
 //		return true;
 //	}
 //
-//	if (pR32F != NULL)
+//	if (pR32F != nullptr)
 //	{
 //		pR32F->Release();
 //	}
-//	if (pRGB != NULL)
+//	if (pRGB != nullptr)
 //	{
 //		pRGB->Release();
 //	}
-//	if (pMemTex != NULL)
+//	if (pMemTex != nullptr)
 //	{
 //		pMemTex->Release();
 //	}

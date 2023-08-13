@@ -8,7 +8,7 @@ namespace Aurora
 
 	/* AABB-triangle overlap test code                      */
 
-	/* by Tomas Akenine-Möller                              */
+	/* by Tomas Akenine-Mé°ˆler                              */
 
 	/* Function: int triBoxOverlap(float boxcenter[3],      */
 

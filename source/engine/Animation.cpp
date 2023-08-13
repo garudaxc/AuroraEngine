@@ -87,7 +87,7 @@ AnimationSet* CreateBindPos(AnimationSet* pAnimSet)
 AnimationTrack
 ================
 */
-AnimationTrack::AnimationTrack():m_pAnimSet(NULL),m_nPlaybackType(PLAYBACK_LOOP),
+AnimationTrack::AnimationTrack():m_pAnimSet(nullptr),m_nPlaybackType(PLAYBACK_LOOP),
 m_bEnable(false),m_fWeight(0.0f),m_fTrackTime(0.0f),m_fAnimTime(0.0f),m_fSpeed(1.0f)
 {
 	m_FrameInter.nFrame0 = 0;
@@ -101,7 +101,7 @@ AnimationTrack::~AnimationTrack()
 
 void AnimationTrack::SetAnimationSet(AnimationSet* pAnimSet)
 {
-	assert(pAnimSet != NULL);
+	assert(pAnimSet != nullptr);
 	m_pAnimSet		= pAnimSet;
 	m_bEnable		= true;
 	m_fWeight		= 1.0f;
@@ -112,7 +112,7 @@ void AnimationTrack::SetAnimationSet(AnimationSet* pAnimSet)
 
 void AnimationTrack::ResetAnimation()
 {	
-	m_pAnimSet		= NULL;
+	m_pAnimSet		= nullptr;
 	m_bEnable		= false;
 	m_fWeight		= 1.0f;
 	m_fTrackTime	= 0.0f;
@@ -541,9 +541,9 @@ void AnimationController::AllocateOutKeys(int nNumKeys)
 void AnimationController::ClearOutputKeys()
 {
 	assert(0);
-	//std::for_each(m_aOutputKeysScale.begin(), m_aOutputKeysScale.end(), boost::lambda::_1 = (float*)NULL);
-	//std::for_each(m_aOutputKeysRotation.begin(), m_aOutputKeysRotation.end(), boost::lambda::_1 = (Quaternionf*)NULL);
-	//std::for_each(m_aOutputKeysTrans.begin(), m_aOutputKeysTrans.end(), boost::lambda::_1 = (Vector3f*)NULL);
+	//std::for_each(m_aOutputKeysScale.begin(), m_aOutputKeysScale.end(), boost::lambda::_1 = (float*)nullptr);
+	//std::for_each(m_aOutputKeysRotation.begin(), m_aOutputKeysRotation.end(), boost::lambda::_1 = (Quaternionf*)nullptr);
+	//std::for_each(m_aOutputKeysTrans.begin(), m_aOutputKeysTrans.end(), boost::lambda::_1 = (Vector3f*)nullptr);
 }
 
 

@@ -2,23 +2,23 @@
 #include "Config.h"
 namespace Aurora
 {
-	static Config* s_pConfig = NULL;
+	static Config* s_pConfig = nullptr;
 	void Config::Initialize()
 	{
-		assert(s_pConfig == NULL);
+		assert(s_pConfig == nullptr);
 		s_pConfig = new Config();
 	}
 
 	void Config::Finalize()
 	{
-		assert(s_pConfig != NULL);
+		assert(s_pConfig != nullptr);
 		delete s_pConfig;
-		s_pConfig = NULL;
+		s_pConfig = nullptr;
 	}
 
 	Config* Config::Get()
 	{
-		assert(s_pConfig != NULL);
+		assert(s_pConfig != nullptr);
 		return s_pConfig;
 	}
 

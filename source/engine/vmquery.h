@@ -8,7 +8,7 @@ Notices: Copyright (c) 2000 Jeffrey Richter
 
 struct MemoryData
 {
-	//ÕâÀïµÄÊý¾Ýµ¥Î»ÊÇ×Ö½Ú
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ýµï¿½Î»ï¿½ï¿½ï¿½Ö½ï¿½
 	ULONGLONG m_commitedMem;
 	ULONGLONG m_reservedMem;
 	ULONGLONG m_freeMem;
@@ -31,9 +31,9 @@ struct MemoryData
 };
 
 
-void GetMemoryData(MemoryData& memData,DWORD g_dwProcessId = 0,const char* outputFilePreStr = NULL);
+void GetMemoryData(MemoryData& memData,DWORD g_dwProcessId = 0,const char* outputFilePreStr = nullptr);
 
-/// dump¶ÑÐÅÏ¢
+/// dumpï¿½ï¿½ï¿½ï¿½Ï¢
 void dumpHeapMemInfo();
 
 typedef struct  

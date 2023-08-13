@@ -39,11 +39,11 @@ namespace Aurora
 	}
 
 
-	Engine::Engine():m_pFrameListener(NULL),m_fps(0.f)
+	Engine::Engine():m_pFrameListener(nullptr),m_fps(0.f)
 	{
-		m_pTimer = NULL;
-		m_pRenderer = NULL;
-		m_pResourceManager = NULL;
+		m_pTimer = nullptr;
+		m_pRenderer = nullptr;
+		m_pResourceManager = nullptr;
 	}
 
 	Engine::~Engine()
@@ -113,7 +113,7 @@ namespace Aurora
 		GTextureManager.Finalize();
 
 		//delete m_pRenderer;
-		//m_pRenderer = NULL;
+		//m_pRenderer = nullptr;
 
 		delete m_pTimer;
 		

@@ -208,13 +208,13 @@ void ShaderConstBuffer::SetTexture(uint idx, const ResourcePtr<Texture>& pTex)
 
 Texture* ShaderConstBuffer::GetTexture(uint idx) const
 {
-	return NULL;
+	return nullptr;
 	//return m_Textures[idx].Get();
 }
 
 //////////////////////////////////////////////////////////////////////////
 
-Shader::Shader(void):HALHandle(NULL)
+Shader::Shader(void):HALHandle(nullptr)
 {
 }
 

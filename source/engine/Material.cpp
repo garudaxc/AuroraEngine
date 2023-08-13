@@ -43,11 +43,11 @@ void ShaderManager::Initialize()
 {
 	//string pathName = Config::Get()->GetShaderPath() + "GlobalShaderVariables.fx";
 
-	//ID3D10EffectPool* pEffectPool = NULL;
-	//ID3D10Blob* pError = NULL;
-	//HRESULT hr = D3DX10CreateEffectPoolFromFileA(pathName.c_str(), NULL, NULL, "fx_4_0", 
+	//ID3D10EffectPool* pEffectPool = nullptr;
+	//ID3D10Blob* pError = nullptr;
+	//HRESULT hr = D3DX10CreateEffectPoolFromFileA(pathName.c_str(), nullptr, nullptr, "fx_4_0", 
 	//												0, 0, D3D9Device, 
-	//												NULL, &pEffectPool, &pError, NULL);
+	//												nullptr, &pEffectPool, &pError, nullptr);
 
 	//if (FAILED(hr) && pError)
 	//{
@@ -104,7 +104,7 @@ void ShaderManager::Initialize()
 void ShaderManager::Finalize()
 {
 	((ID3D10EffectPool*)m_PoolHandle)->Release();
-	m_PoolHandle = NULL;
+	m_PoolHandle = nullptr;
 }
 
 
@@ -274,7 +274,7 @@ void TextureShaderVariable::SetValue(void* pData)
 {
 	Texture* pTexture = (Texture*)pData;
 
-	ID3D10ShaderResourceView* pSRView = NULL;
+	ID3D10ShaderResourceView* pSRView = nullptr;
 	if (pTexture)
 	{
 		pSRView = (ID3D10ShaderResourceView*)pTexture->HALHandle;
@@ -300,7 +300,7 @@ MaterialTemplate::~MaterialTemplate()
 
 bool MaterialTemplate::Load(const string& pathName, const set<string>& MaterialDef)
 {
-	//ID3D10Blob* pError = NULL;
+	//ID3D10Blob* pError = nullptr;
 	//ID3D10EffectPool* pEffectPool = (ID3D10EffectPool*)GShaderManager.GetPoolHandle();
 
 	//vector<D3D10_SHADER_MACRO> macros;
@@ -310,14 +310,14 @@ bool MaterialTemplate::Load(const string& pathName, const set<string>& MaterialD
 	//	mac.Definition = "1";
 	//	macros.push_back(mac);
 	//}
-	//D3D10_SHADER_MACRO mac = {NULL, NULL};
+	//D3D10_SHADER_MACRO mac = {nullptr, nullptr};
 	//macros.push_back(mac);
 
 
-	//HRESULT hr = D3DX10CreateEffectFromFileA(pathName.c_str(), &macros[0], NULL, "fx_4_0" , 
+	//HRESULT hr = D3DX10CreateEffectFromFileA(pathName.c_str(), &macros[0], nullptr, "fx_4_0" , 
 	//										0, D3D10_EFFECT_COMPILE_CHILD_EFFECT, 
 	//										D3D9Device, pEffectPool,
-	//										NULL, &m_pD3DEffect, &pError, NULL);
+	//										nullptr, &m_pD3DEffect, &pError, nullptr);
 
 	//if (FAILED(hr))	{
 	//	if (pError)		{
@@ -381,7 +381,7 @@ void MaterialTemplate::InitShaderVariables()
 	//	pType->GetDesc(&typeDesc);
 
 	//	string name = varDesc.Name;
-	//	ShaderVariable* pSV = NULL;
+	//	ShaderVariable* pSV = nullptr;
 
 	//	if (typeDesc.Class == D3D10_SVC_SCALAR)
 	//	{
@@ -419,7 +419,7 @@ void MaterialTemplate::InitShaderVariables()
 	//		assert(0);
 	//	}
 
-	//	if (pSV != NULL)
+	//	if (pSV != nullptr)
 	//	{
 	//		m_Variables.push_back(pSV);
 	//	}
@@ -437,7 +437,7 @@ ShaderVariable*	MaterialTemplate::FindShaderVariable(const string& name)
 			return *it;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 void MaterialTemplate::Apply(uint nTechnique)
@@ -474,7 +474,7 @@ MaterialTemplate* MaterialTemplateManager::GetMaterialTemplate(const ResourceID&
 	//set<string> mtlId = MaterialDef;
 	//mtlId.insert(id);
 	//MaterialTemplate* pMtl = Find(mtlId);
-	//if (pMtl == NULL)
+	//if (pMtl == nullptr)
 	//{
 	//	return Load(id, MaterialDef);
 	//}
@@ -495,7 +495,7 @@ MaterialTemplate* MaterialTemplateManager::Find(const set<string>& id)
 	{
 		return it->second;
 	}
-	return NULL;
+	return nullptr;
 
 }
 
@@ -511,7 +511,7 @@ MaterialTemplate* MaterialTemplateManager::Load(const ResourceID& id, const set<
 		return pMtl;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 }

@@ -76,7 +76,7 @@ namespace Aurora
 
 
 
-		//DirectionalLight* pShadowCastLight = NULL;
+		//DirectionalLight* pShadowCastLight = nullptr;
 
 		//LightObject* pLight = (LightObject*)pContex->BeginAttachable(RenderingContext::AT_SHADOWCASTER);
 		//while (pLight)
@@ -91,7 +91,7 @@ namespace Aurora
 		//	pLight = (LightObject*)pContex->NextAttachable();
 		//}
 
-		//if (pShadowCastLight != NULL)
+		//if (pShadowCastLight != nullptr)
 		//{
 		//	Matrix4f matCast, matReceive;
 		//	CalcDirectionalLightShadowMatrix(pShadowCastLight, matCast, matReceive);

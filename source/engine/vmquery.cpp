@@ -11,16 +11,16 @@ Notices: Copyright (c) 2000 Jeffrey Richter
 #include <tchar.h>
 #include <stdlib.h>
 
-// CÔËÐÐÊ±Í·ÎÄ¼þ
+// Cï¿½ï¿½ï¿½ï¿½Ê±Í·ï¿½Ä¼ï¿½
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
 #include <ctime>
 #include <cassert>
 
-// ½ûÖ¹ ÀàËÆstrcmp ÐèÒªÉý¼¶µ½ÐÂ°æ±¾ strcmp_sÖ®¼äµÄ¾¯¸æ
+// ï¿½ï¿½Ö¹ ï¿½ï¿½ï¿½ï¿½strcmp ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â°æ±¾ strcmp_sÖ®ï¿½ï¿½Ä¾ï¿½ï¿½ï¿½
 #pragma warning( disable : 4996 )
-// ½ûÖ¹ double --> float ×ª»»¾¯¸æ
+// ï¿½ï¿½Ö¹ double --> float ×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 #pragma warning( disable : 4305 )
 #pragma warning( disable : 4244 )
 
@@ -168,7 +168,7 @@ BOOL VMQuery(HANDLE hProcess, LPCVOID pvAddress, PVMQUERY pVMQ)
    switch (mbi.State)    
    {   
       case MEM_FREE:       // Free block (not reserved)    
-         pVMQ->pvBlkBaseAddress = NULL;   
+         pVMQ->pvBlkBaseAddress = nullptr;   
          pVMQ->BlkSize = 0;   
          pVMQ->dwBlkProtection = 0;   
          pVMQ->dwBlkStorage = MEM_FREE;   
@@ -250,7 +250,7 @@ BOOL VMQuery(HANDLE hProcess, LPCVOID pvAddress, PVMQUERY pVMQ)
 // GetMappedFileName is only on Windows 2000 in PSAPI.DLL    
 // If this function exists on the host system, we'll use it    
 typedef DWORD (WINAPI* PFNGETMAPPEDFILENAME)(HANDLE, PVOID, PTSTR, DWORD);   
-static PFNGETMAPPEDFILENAME g_pfnGetMappedFileName = NULL;  
+static PFNGETMAPPEDFILENAME g_pfnGetMappedFileName = nullptr;  
 
 static PCTSTR GetMemStorageText(DWORD dwStorage)    
 {   
@@ -376,7 +376,7 @@ static void ConstructRgnInfoLine(HANDLE hProcess, PVMQUERY pVMQ, PTSTR szLine, i
 
 	// Try to obtain the module pathname for this region.    
 	int nLen = _tcslen(szLine);   
-	if (pVMQ->pvRgnBaseAddress != NULL)    
+	if (pVMQ->pvRgnBaseAddress != nullptr)    
 	{   
 		MODULEENTRY32 me = { sizeof(me) };   
 
@@ -388,7 +388,7 @@ static void ConstructRgnInfoLine(HANDLE hProcess, PVMQUERY pVMQ, PTSTR szLine, i
 		{   
 			{
 				// This is not a module; see if it's a memory-mapped file    
-				if (g_pfnGetMappedFileName != NULL)    
+				if (g_pfnGetMappedFileName != nullptr)    
 				{   
 					DWORD d = g_pfnGetMappedFileName(hProcess, pVMQ->pvRgnBaseAddress, szLine + nLen, nMaxLen - nLen);   
 					if (d == 0)    
@@ -430,7 +430,7 @@ static CHAR *                      //   return error message
 	ULONG bufSize)                     //   buffer size
 {
 	DWORD retSize;
-	LPTSTR pTemp=NULL;
+	LPTSTR pTemp=nullptr;
 
 	if (bufSize < 16) {
 		if (bufSize > 0) {
@@ -441,13 +441,13 @@ static CHAR *                      //   return error message
 	retSize=FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|
 		FORMAT_MESSAGE_FROM_SYSTEM|
 		FORMAT_MESSAGE_ARGUMENT_ARRAY,
-		NULL,
+		nullptr,
 		GetLastError(),
 		LANG_NEUTRAL,
 		(LPTSTR)&pTemp,
 		0,
-		NULL );
-	if (!retSize || pTemp == NULL) {
+		nullptr );
+	if (!retSize || pTemp == nullptr) {
 		pBuf[0]='\0';
 	}
 	else {
@@ -488,9 +488,9 @@ static void Refresh(MemoryData& memData,const char* preStr, DWORD dwProcessId, B
 	// Is the process still running?    
 	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, dwProcessId);   
 
-	if (hProcess == NULL)    
+	if (hProcess == nullptr)    
 	{   
-		//globalLog("vm Refresh hProcess == NULL");
+		//globalLog("vm Refresh hProcess == nullptr");
 		//ListBox_AddString(hwndLB, TEXT(""));   // Blank line, looks better    
 		//ListBox_AddString(hwndLB, TEXT("    The process ID identifies a process that is not running"));   
 		return;   
@@ -501,7 +501,7 @@ static void Refresh(MemoryData& memData,const char* preStr, DWORD dwProcessId, B
 
 	// Walk the virtual address space, adding entries to the list box.    
 	BOOL fOk = TRUE;   
-	PVOID pvAddress = NULL;   
+	PVOID pvAddress = nullptr;   
 
 	HANDLE hHeaps[100] = {0};
 	DWORD dwHeaps = GetProcessHeaps(100,hHeaps);
@@ -520,7 +520,7 @@ static void Refresh(MemoryData& memData,const char* preStr, DWORD dwProcessId, B
 			TCHAR szLine[1024];   
 			ConstructRgnInfoLine(hProcess, &vmq, szLine, sizeof(szLine));   
 
-			if(vmq.dwRgnStorage == MEM_FREE && vmq.RgnSize < 2000000000)//½Ó½ü2GµÄ²»Í³¼Æ
+			if(vmq.dwRgnStorage == MEM_FREE && vmq.RgnSize < 2000000000)//ï¿½Ó½ï¿½2Gï¿½Ä²ï¿½Í³ï¿½ï¿½
 			{
 				memData.m_freeMem += vmq.RgnSize; 
 				if(vmq.RgnSize > memData.m_biggestFreeBlock)
@@ -612,7 +612,7 @@ static void Refresh(MemoryData& memData,const char* preStr, DWORD dwProcessId, B
 void GetMemoryData(MemoryData& memData,DWORD dwProcessId,const char* outputFilePreStr)
 {
 	HMODULE hmodPSAPI = LoadLibrary(TEXT("PSAPI"));   
-	if (hmodPSAPI != NULL)    
+	if (hmodPSAPI != nullptr)    
 	{   
 #ifdef UNICODE    
 		g_pfnGetMappedFileName = (PFNGETMAPPEDFILENAME)    
@@ -654,7 +654,7 @@ void dumpHeapMemInfo()
 	for (int i = 0; i < num; ++i)
 	{
 		PROCESS_HEAP_ENTRY heap_entry;
-		heap_entry.lpData = NULL;
+		heap_entry.lpData = nullptr;
 		heap_entry.iRegionIndex = 0;
 		heap_entry.wFlags = 0;
 

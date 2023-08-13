@@ -8,7 +8,7 @@ namespace Aurora
 {
 
 
-	extern HWND	MainHWnd;
+	extern HWND	GMainHWnd;
 	extern ID3D11Device* D3D11Device;
 	extern ID3D11DeviceContext* ImmediateContext;
 
@@ -26,7 +26,7 @@ namespace Aurora
 		//ImGui::StyleColorsClassic();
 
 		// Setup Platform/Renderer bindings
-		ImGui_ImplWin32_Init(MainHWnd);
+		ImGui_ImplWin32_Init(GMainHWnd);
 		ImGui_ImplDX11_Init(D3D11Device, ImmediateContext);
 	}
 

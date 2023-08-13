@@ -94,7 +94,7 @@ void Pipeline::Render()
 	//g_pShadowRendering->Render(&m_Context);
 	//g_pGBufferRendering->Render(&m_Context);
 	//g_pLightRendering->Render(&m_Context);
-	//g_pShadingRendering->Render(&m_Context, m_bOcclusionQuerying ? m_pOcclusionQuery : NULL);
+	//g_pShadingRendering->Render(&m_Context, m_bOcclusionQuerying ? m_pOcclusionQuery : nullptr);
 	//g_pPostProcessRendering->Render(&m_Context);
 }
 
@@ -138,7 +138,7 @@ void Pipeline::Initialize(int width, int height)
 	RenderTarget::Desc desc;
 	GRenderDevice->GetFrameBufferSize(width, height);
 
-	RenderTarget* pRT = NULL;
+	RenderTarget* pRT = nullptr;
 
 	desc.nWidth		= RenderTarget::DS_FRAMEBUFFER_WIDTH;
 	desc.nHeight	= RenderTarget::DS_FRAMEBUFFER_HEIGHT;
@@ -254,7 +254,7 @@ void RenderLightingPass(SceneView* pView)
 //	DrawingLight* pLight = pView->pDrawingLight;
 //	while (pLight)
 //	{
-//		Model* pModel = NULL;
+//		Model* pModel = nullptr;
 //		if (pLight->Type == LT_DIRECTIONAL)
 //		{
 //			shaderManager.SetWorldMatrix(pLight->mWorld);
@@ -296,8 +296,8 @@ void RenderLightingPass(SceneView* pView)
 //	}
 //
 //	GRenderDevice->RestoreFrameBuffer();
-//	GShaderManager.SetTexture(SV_GBUFFER0, NULL);
-//	GShaderManager.SetTexture(SV_GBUFFER1, NULL);
+//	GShaderManager.SetTexture(SV_GBUFFER0, nullptr);
+//	GShaderManager.SetTexture(SV_GBUFFER1, nullptr);
 }
 
 //void RenderShadingPass(SceneView* pView)
@@ -313,7 +313,7 @@ void RenderLightingPass(SceneView* pView)
 //		pEntity = pEntity->pNext;
 //	}
 //
-//	GShaderManager.SetTexture(SV_LIGHTINGBUFFER, NULL);
+//	GShaderManager.SetTexture(SV_LIGHTINGBUFFER, nullptr);
 //}
 
 
@@ -361,24 +361,24 @@ int Pipeline::EndOcclusionQuery()
 void Pipeline::DrawLine(const Vector3f& a, const Vector3f& b, const Color& color, int pickupId)
 {
 	//m_pHelperRenderer->DrawLine(a, b, color, pickupId,
-	//	m_bOcclusionQuerying ? m_pOcclusionQuery.get() : NULL);
+	//	m_bOcclusionQuerying ? m_pOcclusionQuery.get() : nullptr);
 }
 
 void Pipeline::DrawLineList(const Vector3f* pPos, uint nNumPoint, const Color& color, int pickupId)
 {
 	//m_pHelperRenderer->DrawLineList(pPos, nNumPoint, color, pickupId,
-	//	m_bOcclusionQuerying ? m_pOcclusionQuery.get() : NULL);
+	//	m_bOcclusionQuerying ? m_pOcclusionQuery.get() : nullptr);
 }
 
 void Pipeline::DrawCicle(const Vector3f& center, float radius, const Vector3f& dir, const Color& color, int pickupId)
 {
 	//m_pHelperRenderer->DrawCicle(center, radius, dir, color, pickupId,
-	//				m_bOcclusionQuerying ? m_pOcclusionQuery.get() : NULL);
+	//				m_bOcclusionQuerying ? m_pOcclusionQuery.get() : nullptr);
 }
 
 void Pipeline::DrawAABB(const Vector3f& a, const Vector3f& b, const Color& color, int pickupId)
 {
-	//m_pHelperRenderer->DrawAABB(a, b, color, pickupId, NULL);
+	//m_pHelperRenderer->DrawAABB(a, b, color, pickupId, nullptr);
 }
 
 }

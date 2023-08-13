@@ -28,8 +28,8 @@ Vector3TransformArray(const Vector3<real>* pIn, int iStride, const Vector3<real>
 {
 	const char* pByteIn		= (const char*)pIn;
 	      char* pByteOut	=		(char*)pOut;
-	const Vector3<real>* pVecIn		= NULL;
-		  Vector3<real>* pVecOut	= NULL;
+	const Vector3<real>* pVecIn		= nullptr;
+		  Vector3<real>* pVecOut	= nullptr;
 
 	for (int i = 0; i < count; i++)
 	{

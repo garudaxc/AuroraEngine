@@ -113,7 +113,7 @@ public:
 	virtual	void			OnUpdateShaderConstI(int id, int* pOutBuffer, uint nCount) {}
 	virtual	void			OnUpdateShaderConstB(int id, int* pOutBuffer, uint nCount) {}
 
-	virtual Texture*		OnUpdateTexture(int id) {	return NULL;	}
+	virtual Texture*		OnUpdateTexture(int id) {	return nullptr;	}
 };
 
 

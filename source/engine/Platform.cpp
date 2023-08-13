@@ -240,8 +240,8 @@ GetCPUInfo
 ========================
 */
 bool GetCPUInfo( cpuInfo_t & cpuInfo ) {
-	PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer = NULL;
-	PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr = NULL;
+	PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer = nullptr;
+	PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr = nullptr;
 	PCACHE_DESCRIPTOR Cache;
 	LPFN_GLPI	glpi;
 	BOOL		done = FALSE;
@@ -251,7 +251,7 @@ bool GetCPUInfo( cpuInfo_t & cpuInfo ) {
 	memset( & cpuInfo, 0, sizeof( cpuInfo ) );
 
 	glpi = (LPFN_GLPI)GetProcAddress( GetModuleHandle(TEXT("kernel32")), "GetLogicalProcessorInformation" );
-	if ( NULL == glpi ) {
+	if ( nullptr == glpi ) {
 		//idLib::Printf( "\nGetLogicalProcessorInformation is not supported.\n" );
 		return 0;
 	}
@@ -414,7 +414,7 @@ cpuid_t GetCPUId() {
 void InitPlatform()
 {
 	Win32Info win32Info;
-	CoInitialize( NULL );
+	CoInitialize( nullptr );
 
 	//
 	// Windows version
@@ -539,7 +539,7 @@ void InitPlatform()
 
 	//bool IsFileExist(const string& pathName)
 	//{
-	//	HANDLE hFile = CreateFileA(pathName.c_str(), 0, 0, NULL, 0, OPEN_EXISTING, NULL);
+	//	HANDLE hFile = CreateFileA(pathName.c_str(), 0, 0, nullptr, 0, OPEN_EXISTING, nullptr);
 
 	//	return true;
 	//}
@@ -590,7 +590,7 @@ void InitPlatform()
 
 		MutexLock()
 		{
-			m_hMutex = CreateMutex(NULL, FALSE, NULL);
+			m_hMutex = CreateMutex(nullptr, FALSE, nullptr);
 		}
 
 		~MutexLock()
@@ -625,7 +625,7 @@ void InitPlatform()
 	{
 	public:
 
-		Event():m_hEvent(NULL)	{}
+		Event():m_hEvent(nullptr)	{}
 		virtual ~Event()	{}
 
 		inline HANDLE	GetHandle() const;
@@ -647,7 +647,7 @@ void InitPlatform()
 	public:
 		ManualResetEvent()
 		{
-			m_hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+			m_hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 			assert(m_hEvent);
 		}
 
@@ -696,7 +696,7 @@ void InitPlatform()
 	public:
 		AutoResetEvent()
 		{
-			m_hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+			m_hEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 			assert(m_hEvent);
 		}
 
@@ -879,7 +879,7 @@ void InitPlatform()
 	WorkingThread::WorkingThread(bool bAutoFinish)
 	{
 		m_bAutoFinish	= bAutoFinish;
-		m_hThread		= NULL;
+		m_hThread		= nullptr;
 		m_nRunning		= 0;
 		m_nThreadId		= 0;
 		Init();
@@ -895,15 +895,15 @@ void InitPlatform()
 		m_nRunning = 0;
 		InterlockedIncrement(&m_nRunning);
 		m_hThread = ::CreateThread( 
-			NULL,              // default security attributes
+			nullptr,              // default security attributes
 			0,                 // use default stack size  
 			ThreadProc,        // thread function 
 			(LPVOID)this,             // argument to thread function 
 			0/*CREATE_SUSPENDED*/,         // use default creation flags 
 			(DWORD*)&m_nThreadId);   // returns the thread identifier 
-		assert(m_hThread != NULL);
+		assert(m_hThread != nullptr);
 
-		if (m_hThread == NULL)
+		if (m_hThread == nullptr)
 		{
 			GLog->Error("Create thread failed");
 			return false;
@@ -937,7 +937,7 @@ void InitPlatform()
 			
 		if (m_Tasks.empty())
 		{
-			return pair<ITask*, void*>((ITask*)NULL, (void*)NULL);
+			return pair<ITask*, void*>((ITask*)nullptr, (void*)nullptr);
 		}
 
 		pair<ITask*, void*> task = m_Tasks.front();
@@ -988,7 +988,7 @@ void InitPlatform()
 		WaitForSingleObject(m_hThread, timeout == 0 ? INFINITE : timeout);
 		CloseHandle(m_hThread);
 
-		m_hThread = NULL;
+		m_hThread = nullptr;
 		m_nThreadId = 0;
 	}
 
@@ -1000,7 +1000,7 @@ void InitPlatform()
 
 	IThread* CreateThread(ITask* task, void* param, bool bAutoFinish)
 	{
-		if (task == NULL && bAutoFinish)
+		if (task == nullptr && bAutoFinish)
 		{
 			GLog->Error("Thread with no task will terminate immediately");
 		}

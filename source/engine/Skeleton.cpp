@@ -4,7 +4,7 @@
 namespace Aurora
 {
 
-	Skeleton::Bone::Bone():m_pParent(NULL),m_pSibling(NULL),m_pFirstChild(NULL)
+	Skeleton::Bone::Bone():m_pParent(nullptr),m_pSibling(nullptr),m_pFirstChild(nullptr)
 	{
 	}
 
@@ -15,7 +15,7 @@ namespace Aurora
 	void Skeleton::Bone::AddSbiling(Bone* pSibling)
 	{
 		Bone*	p = this;
-		while (p->m_pSibling != NULL)
+		while (p->m_pSibling != nullptr)
 			p = p->m_pSibling;
 
 		p->m_pSibling = pSibling;
@@ -24,7 +24,7 @@ namespace Aurora
 
 	void Skeleton::Bone::AddChild(Bone* pChild)
 	{
-		if (m_pFirstChild == NULL)
+		if (m_pFirstChild == nullptr)
 		{
 			m_pFirstChild	= pChild;
 			pChild->SetParent(this);
@@ -37,8 +37,8 @@ namespace Aurora
 
 	int Skeleton::Bone::GetCount() const
 	{
-		return (m_pSibling == NULL ? 0 : m_pSibling->GetCount()) +
-			(m_pFirstChild == NULL ? 0 : m_pFirstChild->GetCount()) + 1;
+		return (m_pSibling == nullptr ? 0 : m_pSibling->GetCount()) +
+			(m_pFirstChild == nullptr ? 0 : m_pFirstChild->GetCount()) + 1;
 	}
 
 
@@ -58,12 +58,12 @@ namespace Aurora
 		}
 
 
-		if (m_pSibling != NULL)
+		if (m_pSibling != nullptr)
 		{
 			m_pSibling->UpdateTransformation();
 		}
 
-		if (m_pFirstChild != NULL)
+		if (m_pFirstChild != nullptr)
 		{
 			m_pFirstChild->UpdateTransformation();
 		}
@@ -75,7 +75,7 @@ namespace Aurora
 	//===============
 	//
 	//===============
-	Skeleton::Skeleton(void):m_pRootBone(NULL)
+	Skeleton::Skeleton(void):m_pRootBone(nullptr)
 	{
 	}
 
@@ -90,8 +90,8 @@ namespace Aurora
 		Allocate(nBone);
 
 		// create bone hierarchy
-		Bone* pRootBone = NULL;
-		Bone* pParentBone = NULL;
+		Bone* pRootBone = nullptr;
+		Bone* pParentBone = nullptr;
 
 		for (int i = 0; i < GetNumBones(); i++)
 		{
@@ -99,7 +99,7 @@ namespace Aurora
 			if (nParentIndex == -1)
 			{
 				// if already had a root bone, error
-				if (pRootBone != NULL)
+				if (pRootBone != nullptr)
 					return false;
 				pRootBone = GetBone(i);
 			}
@@ -112,7 +112,7 @@ namespace Aurora
 		}
 
 		// if not find a root bone or not all bones get in hierarchy, error
-		if (pRootBone == NULL || pRootBone->GetCount() != GetNumBones())
+		if (pRootBone == nullptr || pRootBone->GetCount() != GetNumBones())
 			return false;
 
 		m_pRootBone = pRootBone;
@@ -131,7 +131,7 @@ namespace Aurora
 	{
 		Matrix4f	mat;
 		Matrix4f*	pMatBone = pMatrix;
-		Bone*		pBone = NULL;
+		Bone*		pBone = nullptr;
 
 		for (int i = 0; i < GetNumBones(); i++)
 		{

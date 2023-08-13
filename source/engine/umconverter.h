@@ -11,15 +11,15 @@ protected:
 	wchar_t*	_UnicodeString;
 
 public:
-	// ½ÓÊÕÁ½ÖÖÀàÐÍµÄ×Ö·û´®µÄ¹¹Ôìº¯Êý
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½ï¿½ìº¯ï¿½ï¿½
 	UMConverter( const wchar_t *str );
 	UMConverter( const char *str);
 
 	~UMConverter( void );
 
-	// »ñµÃmultibyteµÄ×Ö·û´®
+	// ï¿½ï¿½ï¿½multibyteï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
 	const char *GetMBCS( void ) const { return( _MBCSString ); };
-	// »ñµÃunicodeµÄ×Ö·û´®
+	// ï¿½ï¿½ï¿½unicodeï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
 	const wchar_t *GetUnicode( void ) const { return( _UnicodeString ); };
 
 	static const char* GetMBFromUTF8(const char* utf8){ return utf8; };
@@ -35,15 +35,15 @@ private:
 
 inline UMConverter::UMConverter( const char *str )
 	: _IsMBCS( true )
-	, _UnicodeString( NULL )
-	, _MBCSString(NULL)
+	, _UnicodeString( nullptr )
+	, _MBCSString(nullptr)
 {
-	if ( str == NULL )
+	if ( str == nullptr )
 	{
-		_MBCSString = NULL;
+		_MBCSString = nullptr;
 		return;
 	}
-	int len = ::MultiByteToWideChar( GB18030, 0, str, strlen( str ) + 1,	NULL, 0 );
+	int len = ::MultiByteToWideChar( GB18030, 0, str, strlen( str ) + 1,	nullptr, 0 );
 	_UnicodeString = new wchar_t[ len ];
 	::MultiByteToWideChar( GB18030, 0, str, strlen( str ) + 1, _UnicodeString, len );
 
@@ -52,16 +52,16 @@ inline UMConverter::UMConverter( const char *str )
 
 inline UMConverter::UMConverter( const wchar_t *str )
 	: _IsMBCS( false )
-	, _MBCSString( NULL )
+	, _MBCSString( nullptr )
 {
-	if ( str == NULL )
+	if ( str == nullptr )
 	{
-		_UnicodeString = NULL;
+		_UnicodeString = nullptr;
 		return;
 	}
-	int len = ::WideCharToMultiByte( GB18030, 0, str, wcslen( str ) + 1,	NULL, 0, NULL, NULL );
+	int len = ::WideCharToMultiByte( GB18030, 0, str, wcslen( str ) + 1,	nullptr, 0, nullptr, nullptr );
 	_MBCSString = new char[ len ];
-	::WideCharToMultiByte( GB18030, 0, str, wcslen( str ) + 1, _MBCSString, len, NULL, NULL );
+	::WideCharToMultiByte( GB18030, 0, str, wcslen( str ) + 1, _MBCSString, len, nullptr, nullptr );
 
 	_UnicodeString = const_cast< wchar_t * >( str );
 }
@@ -70,18 +70,18 @@ inline UMConverter::~UMConverter( void )
 {
 	if ( _IsMBCS )
 	{
-		if ( _UnicodeString != NULL )
+		if ( _UnicodeString != nullptr )
 		{
 			delete []_UnicodeString;
-			_UnicodeString = NULL;
+			_UnicodeString = nullptr;
 		}
 	}
 	else
 	{
-		if ( _MBCSString != NULL )
+		if ( _MBCSString != nullptr )
 		{
 			delete []_MBCSString;
-			_MBCSString = NULL;
+			_MBCSString = nullptr;
 		}
 	}
 }

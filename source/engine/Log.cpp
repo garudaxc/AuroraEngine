@@ -27,7 +27,7 @@ namespace Aurora
 		m_file.close();
 
 		m_pLock->Release();
-		m_pLock = NULL;
+		m_pLock = nullptr;
 	}	
 
 	void Log::Error(const char* text, ...)

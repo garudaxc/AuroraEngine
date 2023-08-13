@@ -20,7 +20,7 @@ namespace Aurora
 
 	Model* CreateLightObject(LightData* pLightData)
 	{
-		Model* pLightObj = NULL;
+		Model* pLightObj = nullptr;
 	/*	if (pLightData->lightType == LIGHTTYPE_DIRECTIONAL)
 		{
 			pLightObj = new Model(string("DirectionalLight"));
@@ -185,7 +185,7 @@ namespace Aurora
 //	//m_pVertDesc = Global::GetResourceManager()->GetVertexDesc(ResourceManager::VEXDESC_P).Get();
 //
 //	//assert(0);
-//	//// 修改实现
+//	//// 锟睫革拷实锟斤拷
 //	////m_pVertexBuffer = pGeomData->GetVertexBuffer();
 //	//m_pIndexBuffer = pGeomData->GetIndexBuffer();
 //

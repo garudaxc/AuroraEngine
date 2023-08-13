@@ -45,7 +45,7 @@ namespace Aurora
 
 	HRESULT MyInclude::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes)
 	{
-		if (stricmp(pFileName, "Replace.shader") == 0) {
+		if (_stricmp(pFileName, "Replace.shader") == 0) {
 			unique_ptr<int8[]> data;
 			int32 size = 0;
 
@@ -87,10 +87,10 @@ namespace Aurora
 	void Wchar_tToString(std::string& szDst, wchar_t* wchar)
 	{
 		wchar_t* wText = wchar;
-		DWORD dwNum = WideCharToMultiByte(CP_OEMCP, NULL, wText, -1, NULL, 0, NULL, FALSE);
+		DWORD dwNum = WideCharToMultiByte(CP_OEMCP, 0, wText, -1, nullptr, 0, nullptr, FALSE);
 		char* psText; //
 		psText = new char[dwNum];
-		WideCharToMultiByte(CP_OEMCP, NULL, wText, -1, psText, dwNum, NULL, FALSE);
+		WideCharToMultiByte(CP_OEMCP, 0, wText, -1, psText, dwNum, nullptr, FALSE);
 		szDst = psText;
 		delete[]psText;
 	}
@@ -98,11 +98,11 @@ namespace Aurora
 	//Converting a WChar string to a Ansi string   
 	std::string WChar2Ansi(LPCWSTR pwszSrc)
 	{
-		int nLen = WideCharToMultiByte(CP_ACP, 0, pwszSrc, -1, NULL, 0, NULL, NULL);
+		int nLen = WideCharToMultiByte(CP_ACP, 0, pwszSrc, -1, nullptr, 0, nullptr, nullptr);
 		if (nLen <= 0) return std::string("");
 		char* pszDst = new char[nLen];
-		if (NULL == pszDst) return std::string("");
-		WideCharToMultiByte(CP_ACP, 0, pwszSrc, -1, pszDst, nLen, NULL, NULL);
+		if (nullptr == pszDst) return std::string("");
+		WideCharToMultiByte(CP_ACP, 0, pwszSrc, -1, pszDst, nLen, nullptr, nullptr);
 		pszDst[nLen - 1] = 0;
 		std::string strTemp(pszDst);
 		delete[] pszDst;
@@ -119,7 +119,7 @@ namespace Aurora
 		int nSize = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pszSrc, nLen, 0, 0);
 		if (nSize <= 0) return std::wstring();
 		WCHAR* pwszDst = new WCHAR[nSize + 1];
-		if (NULL == pwszDst) return NULL;
+		if (nullptr == pwszDst) return nullptr;
 		MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pszSrc, nLen, pwszDst, nSize);
 		pwszDst[nSize] = 0;
 		if (pwszDst[0] == 0xFEFF) // skip Oxfeff   
@@ -325,21 +325,21 @@ namespace Aurora
 
 
 
-	extern HWND	MainHWnd;
+	extern HWND	GMainHWnd;
 
 	static RendererDx11			GRendererDx11;
-	IRenderDevice*				GRenderDevice = NULL;
+	IRenderDevice*				GRenderDevice = nullptr;
 
-	ID3D11Device* D3D11Device = NULL;
+	ID3D11Device* D3D11Device = nullptr;
 	ID3D11Device3* D3D11Device3 = nullptr;
 
-	ID3D11DeviceContext* ImmediateContext = NULL;
-	static IDXGISwapChain* SwapChain = NULL;
+	ID3D11DeviceContext* ImmediateContext = nullptr;
+	static IDXGISwapChain* SwapChain = nullptr;
 
 
-	static ID3D11RenderTargetView* RenderTargetView = NULL;
-	static ID3D11Texture2D* DepthStencil = NULL;
-	static ID3D11DepthStencilView* DepthStencilView = NULL;
+	static ID3D11RenderTargetView* RenderTargetView = nullptr;
+	static ID3D11Texture2D* DepthStencil = nullptr;
+	static ID3D11DepthStencilView* DepthStencilView = nullptr;
 
 	struct DeviceState11
 	{
@@ -411,7 +411,7 @@ namespace Aurora
 
 		for (UINT driverTypeIndex = 0; driverTypeIndex < numDriverTypes; driverTypeIndex++) {
 			driverType = driverTypes[driverTypeIndex];
-			hr = D3D11CreateDeviceAndSwapChain(NULL, driverType, NULL, createDeviceFlags, featureLevels, numFeatureLevels,
+			hr = D3D11CreateDeviceAndSwapChain(nullptr, driverType, nullptr, createDeviceFlags, featureLevels, numFeatureLevels,
 				D3D11_SDK_VERSION, &sd, &SwapChain, &D3D11Device, &featureLevel, &ImmediateContext);
 			if (SUCCEEDED(hr))
 				break;
@@ -436,12 +436,12 @@ namespace Aurora
 
 
 		hr = D3D11Device->QueryInterface(__uuidof (ID3D11Device3), (void**)&D3D11Device3);
-		if (FAILED(hr) || D3D11Device3 == NULL) {
+		if (FAILED(hr) || D3D11Device3 == nullptr) {
 			GLog->Error("Query ID3D11Device3 interface failed!");
 		}
 
 		// Create a render target view
-		ID3D11Texture2D* pBackBuffer = NULL;
+		ID3D11Texture2D* pBackBuffer = nullptr;
 		hr = SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
 		if (FAILED(hr)) {
 			GLog->Error("SwapChain->GetBuffer failed! hr = %d", hr);
@@ -450,7 +450,7 @@ namespace Aurora
 			return false;
 		}
 
-		hr = D3D11Device->CreateRenderTargetView(pBackBuffer, NULL, &RenderTargetView);
+		hr = D3D11Device->CreateRenderTargetView(pBackBuffer, nullptr, &RenderTargetView);
 		pBackBuffer->Release();
 		if (FAILED(hr)) {
 			GLog->Error("D3D11Device->CreateRenderTargetView failed! hr = %d", hr);
@@ -473,7 +473,7 @@ namespace Aurora
 		descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 		descDepth.CPUAccessFlags = 0;
 		descDepth.MiscFlags = 0;
-		hr = D3D11Device->CreateTexture2D(&descDepth, NULL, &DepthStencil);
+		hr = D3D11Device->CreateTexture2D(&descDepth, nullptr, &DepthStencil);
 		if (FAILED(hr)) {
 			GLog->Error("D3D11Device->CreateTexture2D Create depth RT failed! hr = %d", hr);
 			return false;
@@ -512,8 +512,8 @@ namespace Aurora
 
 	IRenderDevice* IRenderDevice::CreateDevice(int nWidth, int nHeight)
 	{
-		if (!CreateDX11Device(MainHWnd)) {
-			return NULL;
+		if (!CreateDX11Device(GMainHWnd)) {
+			return nullptr;
 		}
 
 		GRenderDevice = &GRendererDx11;
@@ -556,12 +556,12 @@ namespace Aurora
 			D3D_SHADER_MACRO m = { it->first.c_str(), it->second.c_str() };
 			macros.push_back(m);
 		}
-		D3D_SHADER_MACRO m = { NULL, NULL };
+		D3D_SHADER_MACRO m = { nullptr, nullptr };
 		macros.push_back(m);
 
 
-		ID3DBlob* pCompiledShader = NULL;
-		ID3DBlob* pError = NULL;
+		ID3DBlob* pCompiledShader = nullptr;
+		ID3DBlob* pError = nullptr;
 
 		UINT flag = 0;
 #ifdef _DEBUG
@@ -610,25 +610,25 @@ namespace Aurora
 		obj->Name = code.name;
 		if (code.type == BaseShader::VERTEX_SHADER) {
 
-			ID3D11VertexShader* pVertexShader = NULL;
+			ID3D11VertexShader* pVertexShader = nullptr;
 			hr = D3D11Device->CreateVertexShader(pCompiledShader->GetBufferPointer(),
-				pCompiledShader->GetBufferSize(), NULL, &pVertexShader);
+				pCompiledShader->GetBufferSize(), nullptr, &pVertexShader);
 			assert(SUCCEEDED(hr));
 			obj->VertexShader = pVertexShader;
 		}
 		else if (code.type == BaseShader::PIXEL_SHADER) {
-			ID3D11PixelShader* pixelShader = NULL;
+			ID3D11PixelShader* pixelShader = nullptr;
 			hr = D3D11Device->CreatePixelShader(pCompiledShader->GetBufferPointer(),
-				pCompiledShader->GetBufferSize(), NULL, &pixelShader);
+				pCompiledShader->GetBufferSize(), nullptr, &pixelShader);
 			assert(SUCCEEDED(hr));
 			obj->PixelShader = pixelShader;
 		}
 
-		ID3D11ShaderReflection* pReflector = NULL;
+		ID3D11ShaderReflection* pReflector = nullptr;
 		D3DReflect(pCompiledShader->GetBufferPointer(), pCompiledShader->GetBufferSize(),
 			IID_ID3D11ShaderReflection, (void**)&pReflector);
 		pCompiledShader->Release();
-		pCompiledShader = NULL;
+		pCompiledShader = nullptr;
 
 		obj->Reflector = pReflector;
 
@@ -892,7 +892,7 @@ namespace Aurora
 		auto shader = VertexShaderList_[shaderHandle];
 		assert(shader->VertexShader != nullptr);
 
-		ImmediateContext->VSSetShader(shader->VertexShader, NULL, 0);
+		ImmediateContext->VSSetShader(shader->VertexShader, nullptr, 0);
 
 		for (int i = 0; i < shader->constBuffers.size(); i++) {
 			BindVertexShaderParameter(shader->constBuffers[i]);
@@ -905,7 +905,7 @@ namespace Aurora
 		auto shader = VertexShaderList_[shaderHandle];
 		assert(shader->PixelShader != nullptr);
 
-		ImmediateContext->PSSetShader(shader->PixelShader, NULL, 0);
+		ImmediateContext->PSSetShader(shader->PixelShader, nullptr, 0);
 
 		for (int i = 0; i < shader->constBuffers.size(); i++) {
 			BindPixelShaderParameter(shader->constBuffers[i]);
@@ -984,7 +984,7 @@ namespace Aurora
 				return nullptr;
 			}
 
-			hr = D3D11Device->CreateShaderResourceView(d3dTexture, NULL, &pResourceView);
+			hr = D3D11Device->CreateShaderResourceView(d3dTexture, nullptr, &pResourceView);
 			if (FAILED(hr)) {
 				GLog->Error("create shader resource view from %s failed!", file->Pathname().c_str());
 				return nullptr;
@@ -1080,7 +1080,7 @@ namespace Aurora
 			d3dDesc.MiscFlags = 0;
 
 			Texture2DDx11* pTexture = new Texture2DDx11(desc);
-			HRESULT hr = D3D11Device->CreateTexture2D(&d3dDesc, NULL, &pTexture->m_pD3DTexture);
+			HRESULT hr = D3D11Device->CreateTexture2D(&d3dDesc, nullptr, &pTexture->m_pD3DTexture);
 			assert(SUCCEEDED(hr));
 
 			D3D11_SHADER_RESOURCE_VIEW_DESC resViewDesc;
@@ -1089,7 +1089,7 @@ namespace Aurora
 			resViewDesc.Texture2D.MipLevels = d3dDesc.MipLevels;
 			resViewDesc.Texture2D.MostDetailedMip = 0;
 
-			ID3D11ShaderResourceView* pD3DResView = NULL;
+			ID3D11ShaderResourceView* pD3DResView = nullptr;
 			hr = D3D11Device->CreateShaderResourceView(pTexture->m_pD3DTexture, &resViewDesc, &pD3DResView);
 			assert(SUCCEEDED(hr));
 			pTexture->HALHandle = pD3DResView;
@@ -1110,7 +1110,7 @@ namespace Aurora
 			d3dDesc.MiscFlags = 0;
 
 			Texture3DDx11* pTexture = new Texture3DDx11(desc);
-			HRESULT hr = D3D11Device->CreateTexture3D(&d3dDesc, NULL, &pTexture->m_pD3DTexture);
+			HRESULT hr = D3D11Device->CreateTexture3D(&d3dDesc, nullptr, &pTexture->m_pD3DTexture);
 			assert(SUCCEEDED(hr));
 
 			D3D11_SHADER_RESOURCE_VIEW_DESC resViewDesc;
@@ -1119,7 +1119,7 @@ namespace Aurora
 			resViewDesc.Texture3D.MipLevels = d3dDesc.MipLevels;
 			resViewDesc.Texture3D.MostDetailedMip = 0;
 
-			ID3D11ShaderResourceView* pD3DResView = NULL;
+			ID3D11ShaderResourceView* pD3DResView = nullptr;
 			hr = D3D11Device->CreateShaderResourceView(pTexture->m_pD3DTexture, &resViewDesc, &pD3DResView);
 			assert(SUCCEEDED(hr));
 			pTexture->HALHandle = pD3DResView;
@@ -1128,7 +1128,7 @@ namespace Aurora
 		}*/
 
 		assert(0);
-		return NULL;
+		return nullptr;
 	}
 
 	RenderTarget* RendererDx11::CreateRenderTarget(const RenderTarget::Desc& desc)
@@ -1160,12 +1160,12 @@ namespace Aurora
 
 		HRESULT hr = S_OK;
 
-		ID3D11Texture2D* pD3DTex = NULL;
-		hr = D3D11Device->CreateTexture2D( &rtDesc, NULL, &pD3DTex);
+		ID3D11Texture2D* pD3DTex = nullptr;
+		hr = D3D11Device->CreateTexture2D( &rtDesc, nullptr, &pD3DTex);
 		if (FAILED(hr))
 		{
 			GLog->Error("CreateRenderTarget failed!");
-			return NULL;
+			return nullptr;
 		}
 
 		ULONG refCnt = pD3DTex->AddRef();
@@ -1183,13 +1183,13 @@ namespace Aurora
 		DescRV.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 		DescRV.Texture2D.MipLevels = 1;
 		DescRV.Texture2D.MostDetailedMip = 0;
-		ID3D11ShaderResourceView* pShaderResourceView = NULL;
+		ID3D11ShaderResourceView* pShaderResourceView = nullptr;
 
 		hr = D3D11Device->CreateShaderResourceView(pD3DTex, &DescRV, &pShaderResourceView);
 		if (FAILED(hr))
 		{
 			GLog->Error("CreateRenderTarget failed!");
-			return NULL;
+			return nullptr;
 		}
 
 		refCnt = pD3DTex->AddRef();
@@ -1204,7 +1204,7 @@ namespace Aurora
 		if (desc.nUsage == Surface::USAGE_RENDERTARGET)
 		{
 			// Create the render target view
-			ID3D11RenderTargetView* pRTView = NULL;
+			ID3D11RenderTargetView* pRTView = nullptr;
 			D3D11_RENDER_TARGET_VIEW_DESC DescRT;
 			DescRT.Format = fmt;
 			DescRT.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
@@ -1214,7 +1214,7 @@ namespace Aurora
 			if (FAILED(hr))
 			{
 				GLog->Error("CreateRenderTarget failed!");
-				return NULL;
+				return nullptr;
 			}
 
 			pBind->pRTView = pRTView;
@@ -1225,7 +1225,7 @@ namespace Aurora
 			{
 				fmt = DXGI_FORMAT_D16_UNORM;
 			}
-			ID3D11DepthStencilView* pDSView = NULL;
+			ID3D11DepthStencilView* pDSView = nullptr;
 			D3D11_DEPTH_STENCIL_VIEW_DESC DescRT;
 			DescRT.Format = fmt;
 			DescRT.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
@@ -1235,7 +1235,7 @@ namespace Aurora
 			if (FAILED(hr))
 			{
 				GLog->Error("CreateRenderTarget failed!");
-				return NULL;
+				return nullptr;
 			}
 
 			pBind->pDSView = pDSView;
@@ -1467,12 +1467,12 @@ namespace Aurora
 
 	void RendererDx11::SetVertexShader(Shader* pShader)
 	{
-		ImmediateContext->VSSetShader((ID3D11VertexShader*)pShader->HALHandle, NULL, 0);
+		ImmediateContext->VSSetShader((ID3D11VertexShader*)pShader->HALHandle, nullptr, 0);
 	}
 
 	void RendererDx11::SetPixelShader(Shader* pShader)
 	{
-		ImmediateContext->PSSetShader((ID3D11PixelShader*)pShader->HALHandle, NULL, 0);
+		ImmediateContext->PSSetShader((ID3D11PixelShader*)pShader->HALHandle, nullptr, 0);
 	}
 
 
@@ -1488,7 +1488,7 @@ namespace Aurora
 
 	void RendererDx11::SetRenderTarget(uint nRTs, RenderTarget** pRenderTargets, RenderTarget* pDepthStencil)
 	{
-		ID3D11RenderTargetView * pRTs[] = {NULL, NULL, NULL, NULL};
+		ID3D11RenderTargetView * pRTs[] = {nullptr, nullptr, nullptr, nullptr};
 
 		for (uint i = 0; i < nRTs; i++)
 		{
@@ -1499,7 +1499,7 @@ namespace Aurora
 			}
 		}
 
-		ID3D11DepthStencilView* pDSView = NULL;
+		ID3D11DepthStencilView* pDSView = nullptr;
 		if (pDepthStencil)
 		{
 			Dx11TextureBind* pDSBind = (Dx11TextureBind*)pDepthStencil->HALHandleRT;
@@ -1561,13 +1561,13 @@ namespace Aurora
 		char buffer[512];
 		sprintf_s(buffer, sizeof(buffer), pCode, vsin);
 
-		ID3D10Blob* pShader = NULL;
-		ID3D10Blob* pError = NULL;
+		ID3D10Blob* pShader = nullptr;
+		ID3D10Blob* pError = nullptr;
 
 
 		HRESULT hr = S_FALSE;
 
-		hr = D3DCompile(buffer, strlen(buffer), "CreateShaderSignature shader", NULL, NULL, "Main",
+		hr = D3DCompile(buffer, strlen(buffer), "CreateShaderSignature shader", nullptr, nullptr, "Main",
 			"vs_4_0", 0, 0, &pShader, &pError);
 		
 		if (FAILED(hr)) {
@@ -1580,7 +1580,7 @@ namespace Aurora
 			return nullptr;
 		}
 
-		ID3DBlob* pInputSig = NULL;
+		ID3DBlob* pInputSig = nullptr;
 		hr = D3DGetInputSignatureBlob(pShader->GetBufferPointer(), pShader->GetBufferSize(), &pInputSig);
 		assert(SUCCEEDED(hr));
 
@@ -1727,12 +1727,12 @@ namespace Aurora
 		";
 
 
-		ID3D10Blob* pShader = NULL;
-		ID3D10Blob* pError = NULL;
+		ID3D10Blob* pShader = nullptr;
+		ID3D10Blob* pError = nullptr;
 
 		HRESULT hr = S_FALSE;
 		hr = D3DCompile(signatureCode.c_str(), signatureCode.size(), "CreateShaderSignature shader", 
-						NULL, NULL, "Main", "vs_4_0", 0, 0, &pShader, &pError);
+						nullptr, nullptr, "Main", "vs_4_0", 0, 0, &pShader, &pError);
 
 		if (FAILED(hr)) {
 			int code = HRESULT_CODE(hr);
@@ -1745,7 +1745,7 @@ namespace Aurora
 			return nullptr;
 		}
 
-		ID3DBlob* pInputSig = NULL;
+		ID3DBlob* pInputSig = nullptr;
 		hr = D3DGetInputSignatureBlob(pShader->GetBufferPointer(), pShader->GetBufferSize(), &pInputSig);
 		assert(SUCCEEDED(hr));
 

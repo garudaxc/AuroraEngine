@@ -25,8 +25,8 @@ namespace Aurora
 	{
 		delete []m_pBufferA;
 		delete []m_pBufferB;
-		m_pBuffer = NULL;
-		m_pPos = NULL;
+		m_pBuffer = nullptr;
+		m_pPos = nullptr;
 	}
 
 	void* FrameMemoryBuffer::Alloc(size_t size)

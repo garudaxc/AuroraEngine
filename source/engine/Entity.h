@@ -21,7 +21,7 @@ namespace Aurora
 		const Matrix4f&	GetWorldTransform() const		{	return m_matWorld;	}
 
 		virtual uint		GetNumRenderable()			{	return 0;	}
-		virtual Renderable*	GetRenderable(uint idx)		{	return NULL;	}
+		virtual Renderable*	GetRenderable(uint idx)		{	return nullptr;	}
 
 		virtual void		PushToPipe(RenderingContext* pContext)	{}
 
