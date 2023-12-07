@@ -52,8 +52,6 @@ namespace Aurora
 
 	void InitPlatform();
 
-
-
 	bool IsFileExist(const std::string& pathName);
 
 
@@ -119,6 +117,15 @@ namespace Aurora
 	ILock* CreateThreadLock();
 
 	IThread* CreateThread(ITask* task, void* param, bool bAutoFinish);
+
+
+	class CPlatform
+	{
+	public:
+
+		static std::string		GetWorkingPath();
+		
+	};
 
 
 }

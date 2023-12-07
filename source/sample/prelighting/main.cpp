@@ -2,19 +2,14 @@
 //
 #include "stdheader.h"
 #include <tchar.h>
-#include <shellapi.h>
-#include <time.h>
-#include <sstream>
 #include "Application.h"
 #include "Camera.h"
 #include "Renderer.h"
-#include "Util.h"
 #include "DeviceWindow.h"
 #include "Controller.h"
 #include "Model.h"
 #include "SceneView.h"
 #include "Entity.h"
-#include "Platform.h"
 #include "CmdSystem.h"
 #include "Scene.h"
 #include "FileSystem.h"
@@ -76,17 +71,16 @@ Entity* CreateSimpleEntity()
 class MyApp : public Application, public KeyEventListener, public MouseEventListener
 {
 public:
-    virtual bool		OnInitApp();
-    virtual bool		OnCreateDevice(const RectSize& mainView);
-    virtual void		OnDestroyDevice();
+    bool		OnInitApp() override;
+    bool		OnCreateDevice(const RectSize& mainView) override;
+    void		OnDestroyDevice() override;
 
-    virtual void		OnResizeFrameBuffer(int width, int height);
-    virtual void		OnUpdate(float dt);
-    virtual void		OnRender();
+    void		OnResizeFrameBuffer(int width, int height) override;
+    void		OnUpdate(float dt) override;
+    void		OnRender() override;
 
-    virtual void	OnKeyEvent(const KeyEvent& event);
-    virtual void	OnMouseEvent(const MouseEvent& event);
-
+    void	OnKeyEvent(const KeyEvent& event) override;
+    void	OnMouseEvent(const MouseEvent& event) override;
 
 
     LightObject* m_pLight;
