@@ -13,18 +13,6 @@ namespace Aurora
 	Engine*		GetEngine();
 
 
-	class FrameListener
-	{
-	public:
-		FrameListener()				{}
-		virtual ~FrameListener()	{}
-
-		virtual void		OnResizeFrameBuffer(int width, int height)	{}
-
-		virtual void		OnUpdate(float dt)		{}
-		virtual void		OnRender()				{}
-	};
-
 
 	struct Window
 	{
@@ -42,7 +30,7 @@ namespace Aurora
 		static Engine*		Create();
 
 		~Engine();
-		void			Init(int nWidth, int nHeight, FrameListener* pListener);
+		void			Init(int nWidth, int nHeight);
 		void			Destroy();
 
 		IRenderDevice*		GetRenderer();
@@ -65,7 +53,6 @@ namespace Aurora
 		Timer*			m_pTimer;
 		ResourceManager*	m_pResourceManager;
 
-		FrameListener*		m_pFrameListener;
 		float				m_fps;
 
 	};

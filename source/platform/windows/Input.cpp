@@ -92,7 +92,7 @@ namespace Aurora
 	EventDispatcher* GEventDisPatcher = &eventDispatcher;
 
 
-	void EngineWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	void WindowsInputWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		eventDispatcher.OnMessage(hWnd, uMsg, wParam, lParam);
 	}

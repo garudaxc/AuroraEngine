@@ -148,7 +148,7 @@ ResourcePtr<ResType>::operator bool() const
 
 class Texture;
 class VertexLayout;
-class Geometry;
+class CGeometry;
 class Material;
 class RenderTarget;
 class MaterialInstance;
@@ -170,12 +170,12 @@ public:
 	static char* VEXDESC_P;
 
 	ResourcePtr<Texture>			GetTexture(const IDType& id);
-	ResourcePtr<Geometry>		GetGeometryData(const IDType& id);
+	ResourcePtr<CGeometry>		GetGeometryData(const IDType& id);
 
 	ResourcePtr<RenderTarget> 		AddRenderTarget(const IDType& id, RenderTarget* pRT);
 	ResourcePtr<RenderTarget>		GetRenderTarget(const IDType& id);
 
-	void			AddGeometryData(const IDType& id, Geometry* pGeom);
+	void			AddGeometryData(const IDType& id, CGeometry* pGeom);
 
 	int				ClearUnrefResource();
 

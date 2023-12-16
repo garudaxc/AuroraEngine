@@ -210,7 +210,7 @@ namespace Aurora
 	void PPLRendering::RenderGBufferPass(RenderingContext* pContex)
 	{
 		//RenderTarget* rt[] = {m_pRTGbuffer0, m_pRTGbuffer1};
-		//RenderTarget* pDepthBuffer = GetRenderer()->GetDepthStecil();
+		//RenderTarget* pDepthBuffer = GetRenderer()->GetDepthStencil();
 		//GetRenderer()->SetRenderTarget(2, rt, pDepthBuffer);
 
 		//const vector<RenderStrategy*>& models = pContex->GetModels();
@@ -232,7 +232,7 @@ namespace Aurora
 
 
 	/*	RenderTarget* rt[] = {m_pRTLighting};
-		RenderTarget* pDepthBuffer = GetRenderer()->GetDepthStecil();
+		RenderTarget* pDepthBuffer = GetRenderer()->GetDepthStencil();
 		GetRenderer()->SetRenderTarget(1, rt, pDepthBuffer);
 
 		const vector<RenderStrategy*>& lights = pContex->GetLights();
@@ -248,7 +248,7 @@ namespace Aurora
 	void PPLRendering::RenderShadingPass(RenderingContext* pContex)
 	{
 		//RenderTarget* rt[] = {GetRenderer()->GetFrameBuffer()};
-		//RenderTarget* pDepthBuffer = GetRenderer()->GetDepthStecil();
+		//RenderTarget* pDepthBuffer = GetRenderer()->GetDepthStencil();
 		//GetRenderer()->SetRenderTarget(1, rt, pDepthBuffer);
 
 		//const vector<RenderStrategy*>& models = pContex->GetModels();

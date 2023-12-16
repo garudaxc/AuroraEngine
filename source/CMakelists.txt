@@ -81,6 +81,7 @@ if(USE_VULKAN)
 endif(USE_VULKAN)
 
 
+aux_source_directory(engine/OpenGL srcs)
 
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 

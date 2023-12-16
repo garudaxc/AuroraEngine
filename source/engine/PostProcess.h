@@ -2,7 +2,7 @@
 #include "ResourceManager.h"
 #include "Primitive.h"
 #include "MaterialInstance.h"
-#include "Geometry.h"
+#include "CGeometry.h"
 #include "Renderer.h"
 
 namespace Aurora

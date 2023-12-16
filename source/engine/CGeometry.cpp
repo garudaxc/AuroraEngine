@@ -1,5 +1,5 @@
 #include "stdHeader.h"
-#include "Geometry.h"
+#include "CGeometry.h"
 #include <assert.h>
 #include "MathFunction.h"
 #include "Util.h"
@@ -65,7 +65,7 @@ void ComputeFaceNormal(const T* pIndex, Vector3f* pFaceNormal, const Vector3f* p
 
 
 
-uint32 Geometry::GetSizeOfType(Vertex::ElemType type) {
+uint32 CGeometry::GetSizeOfType(Vertex::ElemType type) {
 	switch (type)
 	{
 	case Aurora::Vertex::TYPE_FLOAT:
@@ -93,7 +93,7 @@ uint32 Geometry::GetSizeOfType(Vertex::ElemType type) {
 
 void FlipTriangleOrder(uint8* pIndex, uint32 nTri, Vertex::ElemType indexType)
 {
-	int stride = Geometry::GetSizeOfType(indexType);
+	int stride = CGeometry::GetSizeOfType(indexType);
 	// swep two points in triangle
 	if (stride == 2) {
 		uint16* pSrc = (uint16*)pIndex;
@@ -123,7 +123,7 @@ void FlipTriangleOrder(uint8* pIndex, uint32 nTri, Vertex::ElemType indexType)
 void ComputeNormal(Vector3f* pNormal, uint8* pIndex, uint32 nTri, Vertex::ElemType indexType,
 				   Vector3f* pPos, uint32 nVert)
 {
-	int stride = Geometry::GetSizeOfType(indexType);
+	int stride = CGeometry::GetSizeOfType(indexType);
 
 	std::vector<VertexInfo>	vertInfo(nVert);
 	std::vector<Vector3f>	faceNormal(nTri);
@@ -151,10 +151,7 @@ void ComputeNormal(Vector3f* pNormal, uint8* pIndex, uint32 nTri, Vertex::ElemTy
 	}
 }
 
-
-
-
-
+	
 vector<VertexLayoutItem>	VertexLayoutPosNormTangentTex(
 	{
 	   {Vertex::TYPE_FLOAT3, Vertex::USAGE_POSITION, 0},
@@ -163,29 +160,27 @@ vector<VertexLayoutItem>	VertexLayoutPosNormTangentTex(
 	   {Vertex::TYPE_FLOAT2, Vertex::USAGE_TEXCOORD, 0},
 	}
 );
+	
 
 
-
-
-
-Geometry::Geometry(uint32 nVert, uint32 nTri):m_nNumVert(nVert),
+CGeometry::CGeometry(uint32 nVert, uint32 nTri):m_nNumVert(nVert),
 m_nNumIndex(nTri*3) {
 }
 
-Geometry::Geometry():m_nNumVert(0),m_nNumIndex(0) {
+CGeometry::CGeometry():m_nNumVert(0),m_nNumIndex(0) {
 }
 
-int32 Geometry::CalcVertexStride(const vector<VertexLayoutItem>& layout)
+int32 CGeometry::CalcVertexStride(const vector<VertexLayoutItem>& layout)
 {
 	int32 stride = 0;
 	for (auto it = layout.begin(); it != layout.end(); ++it) {
-		stride += Geometry::GetSizeOfType((Vertex::ElemType)it->type);
+		stride += CGeometry::GetSizeOfType((Vertex::ElemType)it->type);
 	}
 
 	return stride;
 }
 
-uint32 Geometry::GetNumStreamOfUsage(Vertex::ElemUsage usage) const {
+uint32 CGeometry::GetNumStreamOfUsage(Vertex::ElemUsage usage) const {
 	uint32 num = 0;
 	for (uint32 i = 0; i < GetNumStream(); i++)
 	{
@@ -198,7 +193,7 @@ uint32 Geometry::GetNumStreamOfUsage(Vertex::ElemUsage usage) const {
 }
 
 
-uint8* Geometry::AddStream(Vertex::ElemUsage usage, Vertex::ElemType type) {
+uint8* CGeometry::AddStream(Vertex::ElemUsage usage, Vertex::ElemType type) {
 	uint32 usageIndex		= GetNumStreamOfUsage(usage);
 
 	uint32 numElem = 0;
@@ -223,7 +218,7 @@ uint8* Geometry::AddStream(Vertex::ElemUsage usage, Vertex::ElemType type) {
 }
 
 
-int Geometry::FindStream(Vertex::ElemUsage usage, uint8 usageIndex) const {
+int CGeometry::FindStream(Vertex::ElemUsage usage, uint8 usageIndex) const {
 	for (int i = 0; i < (int)m_Streams.size(); i++) {
 		if (usage == m_Streams[i].usage && usageIndex == m_Streams[i].nUsageIndex)	{
 			return i;
@@ -233,7 +228,7 @@ int Geometry::FindStream(Vertex::ElemUsage usage, uint8 usageIndex) const {
 }
 
 
-uint8* Geometry::GetStreamPointer(Vertex::ElemUsage usage, uint8 usageIndex) {
+uint8* CGeometry::GetStreamPointer(Vertex::ElemUsage usage, uint8 usageIndex) {
 	int nStream = FindStream(usage, usageIndex);
 	if (nStream == -1)	{
 		return nullptr;
@@ -243,7 +238,7 @@ uint8* Geometry::GetStreamPointer(Vertex::ElemUsage usage, uint8 usageIndex) {
 }
 
 
-bool Geometry::AssembleVertexElement(void* pBuffer, uint32 bufferOffset, uint32 bufferStride, Vertex::ElemType usedType, 
+bool CGeometry::AssembleVertexElement(void* pBuffer, uint32 bufferOffset, uint32 bufferStride, Vertex::ElemType usedType, 
 										 Vertex::ElemUsage usage, uint8 usageIndex)
 {
 	int streamIndex = FindStream(usage, usageIndex);
@@ -266,7 +261,7 @@ bool Geometry::AssembleVertexElement(void* pBuffer, uint32 bufferOffset, uint32 
 }
 
 
-bool Geometry::Load(const TiXmlNode* pXmlMesh) {
+bool CGeometry::Load(const TiXmlNode* pXmlMesh) {
 	const TiXmlElement* pMesh = pXmlMesh->ToElement();
 
 	int nNumVerts = 0, nNumTri = 0;
@@ -349,7 +344,7 @@ bool Geometry::Load(const TiXmlNode* pXmlMesh) {
 
 	vector<int8> vertexData;
 	PrepareVertexData(vertexData, VertexLayoutPosNormTangentTex);
-	VertexBufferHandle_ = CreateVertexBufferHandle(&vertexData[0], vertexData.size());
+	VertexBufferHandle_ = GRenderDevice->CreateVertexBufferHandle(vertexData.data(), vertexData.size());
 
 	//if (pMesh->FirstChild("BlendIndex")) {
 	//	m_pVertexBuffer = CreateVertexBuffer(VertexLayout_PNTTBB);
@@ -361,7 +356,7 @@ bool Geometry::Load(const TiXmlNode* pXmlMesh) {
 }
 
 
-void Geometry::Load(File* file)
+void CGeometry::Load(File* file)
 {
 	unsigned int magic = 0;
 	file->Read(magic);
@@ -420,14 +415,14 @@ void Geometry::Load(File* file)
 		
 	vector<int8> vertexData;
 	PrepareVertexData(vertexData, VertexLayoutPosNormTangentTex);
-	VertexBufferHandle_ = CreateVertexBufferHandle(&vertexData[0], vertexData.size());
+	VertexBufferHandle_ = GRenderDevice->CreateVertexBufferHandle(&vertexData[0], vertexData.size());
 
 	CreateIndexBuffer();
 	//m_pVertexBuffer = CreateVertexBuffer(VertexLayout_PNTT);
 }
 
 
-bool Geometry::HasSkin() const {
+bool CGeometry::HasSkin() const {
 	bool hasSkin = false;
 	for (vector<Stream_t>::const_iterator it = m_Streams.begin(); it != m_Streams.end(); ++it) {
 		if (it->usage == Vertex::USAGE_BLENDINDEX) {
@@ -438,18 +433,18 @@ bool Geometry::HasSkin() const {
 	return hasSkin;
 }
 
-void Geometry::GetMaterialInfo(set<string>& info) const {
+void CGeometry::GetMaterialInfo(set<string>& info) const {
 	if (HasSkin()) {
 		info.insert("_SKIN_");
 	}
 }
 
 
-void Geometry::PrepareVertexData(vector<int8>& data, const vector<VertexLayoutItem>& layout)
+void CGeometry::PrepareVertexData(vector<int8>& data, const vector<VertexLayoutItem>& layout)
 {
 	int32 stride = 0;
 	for (auto it = layout.begin(); it != layout.end(); ++it) {
-		stride += Geometry::GetSizeOfType((Vertex::ElemType)it->type);
+		stride += CGeometry::GetSizeOfType((Vertex::ElemType)it->type);
 	}
 
 	data.resize(stride * m_nNumVert);
@@ -468,7 +463,7 @@ void Geometry::PrepareVertexData(vector<int8>& data, const vector<VertexLayoutIt
 }
 
 
-void Geometry::CreateIndexBuffer() {
+void CGeometry::CreateIndexBuffer() {
 	   
 	int streamIndex = FindStream(Vertex::USAGE_INDEX, 0);
 	if (streamIndex == -1) {
@@ -479,13 +474,13 @@ void Geometry::CreateIndexBuffer() {
 	assert(m_Streams[streamIndex].nStride == 4);
 	auto stream = m_Streams[streamIndex];
 
-	IndexBufferHandle_ = CreateIndexBufferHandle(stream.data, stream.nSizeInByte);
+	IndexBufferHandle_ = GRenderDevice->CreateIndexBufferHandle(stream.data, stream.nSizeInByte);
 }
 
-void Geometry::OnReset() {
+void CGeometry::OnReset() {
 }
 
-void Geometry::OnLost() {
+void CGeometry::OnLost() {
 }
 
 
@@ -563,7 +558,7 @@ void CalculateTangentArray(long vertexCount, const Vector3f *vertex, const Vecto
 	delete[] tan1;
 }
 
-void Geometry::ComputeTangentSpace()
+void CGeometry::ComputeTangentSpace()
 {
 	assert(GetNumStreamOfUsage(Vertex::USAGE_TANGENT) == 0);
 
@@ -597,7 +592,7 @@ void Geometry::ComputeTangentSpace()
 //ComputeNormal
 //===================
 //*/
-//void Geometry::ComputeNormal()
+//void CGeometry::ComputeNormal()
 //{
 //	int iIndexStream	= GetStreamIndex(USAGE_INDEX);
 //	int iPosStream		= GetStreamIndex(USAGE_POSITION);
@@ -642,13 +637,13 @@ void Geometry::ComputeTangentSpace()
 //ComputeTangent
 //===================
 //*/
-//void Geometry::ComputeTangent()
+//void CGeometry::ComputeTangent()
 //{
 //}
 //
 //
 //
-//void Geometry::ComputeAABB()
+//void CGeometry::ComputeAABB()
 //{
 //	Vector3f* pPos = (Vector3f*)GetStreamBufferByUsage(USAGE_POSITION);
 //	if (pPos == nullptr)
@@ -674,7 +669,7 @@ float TriangleArea(const Vector3f& a, const Vector3f& b, const Vector3f& c)
 }
 //
 //
-//float Geometry::GetSurfaceArea()
+//float CGeometry::GetSurfaceArea()
 //{
 //
 //	int nTri = GetNumTri();
@@ -693,7 +688,7 @@ float TriangleArea(const Vector3f& a, const Vector3f& b, const Vector3f& c)
 //
 //
 //
-//GeometryDataPtr Geometry::AssembleSubmesh(const std::set<uint16>& vertSet, uint32 triOffset, uint32 nNumTri)
+//GeometryDataPtr CGeometry::AssembleSubmesh(const std::set<uint16>& vertSet, uint32 triOffset, uint32 nNumTri)
 //{
 //	std::vector<uint16> vertArray;
 //	std::map<uint16, uint16> indexMap;
@@ -710,7 +705,7 @@ float TriangleArea(const Vector3f& a, const Vector3f& b, const Vector3f& c)
 //		indexMap.insert(std::make_pair(vertArray[i], i));
 //	}
 //
-//	GeometryDataPtr pSubmesh(new Geometry(nNumVert, nNumTri));
+//	GeometryDataPtr pSubmesh(new CGeometry(nNumVert, nNumTri));
 //
 //
 //	Vector3f* pSrcPos = (Vector3f*)GetStreamBufferByUsage(USAGE_POSITION);
@@ -720,10 +715,10 @@ float TriangleArea(const Vector3f& a, const Vector3f& b, const Vector3f& c)
 //
 //
 //
-//	Vector3f* pDesPos = (Vector3f*)pSubmesh->AddStream(Geometry::USAGE_POSITION, sizeof(Vector3f));
-//	Vector3f* pDesNormal = (Vector3f*)pSubmesh->AddStream(Geometry::USAGE_NORMAL, sizeof(Vector3f));
-//	Vector2f* pDesUV = (Vector2f*)pSubmesh->AddStream(Geometry::USAGE_TEXCOORD, sizeof(Vector2f));
-//	uint16* pDesIndex = (uint16*)pSubmesh->AddStream(Geometry::USAGE_INDEX, 2);
+//	Vector3f* pDesPos = (Vector3f*)pSubmesh->AddStream(CGeometry::USAGE_POSITION, sizeof(Vector3f));
+//	Vector3f* pDesNormal = (Vector3f*)pSubmesh->AddStream(CGeometry::USAGE_NORMAL, sizeof(Vector3f));
+//	Vector2f* pDesUV = (Vector2f*)pSubmesh->AddStream(CGeometry::USAGE_TEXCOORD, sizeof(Vector2f));
+//	uint16* pDesIndex = (uint16*)pSubmesh->AddStream(CGeometry::USAGE_INDEX, 2);
 //
 //	for (uint32 i = 0; i < nNumVert; i++)
 //	{
@@ -742,7 +737,7 @@ float TriangleArea(const Vector3f& a, const Vector3f& b, const Vector3f& c)
 //}
 //
 //
-//std::vector<GeometryDataPtr> Geometry::SplitMesh(float areaThreshold)
+//std::vector<GeometryDataPtr> CGeometry::SplitMesh(float areaThreshold)
 //{
 //	std::vector<GeometryDataPtr> subMeshes;
 //	if (GetSurfaceArea() <= areaThreshold)
@@ -795,12 +790,12 @@ float TriangleArea(const Vector3f& a, const Vector3f& b, const Vector3f& c)
 
 
 //-------------------------------------------------------------------------------
-Geometry* StandardMesh::CreatePlane(int nRow, int nCol, const Matrix4f &matTrans)
+CGeometry* StandardMesh::CreatePlane(int nRow, int nCol, const Matrix4f &matTrans)
 {
 	int		nVert	= (nCol + 1) * (nRow + 1);
 	int		nTri	= nCol * nRow * 2;
 
-	Geometry* pMesh = new Geometry(nVert, nTri);
+	CGeometry* pMesh = new CGeometry(nVert, nTri);
 	assert(pMesh != nullptr);
 
 	Vector3f* pPos		= (Vector3f*)pMesh->AddStream(Vertex::USAGE_POSITION, Vertex::TYPE_FLOAT3);
@@ -863,9 +858,9 @@ Geometry* StandardMesh::CreatePlane(int nRow, int nCol, const Matrix4f &matTrans
 
 
 
-Geometry* StandardMesh::CreateBox(bool bInside, const Matrix4f& matTrans)
+CGeometry* StandardMesh::CreateBox(bool bInside, const Matrix4f& matTrans)
 {
-	Geometry* pMesh = new Geometry(8, 12);
+	CGeometry* pMesh = new CGeometry(8, 12);
 	assert(pMesh != nullptr);
 
 	Vector3f* pPos		= (Vector3f*)pMesh->AddStream(Vertex::USAGE_POSITION, Vertex::TYPE_FLOAT3);
@@ -915,12 +910,12 @@ Geometry* StandardMesh::CreateBox(bool bInside, const Matrix4f& matTrans)
 	return pMesh;
 }
 
-Geometry* StandardMesh::CreateSphere(uint32 slice, uint32 stack, bool bInside, const Matrix4f& matTrans)
+CGeometry* StandardMesh::CreateSphere(uint32 slice, uint32 stack, bool bInside, const Matrix4f& matTrans)
 {
 	int nVert = (stack - 1) * (slice + 1) + 2;	// the first and last point in a stack take the same position
 	int nTri  = 2 * slice * (stack - 1);
 
-	Geometry* pMesh = new Geometry(nVert, nTri);
+	CGeometry* pMesh = new CGeometry(nVert, nTri);
 	assert(pMesh != nullptr);
 
 	Vector3f* pPos		= (Vector3f*)pMesh->AddStream(Vertex::USAGE_POSITION, Vertex::TYPE_FLOAT3);
@@ -1072,9 +1067,9 @@ MeshManager::~MeshManager()
 
 }
 
-Geometry* MeshManager::GetMesh(const ResourceID& id)
+CGeometry* MeshManager::GetMesh(const ResourceID& id)
 {
-	Geometry* pMesh = Find(id);
+	CGeometry* pMesh = Find(id);
 	if (pMesh == nullptr)
 	{
 		return Load(id);
@@ -1082,9 +1077,9 @@ Geometry* MeshManager::GetMesh(const ResourceID& id)
 	return pMesh;
 }
 
-Geometry* MeshManager::Find(const ResourceID& id)
+CGeometry* MeshManager::Find(const ResourceID& id)
 {
-	map<ResourceID, Geometry*>::iterator it = m_ResourcePool.find(id);
+	map<ResourceID, CGeometry*>::iterator it = m_ResourcePool.find(id);
 	if (it != m_ResourcePool.end())
 	{
 		return it->second;
@@ -1092,11 +1087,11 @@ Geometry* MeshManager::Find(const ResourceID& id)
 	return nullptr;
 }
 
-Geometry* MeshManager::Load(const ResourceID& id)
+CGeometry* MeshManager::Load(const ResourceID& id)
 {
 	string pathName = Util::ProcessPathName(id);
 
-	Geometry* pMesh = new Geometry();
+	CGeometry* pMesh = new CGeometry();
 
 	string ext = Util::GetFileNameExt(pathName);
 	if (ext == "xms") {

@@ -1,7 +1,7 @@
 
 #include "stdHeader.h"
 #include "Model.h"
-#include "Geometry.h"
+#include "CGeometry.h"
 #include "RendererObject.h"
 #include "Renderer.h"
 #include "Config.h"
@@ -25,7 +25,7 @@ namespace Aurora
 
 	}
 
-	void Model::SetMesh(Geometry* pMesh)
+	void Model::SetMesh(CGeometry* pMesh)
 	{
 		m_pMesh = pMesh;
 	}
@@ -106,7 +106,7 @@ namespace Aurora
 		string name = pXmlModel->Attribute("name");
 		Model* pModel = new Model(name);		
 
-		Geometry* pGeometry = nullptr;
+		CGeometry* pGeometry = nullptr;
 		{
 			string meshId = pXmlModel->FirstChild("Mesh")->FirstChild()->ToText()->Value();
 			pGeometry = GMeshManager.GetMesh(meshId);

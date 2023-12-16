@@ -1,6 +1,6 @@
 #include "stdHeader.h"
 #include "RendererObject.h"
-#include "Geometry.h"
+#include "CGeometry.h"
 #include "Util.h"
 #include "Console.h"
 #include "Renderer.h"
@@ -12,7 +12,8 @@
 
 namespace Aurora
 {
-
-
+    VertexLayout* VertexLayout::PositionNormalTangentTexture = nullptr;    
+    VertexLayout* VertexLayout::PositionTexture = nullptr;
+    VertexLayout* VertexLayout::Position = nullptr;
 
 }

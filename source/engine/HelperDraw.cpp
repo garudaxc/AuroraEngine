@@ -1,6 +1,6 @@
 #include "stdheader.h"
 #include "HelperDraw.h"
-#include "Geometry.h"
+#include "CGeometry.h"
 #include "RendererObject.h"
 #include "Renderer.h"
 #include "Shader.h"
@@ -42,12 +42,12 @@ namespace Aurora
 			{Vertex::TYPE_UBYTE4_UNORM, Vertex::USAGE_COLOR, 0}
 		};
 
-		Handle  handle_ = -1;
+		Handle  mVertexLayout = -1;
 		int32	Stride = 0;
 
 		void Init() {
-			handle_ = CreateVertexLayoutHandle(items);
-			Stride = Geometry::CalcVertexStride(items);
+			mVertexLayout = GRenderDevice->CreateVertexLayoutHandle(items);
+			Stride = CGeometry::CalcVertexStride(items);
 		}
 	};
 
@@ -169,8 +169,8 @@ namespace Aurora
 		DrawLinePixelShader.Initialize();
 
 		VertexLayoutPositonColor_.Init();
-		VertexBuffer_ = CreateVertexBufferHandle(nullptr, MaxVertexCount * VertexLayoutPositonColor_.Stride);
-		IndexBuffer_ = CreateIndexBufferHandle(nullptr, MaxIndexCount * 4);
+		VertexBuffer_ = GRenderDevice->CreateVertexBufferHandle(nullptr, MaxVertexCount * VertexLayoutPositonColor_.Stride);
+		IndexBuffer_ = GRenderDevice->CreateIndexBufferHandle(nullptr, MaxIndexCount * 4);
 	}
 
 	void CHelperDraw::AddLine(const Vector3f& a, const Vector3f& b, const Color& color, float life)
@@ -224,7 +224,7 @@ namespace Aurora
 		DrawLineVertexShader.BindShader();
 		DrawLinePixelShader.BindShader();
 		
-		RenderOperator op(VertexLayoutPositonColor_.handle_, VertexBuffer_, IndexBuffer_,
+		RenderOperator op(VertexLayoutPositonColor_.mVertexLayout, VertexBuffer_, IndexBuffer_,
 			RenderOperator::PT_LINELIST, 0, 0, indexBase, VertexLayoutPositonColor_.Stride);
 
 		GRenderDevice->ExecuteOperator(op);

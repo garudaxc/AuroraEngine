@@ -1,6 +1,6 @@
 #include "stdHeader.h"
 #include "Light.h"
-#include "Geometry.h"
+#include "CGeometry.h"
 #include "Renderer.h"
 #include "Material.h"
 #include "MaterialInstance.h"
@@ -26,7 +26,7 @@ namespace Aurora
 			pLightObj = new Model(string("DirectionalLight"));
 			string path = "asset:ScreenQuad.mesh";
 
-			Geometry* pGeometry = GMeshManager.GetMesh(path);
+			CGeometry* pGeometry = GMeshManager.GetMesh(path);
 			pLightObj->SetMesh(pGeometry);
 
 
@@ -181,7 +181,7 @@ namespace Aurora
 //
 //void LightObject::CreateRenderable(const string& geomName, const string& mtlName)
 //{
-//	//ResourcePtr<Geometry> pGeomData = Global::GetResourceManager()->GetGeometryData(geomName);
+//	//ResourcePtr<CGeometry> pGeomData = Global::GetResourceManager()->GetGeometryData(geomName);
 //	//m_pVertDesc = Global::GetResourceManager()->GetVertexDesc(ResourceManager::VEXDESC_P).Get();
 //
 //	//assert(0);
@@ -205,7 +205,7 @@ namespace Aurora
 //
 //
 //
-//void LightObject::BuildRenderOperator(Geometry* pGeom)
+//void LightObject::BuildRenderOperator(CGeometry* pGeom)
 //{
 //	m_pOP->nBaseVertexIndex = 0;
 //	m_pOP->nNumVertices = pGeom->GetNumVertex();
@@ -496,7 +496,7 @@ void LightRendering::Initialize()
 void LightRendering::Render(LightRenderingInfo* renderInfo)
 {
 	//RenderTarget* rt[] = {renderInfo->pLightingRT};
-	//RenderTarget* pDepthBuffer = GetRenderer()->GetDepthStecil();
+	//RenderTarget* pDepthBuffer = GetRenderer()->GetDepthStencil();
 	//GetRenderer()->SetRenderTarget(1, rt, pDepthBuffer);
 
 	//GetRenderer()->Clear(IRenderDevice::CLEAR_FRAME_BUFFER, Color::ZERO);

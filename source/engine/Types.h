@@ -26,6 +26,11 @@ typedef int32		Handle;
 
 struct RectSize
 {
+	RectSize(int32 InWidth, int32 InHeight):Width(InWidth),Height(InHeight)
+	{}
+
+	RectSize(){}
+	
 	int32	Width	= 0;
 	int32	Height	= 0;
 };

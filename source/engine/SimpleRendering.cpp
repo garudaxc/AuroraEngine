@@ -1,13 +1,8 @@
 #include "stdheader.h"
 #include "SimpleRendering.h"
 #include "Renderer.h"
-#include "Camera.h"
-#include "Util.h"
 #include "Entity.h"
-#include "Renderer.h"
 #include "SceneView.h"
-#include "Material.h"
-#include "Model.h"
 #include "Texture.h"
 #include "RenderState.h"
 #include "HelperDraw.h"
@@ -72,7 +67,7 @@ namespace Aurora
 		bindings_.Bindings.push_back(ShaderParamterBindingItem{ "DirectionLight0", 0, DirectionLight.Direction.Ptr() });
 		bindings_.Bindings.push_back(ShaderParamterBindingItem{ "LightColor0", 0, DirectionLight.LightColor.Ptr() });
 
-		bindings_.handle = CreateShaderParameterBinding(0, bindings_);
+		bindings_.handle = GRenderDevice->CreateShaderParameterBinding(0, bindings_);
 	}
 
 
@@ -83,8 +78,8 @@ namespace Aurora
 
 		MatrixProj.TransposeSelf();
 		MatrixViewProj.TransposeSelf();
-		UpdateShaderParameter(bindings_.handle);
-		BindGlobalParameter(bindings_.handle);
+		GRenderDevice->UpdateShaderParameter(bindings_.handle);
+		GRenderDevice->BindGlobalParameter(bindings_.handle);
 	}
 
 
@@ -129,8 +124,8 @@ namespace Aurora
 
 	void SimpleRendering::Initialize()
 	{
-		VertexLayoutPosNormTangentTexHandle_ = CreateVertexLayoutHandle(VertexLayoutPosNormTangentTex);
-		VertexLayoutPosNormTangentTexStride = Geometry::CalcVertexStride(VertexLayoutPosNormTangentTex);
+		VertexLayoutPosNormTangentTexHandle_ = GRenderDevice->CreateVertexLayoutHandle(VertexLayoutPosNormTangentTex);
+		VertexLayoutPosNormTangentTexStride = CGeometry::CalcVertexStride(VertexLayoutPosNormTangentTex);
 
 		HelperDraw.Init();
 
@@ -224,10 +219,10 @@ namespace Aurora
 		ShaderParamterBindings bindings;
 		bindings.Name = "StaticBuffer";
 		bindings.Bindings.push_back(ShaderParamterBindingItem{ "HammersleySample", 0, HammersleySample });
-		bindings.handle = CreateShaderParameterBinding(handle, bindings);
+		bindings.handle = GRenderDevice->CreateShaderParameterBinding(handle, bindings);
 		
-		UpdateShaderParameter(bindings.handle);
-		BindGlobalParameter(bindings.handle);
+		GRenderDevice->UpdateShaderParameter(bindings.handle);
+		GRenderDevice->BindGlobalParameter(bindings.handle);
 	}
 	
 

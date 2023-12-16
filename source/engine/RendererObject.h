@@ -6,7 +6,7 @@
 namespace Aurora
 {
 
-	class Geometry;
+	class CGeometry;
 	class IRenderDevice;
 	class RenderOperator;
 	class VertexLayout;
@@ -29,6 +29,12 @@ namespace Aurora
 	class VertexLayout
 	{
 	public:
+
+		static VertexLayout* PositionNormalTangentTexture;
+		static VertexLayout* PositionTexture;
+		static VertexLayout* Position;
+		
+		
 		struct Stream
 		{
 			vector<VertexLayoutItem>	items;
@@ -38,18 +44,7 @@ namespace Aurora
 		Stream			stream;
 
 		void* HALHandle = nullptr;
-
 	};
-
-	enum EVertexLayout : int8
-	{
-		VertexLayout_PNTT = 0,
-		VertexLayout_PT,
-		VertexLayout_P,
-		VertexLayout_PNTTBB,
-		VertexLayout_NUM,
-	};
-
 
 
 }

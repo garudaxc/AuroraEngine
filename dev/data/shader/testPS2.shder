@@ -69,9 +69,9 @@ PS_OUTPUT Main(PS_INPUT input)
 
 	float3 ibl = SpecularIBL(SpecularColor_, 0.1, input.normal, input.view);
 
-	c = vDiffuse.xyz * LightColor0.xyz * ndl;
+	c = vDiffuse.xyz * LightColor0.xyz * ndl + ibl;
 
-	output.c0 = float4(ibl, 1.0);
+	output.c0 = float4(c, 1.0);
 
 	return output;
 }

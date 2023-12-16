@@ -5,9 +5,12 @@
 *.suo
 *.spv
 
+CMakeCache.txt
+
 **/.DS_Store
 **/.idea
 **/.vs
+**/CMakeFiles
 
 bin/
 Binaries/

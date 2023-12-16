@@ -71,9 +71,12 @@ Entity* CreateSimpleEntity()
 class MyApp : public Application, public KeyEventListener, public MouseEventListener
 {
 public:
+    MyApp():Application("MyApp")
+    {
+        
+    }
+    
     bool		OnInitApp() override;
-    bool		OnCreateDevice(const RectSize& mainView) override;
-    void		OnDestroyDevice() override;
 
     void		OnResizeFrameBuffer(int width, int height) override;
     void		OnUpdate(float dt) override;
@@ -91,23 +94,15 @@ public:
     IScene* m_pScene;
     
     Camera camera_;
-    RectSize mainView_;
+    // RectSize mainView_;
 };
 
 
 bool MyApp::OnInitApp()
 {
-    return true;
-}
-
-
-
-bool MyApp::OnCreateDevice(const RectSize& mainView)
-{
     cameraControl_.Transform_.LootAt(Vector3f(0.f, -2.0f, 1.0f), Vector3f(0.0f, 0.0f, 0.0f), Vector3f::UNIT_Z);
 
     camera_.SetFov(Mathf::PI / 4.0f);
-    mainView_ = mainView;
     
     m_pScene = CreateScene();
         
@@ -141,6 +136,7 @@ bool MyApp::OnCreateDevice(const RectSize& mainView)
      
     return true;
 }
+
 
 
 void MyApp::OnResizeFrameBuffer(int width, int height)
@@ -186,19 +182,18 @@ Color  clearColor;
 
 void MyApp::OnRender()
 {
-    SceneView* pRenderView = m_pScene->MakeSceneView(&camera_, mainView_);
+    const RectSize CanvasSize = CCanvas::GetSize();
+    SceneView* pRenderView = m_pScene->MakeSceneView(&camera_, CanvasSize);
 
-    if (pRenderView)
-    {
-        GSimpleRendering.RenderSceneView(pRenderView);
-        //GPipeline.RenderSceneView(pRenderView);
-    }
-
+     if (pRenderView)
+     {
+         GSimpleRendering.RenderSceneView(pRenderView);
+         //GPipeline.RenderSceneView(pRenderView);
+     }
     
-    //GFrameMemoryBuffer->Clear();
+    GFrameMemoryBuffer->Clear();
 
     DrawGrid();
-
 
     GuiNewFrame();
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
@@ -223,13 +218,7 @@ void MyApp::OnRender()
         ImGui::End();
     }
 
-    GuiRender();
 
-    GRenderDevice->Present();
-}
-
-void MyApp::OnDestroyDevice()
-{
 }
 
 
@@ -246,31 +235,10 @@ void MyApp::OnMouseEvent(const MouseEvent& event)
 {
 }
 
-
-
 void MyCommand(const Arguments& args)
 {
     MessageBox(nullptr, args.Args(1), args.Args(2), MB_OK);
 }
 
 
-int WINAPI _tWinMain(HINSTANCE hInstance,
-                     HINSTANCE hPrevInstance,
-                     LPTSTR    lpCmdLine,
-                     int       nCmdShow)
-{
-    //GCommandSystem->AddCommand("MyCommand", MyCommand, "abck");
-    //GCommandSystem->ExecuteCommand("MyCommand");
-    
-    MyApp app;
-
-    if (!app.Create(L"app", 1200, 800))
-        return 1;
-
-    app.Run();
-
-    return 0;
-}
-
-
-
+MyApp app;

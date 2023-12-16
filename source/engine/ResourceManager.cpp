@@ -89,7 +89,7 @@ ResPtrHolder* ResourceManager::CreateTextureFromFile(const IDType& id)
 	return nullptr;
 }
 
-ResourcePtr<Geometry> ResourceManager::GetGeometryData(const IDType& id)
+ResourcePtr<CGeometry> ResourceManager::GetGeometryData(const IDType& id)
 {
 	ResPtrHolder* pHolder = Find(id);
 	if (pHolder == nullptr)
@@ -97,11 +97,11 @@ ResourcePtr<Geometry> ResourceManager::GetGeometryData(const IDType& id)
 		pHolder = Find(DEFAULT_GEOM);
 	}
 
-	return ResourcePtr<Geometry>(pHolder);
+	return ResourcePtr<CGeometry>(pHolder);
 }
 
 
-void ResourceManager::AddGeometryData(const IDType& id, Geometry* pGeom)
+void ResourceManager::AddGeometryData(const IDType& id, CGeometry* pGeom)
 {
 	map<string, ResPtrHolder*>::iterator it = m_Resources.find(id);
 	if (it != m_Resources.end())
@@ -171,7 +171,7 @@ void ResourceManager::Init()
 	// create default geom
 	Matrix4f mat;
 	MatrixScale(mat, Vector3f(5.0f, 5.0f, 5.0f));
-	Geometry* pGeom = StandardMesh::CreateSphere(10, 10, false, mat);
+	CGeometry* pGeom = StandardMesh::CreateSphere(10, 10, false, mat);
 
 	ResPtrHolder* pHolder = new ResPtrHolder(pGeom);
 	m_Resources.insert(make_pair(DEFAULT_GEOM, pHolder));
@@ -211,7 +211,7 @@ void ResourceManager::CleanUp()
 
 //RenderableObjectPtr ResourceManager::CreateRenderableObject(const IDType& geomId, const IDType& descId)
 //{
-//	Geometry* pGeomData = GetGeometryData(geomId).Get();
+//	CGeometry* pGeomData = GetGeometryData(geomId).Get();
 //	assert(pGeomData);
 //
 //	ResourcePtr<VertexDescription> pVertexDesc = GetVertexDesc(descId);
@@ -230,7 +230,7 @@ ResPtrHolder* ResourceManager::CreateDefaultGeometryData(const IDType& id)
 {
 	Matrix4f mat;
 	MatrixScale(mat, Vector3f(5.0f, 5.0f, 5.0f));
-	Geometry* pGeom = StandardMesh::CreateSphere(10, 10, false, mat);
+	CGeometry* pGeom = StandardMesh::CreateSphere(10, 10, false, mat);
 
 
 	ResPtrHolder* pHolder = new ResPtrHolder(pGeom);

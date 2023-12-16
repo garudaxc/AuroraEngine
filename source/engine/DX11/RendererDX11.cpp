@@ -241,7 +241,7 @@ namespace Aurora
 	{
 		switch (priType)
 		{
-		case Aurora::RenderOperator::PT_POINTLIST:
+		case Aurora::RenderOperator::POINT_LIST:
 			return D3D11_PRIMITIVE_TOPOLOGY_POINTLIST;
 		case Aurora::RenderOperator::PT_LINELIST:
 			return D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
@@ -279,47 +279,58 @@ namespace Aurora
 	public:
 		
 		RendererDx11();
-		~RendererDx11(void);
+		virtual ~RendererDx11(void);
 
 
-		virtual Handle  CreateShader(const ShaderCode& code);
+		Handle  CreateShader(const ShaderCode& code) override;
 
-		virtual Texture* CreateTexture(File* file);
+		Texture* CreateTexture(File* file) override;
 
-		virtual Texture* CreateTexture(Texture::Type type, const Texture::Desc& desc);
+		Texture* CreateTexture(Texture::Type type, const Texture::Desc& desc) override;
 
-		virtual RenderTarget* CreateRenderTarget(const RenderTarget::Desc& desc);
-
-
-		virtual void		Clear(int clearMask, const Color& clearColor = Color::BLUE, float fDepth = 1.0f, uint8 nStencil = 0);
-		virtual void		BeginScene();
-		virtual void		EndScene();
-		virtual void		Present();
-
-		RenderTarget* GetFrameBuffer();
-		RenderTarget* GetDepthStecil();
-
-		virtual void		SetVertexDesc(VertexLayout* pVertDesc);
-
-		virtual void		SetVertexShader(Shader* pShader);
-		virtual void		SetPixelShader(Shader* pShader);
+		RenderTarget* CreateRenderTarget(const RenderTarget::Desc& desc) override;
 
 
-		virtual void		SetRenderTarget(uint idx, RenderTarget* pRenderTarget);
-		virtual void		SetDepthStencil(RenderTarget* pDepthStencil);
+		void Clear(int clearMask, const Color& clearColor = Color::BLUE, float fDepth = 1.0f, uint8 nStencil = 0) override;
 
-		virtual void		SetRenderTarget(uint nRTs, RenderTarget** pRenderTargets, RenderTarget* pDepthStencil);
+		void Present() override;
 
-		virtual void		ExecuteOperator(const RenderOperator& op);
+		RenderTarget* GetFrameBuffer() override;
+		RenderTarget* GetDepthStencil() override;
 
-		virtual void		OnReset();
-		virtual void		OnLost();
-		virtual void		GetFrameBufferSize(uint& nWidth, uint& nHeight);
+		virtual void SetVertexDesc(VertexLayout* pVertDesc);
 
-		virtual void		Reset(int nWidth, int nHeight);
-		virtual void		RestoreFrameBuffer();
+		void SetVertexShader(Shader* pShader) override;
+		void SetPixelShader(Shader* pShader) override;
 
 
+		void SetRenderTarget(uint idx, RenderTarget* pRenderTarget) override;
+		void SetDepthStencil(RenderTarget* pDepthStencil) override;
+
+		void SetRenderTarget(uint nRTs, RenderTarget** pRenderTargets, RenderTarget* pDepthStencil) override;
+
+		void ExecuteOperator(const RenderOperator& op) override;
+
+		void GetFrameBufferSize(uint& nWidth, uint& nHeight) override;
+
+
+		Handle CreateShaderParameterBinding(Handle shaderHandle, const ShaderParamterBindings& bindings) override;
+
+		void UpdateShaderParameter(Handle bindingHandle) override;
+
+		void BindVertexShader(Handle shaderHandle) override;
+		void BindPixelShader(Handle shaderHandle) override;
+
+		Handle CreateShaderTextureBinding(Handle shaderHandle, const ShaderTextureBinding& bindings) override;
+		void BindTexture(Handle binding, Texture* texture) override;
+
+		void BindGlobalParameter(Handle handle) override;
+
+		Handle CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems) override;
+
+
+		Handle CreateVertexBufferHandle(const void* data, int32 size) override;
+		Handle CreateIndexBufferHandle(const void* data, int32 size) override;
 	};
 
 
@@ -510,8 +521,17 @@ namespace Aurora
 
 	void CreateGlobalParameterBuffer();
 
+	
+	bool InitializeOpenGLDevice(HWND hwnd, int InWidth, int InHeight);
+
+	
 	IRenderDevice* IRenderDevice::CreateDevice(int nWidth, int nHeight)
 	{
+
+		
+		// bool succeeded = InitializeOpenGLDevice(GMainHWnd, nWidth, nHeight);
+
+		
 		if (!CreateDX11Device(GMainHWnd)) {
 			return nullptr;
 		}
@@ -520,9 +540,15 @@ namespace Aurora
 
 		CreateGlobalParameterBuffer();
 
+		
+
 		return GRenderDevice;
 	}
 
+	bool IRenderDevice::Initialized()
+	{
+		return  GRenderDevice != nullptr;
+	}
 
 
 	RendererDx11::RendererDx11()
@@ -630,6 +656,7 @@ namespace Aurora
 		pCompiledShader->Release();
 		pCompiledShader = nullptr;
 
+
 		obj->Reflector = pReflector;
 
 		auto it = std::find(VertexShaderList_.begin(), VertexShaderList_.end(), nullptr);
@@ -731,7 +758,7 @@ namespace Aurora
 
 	static vector<ShaderParameterBuffer*>  ShaderParameterBuffers_;
 
-	Handle CreateShaderParameterBinding(Handle shaderHandle, const ShaderParamterBindings& bindings)
+	Handle RendererDx11::CreateShaderParameterBinding(Handle shaderHandle, const ShaderParamterBindings& bindings)
 	{
 		auto shader = VertexShaderList_[shaderHandle];
 
@@ -807,13 +834,26 @@ namespace Aurora
 	}
 
 
-
-	Handle CreateShaderTextureBinding(Handle shaderHandle, const ShaderTextureBinding& bindings)
+	Handle RendererDx11::CreateShaderTextureBinding(Handle shaderHandle, const ShaderTextureBinding& bindings)
 	{
 		auto shader = VertexShaderList_[shaderHandle];
 		ID3D11ShaderReflection* Reflector = shader->Reflector;
+				
+		D3D11_SHADER_DESC Desc;
+		Reflector->GetDesc(&Desc);
 
-		D3D11_SHADER_INPUT_BIND_DESC bindDesc;
+		GLog->Info("shader %d InstructionCount %d BoundResources %d", Desc.Creator, Desc.InstructionCount, Desc.BoundResources);
+
+		// for(int Index = 0; Index < Desc.BoundResources; Index++)
+		// {
+		// 	
+		// 	D3D11_SHADER_INPUT_BIND_DESC bindDesc;
+		// 	HRESULT hr = Reflector->GetResourceBindingDesc(Index, &bindDesc);
+		// 	GLog->Info("bound resource %d %s", Index, bindDesc.Name);
+		// }
+		
+		D3D11_SHADER_INPUT_BIND_DESC bindDesc;	
+		
 		HRESULT hr = Reflector->GetResourceBindingDescByName(bindings.Name.c_str(), &bindDesc);
 		if (FAILED(hr)) {
 			GLog->Error("can not find binding texture %s in shader %s", bindings.Name.c_str(), shader->Name.c_str());
@@ -839,7 +879,7 @@ namespace Aurora
 	}
 
 
-	void UpdateShaderParameter(Handle bindingHandle)
+	void RendererDx11::UpdateShaderParameter(Handle bindingHandle)
 	{
 		assert(bindingHandle >= 0);
 		auto binding = ShaderParameterBuffers_[bindingHandle];
@@ -879,14 +919,14 @@ namespace Aurora
 	}
 
 
-	void BindGlobalParameter(Handle handle)
+	void RendererDx11::BindGlobalParameter(Handle handle)
 	{
 		auto binding = ShaderParameterBuffers_[handle];
 		ImmediateContext->VSSetConstantBuffers(binding->Slot, 1, &binding->D3DBuffer);
 		ImmediateContext->PSSetConstantBuffers(binding->Slot, 1, &binding->D3DBuffer);
 	}
 
-	void BindVertexShader(Handle shaderHandle)
+	void RendererDx11::BindVertexShader(Handle shaderHandle)
 	{
 		assert(shaderHandle >= 0);
 		auto shader = VertexShaderList_[shaderHandle];
@@ -899,7 +939,7 @@ namespace Aurora
 		}
 	}
 
-	void BindPixelShader(Handle shaderHandle)
+	void RendererDx11::BindPixelShader(Handle shaderHandle)
 	{
 		assert(shaderHandle >= 0);
 		auto shader = VertexShaderList_[shaderHandle];
@@ -1043,7 +1083,7 @@ namespace Aurora
 
 
 
-	void BindTexture(Handle binding, Texture* texture)
+	void RendererDx11::BindTexture(Handle binding, Texture* texture)
 	{
 		assert((binding & RESOURCE_FLAG_TEXTURE) == RESOURCE_FLAG_TEXTURE);
 		assert(texture);
@@ -1265,7 +1305,7 @@ namespace Aurora
 	vector<GeometryBufferInfo>		GeometryBufferInfos_;
 
 
-	Handle CreateVertexBufferHandle(const void* data, int32 size)
+	Handle RendererDx11::CreateVertexBufferHandle(const void* data, int32 size)
 	{
 		D3D11_BUFFER_DESC bufferDesc = { 0 };
 		bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -1312,7 +1352,7 @@ namespace Aurora
 	}
 
 
-	Handle CreateIndexBufferHandle(const void* data, int32 size)
+	Handle RendererDx11::CreateIndexBufferHandle(const void* data, int32 size)
 	{
 		D3D11_BUFFER_DESC bufferDesc = { 0 };
 		bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
@@ -1433,16 +1473,6 @@ namespace Aurora
 		}
 	}
 	
-	void RendererDx11::BeginScene()
-	{
-
-	}
-
-	void RendererDx11::EndScene()
-	{
-
-	}
-
 	void RendererDx11::Present()
 	{
 		SwapChain->Present(0, 0);
@@ -1453,7 +1483,7 @@ namespace Aurora
 		return nullptr;
 	}
 
-	RenderTarget* RendererDx11::GetDepthStecil()
+	RenderTarget* RendererDx11::GetDepthStencil()
 	{
 		return nullptr;
 	}
@@ -1494,7 +1524,7 @@ namespace Aurora
 		{
 			if (pRenderTargets[i])
 			{
-				Dx11TextureBind* pBind = (Dx11TextureBind*)pRenderTargets[i]->HALHandleRT;
+				auto* pBind = static_cast<Dx11TextureBind*>(pRenderTargets[i]->HALHandleRT);
 				pRTs[i] = pBind->pRTView;
 			}
 		}
@@ -1502,7 +1532,7 @@ namespace Aurora
 		ID3D11DepthStencilView* pDSView = nullptr;
 		if (pDepthStencil)
 		{
-			Dx11TextureBind* pDSBind = (Dx11TextureBind*)pDepthStencil->HALHandleRT;
+			auto* pDSBind = static_cast<Dx11TextureBind*>(pDepthStencil->HALHandleRT);
 			pDSView = pDSBind->pDSView;
 		}
 
@@ -1515,31 +1545,10 @@ namespace Aurora
 
 	}
 
-	void RendererDx11::OnReset()
-	{
-
-	}
-
-	void RendererDx11::OnLost()
-	{
-
-	}
-
 	void RendererDx11::GetFrameBufferSize(uint& nWidth, uint& nHeight)
 	{
 
 	}
-
-	void RendererDx11::Reset(int nWidth, int nHeight)
-	{
-
-	}
-
-	void RendererDx11::RestoreFrameBuffer()
-	{
-
-	}
-
 
 
 	static ID3DBlob* CreateShaderSignature(const char* vsin)
@@ -1573,9 +1582,9 @@ namespace Aurora
 		if (FAILED(hr)) {
 			int code = HRESULT_CODE(hr);
 			if (pError) {
-				string errorMsg = (const char*)pError->GetBufferPointer();
+				string errorMsg = static_cast<const char*>(pError->GetBufferPointer());
 				pError->Release();
-				GLog->Error("CreateShaderSignature error : %s", errorMsg);
+				GLog->Error("CreateShaderSignature error : %s", errorMsg.c_str());
 			}
 			return nullptr;
 		}
@@ -1768,7 +1777,7 @@ namespace Aurora
 	static vector<VertexLayoutInfo*>  VertexLayouts_;
 
 
-	Handle CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems)
+	Handle RendererDx11::CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems)
 	{
 
 		vector<D3D11_INPUT_ELEMENT_DESC> elemDesc;

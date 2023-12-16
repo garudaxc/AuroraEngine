@@ -1,5 +1,7 @@
 #include "stdHeader.h"
 #include "Shader.h"
+
+#include "DeferredLightingRender.h"
 #include "Renderer.h"
 #include "ResourceManager.h"
 #include "FileSystem.h"
@@ -288,7 +290,7 @@ void BaseShader::InitBase(ShaderType type, const string& pathname)
 void BaseShader::CommitShaderParameter()
 {
 	if (bindings_.handle >= 0) {
-		UpdateShaderParameter(bindings_.handle);
+		GRenderDevice->UpdateShaderParameter(bindings_.handle);
 	}
 }
 
@@ -296,11 +298,11 @@ void BaseShader::BindShader()
 {
 	assert(handle_ >= 0);
 	if (type_ == VERTEX_SHADER) {
-		BindVertexShader(handle_);
+		GRenderDevice->BindVertexShader(handle_);
 	}
 
 	if (type_ == PIXEL_SHADER) {
-		BindPixelShader(handle_);
+		GRenderDevice->BindPixelShader(handle_);
 	}
 }
 
@@ -327,7 +329,7 @@ void ModelShaderVS::CreateBindings()
 	//ShaderParamterBindingItem 
 	bindings_.Bindings.push_back(ShaderParamterBindingItem{ "matWorld", 0, matWorld.Ptr() });
 
-	bindings_.handle = CreateShaderParameterBinding(handle_, bindings_);	
+	bindings_.handle = GRenderDevice->CreateShaderParameterBinding(handle_, bindings_);	
 }
 
 ModelShaderPS::ModelShaderPS()
@@ -357,21 +359,21 @@ void ModelShaderPS::CreateBindings()
 
 	//bindings_.handle = CreateShaderParameterBinding(handle_, bindings_);
 	texBinding_.Name = "g_txDiffuse";
-	texBinding_.handle = CreateShaderTextureBinding(handle_, texBinding_);
+	texBinding_.handle = GRenderDevice->CreateShaderTextureBinding(handle_, texBinding_);
 
 	texEnvTex_.Name = "g_txEnv";
-	texEnvTex_.handle = CreateShaderTextureBinding(handle_, texEnvTex_);
+	texEnvTex_.handle = GRenderDevice->CreateShaderTextureBinding(handle_, texEnvTex_);
 }
 
 
 void ModelShaderPS::BindTextureToRender(Texture* texture, Texture* envTex)
 {
 	if (texBinding_.handle >= 0) {
-		BindTexture(texBinding_.handle, texture);
+		GRenderDevice->BindTexture(texBinding_.handle, texture);
 	}
 
 	if (texEnvTex_.handle >= 0) {
-		BindTexture(texEnvTex_.handle, envTex);
+		GRenderDevice->BindTexture(texEnvTex_.handle, envTex);
 	}
 }
 

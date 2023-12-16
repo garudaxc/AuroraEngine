@@ -17,11 +17,13 @@
 #include "SimpleRendering.h"
 #include "Gui.h"
 
+
+
+
 namespace Aurora
 {
 	const char* ENGINE_NAME = "Aurora Engine";
 	const char* ENGINE_VERSION = "0.1";
-
 
 	static Engine* g_pEngine;
 
@@ -39,7 +41,7 @@ namespace Aurora
 	}
 
 
-	Engine::Engine():m_pFrameListener(nullptr),m_fps(0.f)
+	Engine::Engine():m_fps(60.f)
 	{
 		m_pTimer = nullptr;
 		m_pRenderer = nullptr;
@@ -51,7 +53,7 @@ namespace Aurora
 
 	}
 
-	void Engine::Init(int nWidth, int nHeight, FrameListener* pListener)
+	void Engine::Init(int nWidth, int nHeight)
 	{
 		Config::Initialize();
 
@@ -60,7 +62,8 @@ namespace Aurora
 		InitPlatform();
 
 		m_pTimer = new Timer();
-
+		
+		
 		m_pRenderer = IRenderDevice::CreateDevice(nWidth, nHeight);
 
 		m_pResourceManager = new ResourceManager();
@@ -82,8 +85,6 @@ namespace Aurora
 		GSimpleRendering.Initialize();
 
 		EntityFactory.Initialize();
-
-		m_pFrameListener = pListener;
 
 		m_pTimer->Reset();
 
@@ -131,7 +132,6 @@ namespace Aurora
 
 		uint width, height;
 		GetRenderer()->GetFrameBufferSize(width, height);
-		m_pFrameListener->OnResizeFrameBuffer(width, height);
 	}
 
 	void Engine::LostDevice()
@@ -156,21 +156,22 @@ namespace Aurora
 			fTimes = 0.0f;
 		}
 
-		m_pFrameListener->OnUpdate(timeElapsed);
+		GuiRender();
 
 		//GetScene()->UpdateWorld(timeElapsed);
 		//GetScene()->FlushToPipeline(m_pPipeline.get());
 		//GetPipeline()->BeginPipe();
 		//GetPipeline()->Render();
-		m_pFrameListener->OnRender();
 		//GetPipeline()->EndPipe();
+
+		
+		GRenderDevice->Present();
 	}
 
 	void Engine::ResizeFrameBuffer(int nWidth, int nHeight)
 	{
 		LostDevice();
 
-		GetRenderer()->Reset(nWidth, nHeight);
 
 		ResetDevice();
 	}
@@ -182,7 +183,6 @@ namespace Aurora
 		//GetScene()->FlushToPipeline(m_pPipeline.get());
 		GPipeline.BeginPipe();
 		GPipeline.Render();
-		m_pFrameListener->OnRender();
 		GPipeline.EndPipe();
 		return GPipeline.EndOcclusionQuery();
 	}

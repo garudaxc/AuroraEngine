@@ -85,7 +85,6 @@ Pipeline::~Pipeline(void)
 void Pipeline::BeginPipe()
 {
 	//m_Context.GetStatistic()->Clear();
-	GRenderDevice->BeginScene();
 	//m_Context.PrepareRendering();
 }
 
@@ -100,7 +99,6 @@ void Pipeline::Render()
 
 void Pipeline::EndPipe()
 {
-	GRenderDevice->EndScene();
 	Clear();
 
 	GRenderDevice->Present();
@@ -182,15 +180,10 @@ void Pipeline::Finalize()
 
 void Pipeline::OnReset()
 {
-	GRenderDevice->OnReset();
-	//m_pOcclusionQuery.reset(new OcclusionQuery());
-	//m_pOcclusionQuery->Init();
 }
 
 void Pipeline::OnLost()
 {
-	//m_pOcclusionQuery.reset();
-	GRenderDevice->OnLost();
 }
 
 void Pipeline::SetupShaderVariables(SceneView* view)
@@ -226,7 +219,7 @@ void Pipeline::SetupShaderVariables(SceneView* view)
 void RenderGeomPass(SceneView* pView)
 {
 	//RenderTarget* rt[] = {renderInfo.pRTGbuffer0, renderInfo.pRTGbuffer1};
-	//RenderTarget* pDepthBuffer = GRenderDevice->GetDepthStecil();
+	//RenderTarget* pDepthBuffer = GRenderDevice->GetDepthStencil();
 	//GRenderDevice->SetRenderTarget(2, rt, pDepthBuffer);
 
 	////GShaderManager.BindGPassShader();
@@ -243,7 +236,7 @@ void RenderGeomPass(SceneView* pView)
 void RenderLightingPass(SceneView* pView)
 {
 //	RenderTarget* rt[] = {renderInfo.pRTLighting};
-//	RenderTarget* pDepthBuffer = GRenderDevice->GetDepthStecil();
+//	RenderTarget* pDepthBuffer = GRenderDevice->GetDepthStencil();
 //	GRenderDevice->SetRenderTarget(1, rt, pDepthBuffer);
 //	GRenderDevice->Clear(IRenderDevice::CLEAR_FRAME_BUFFER, Color::ZERO);
 //
@@ -341,8 +334,6 @@ void Pipeline::RenderSceneView(SceneView* pView)
 	//RenderShadingPass(pView);
 
 	//RenderDebugPass(pView);
-	
-	GRenderDevice->RestoreFrameBuffer();
 }
 
 

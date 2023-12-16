@@ -8,56 +8,52 @@
 
 namespace Aurora
 {
+    class CCanvas
+    {
+    public:        
+        static RectSize GetSize();
+    };
 
-class Application : public FrameListener
-{
-public:
-					Application();
-	virtual			~Application();
+    
+    class Application
+    {
+    public:
 
-	bool			Create(const wchar_t* appName = L"", int nWidth = 800, int nHeight = 600);
-	void			Run();
+        static Application* GetCurrentApplication();
+        void SwitchApplication();
 
-
-	virtual bool		OnInitApp()							= 0;
-	virtual bool		OnCreateDevice(const RectSize& mainView)			= 0;		// call after device created
-	virtual void		OnDestroyDevice()					= 0;		// call before device destroy
-
-	virtual void		OnResizeFrameBuffer(int width, int height)	{}
-	virtual void		OnUpdate(float dt)							{}
-	virtual void		OnRender()								{}
-	   
-	void			StartTiming();
-	float			EndTiming(char* text, bool bTextout = true);
+        
+        Application(const string& Name);
+        virtual ~Application();
 
 
-protected:
-	static Application*	s_App;
+        virtual bool OnInitApp() = 0;
 
-	Engine*		Engine;
+        virtual void OnResizeFrameBuffer(int width, int height)
+        {
+        }
 
-	int			WindowWidth;
-	int			WindowHeight;
+        virtual void OnUpdate(float dt)
+        {
+        }
 
-	long		TimeStart;
-	long		TimeEnd;
+        virtual void OnRender()
+        {
+        }
 
-private:
-	// message call back
-	static LRESULT CALLBACK			WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-	LRESULT							MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+        void StartTiming();
+        float EndTiming(char* text, bool bTextout = true);
 
-	bool		InitEnvironment();
-	void		CleanEnvironment();
-
-};
+    protected:
+        string mName;
 
 
+        long TimeStart;
+        long TimeEnd;
+
+    private:
+    };
 }
-
-
-
-
 
 
 #endif

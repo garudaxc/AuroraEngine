@@ -2,7 +2,7 @@
 
 namespace Aurora
 {
-	class Geometry;
+	class CGeometry;
 	class Renderable;
 	class MaterialInstance;
 	class RenderableVisitor;
@@ -13,7 +13,7 @@ namespace Aurora
 		Model(const string& name);
 		~Model();
 
-		void		SetMesh(Geometry* pMesh);
+		void		SetMesh(CGeometry* pMesh);
 		void		SetMaterial(uint idx, MaterialInstance* pMtl);
 
 		const string&	GetName() const		{	return m_Name;	}
@@ -23,7 +23,7 @@ namespace Aurora
 
 	protected:
 		string			m_Name;
-		Geometry*		m_pMesh;
+		CGeometry*		m_pMesh;
 	};
 
 
