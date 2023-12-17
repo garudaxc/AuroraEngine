@@ -282,7 +282,7 @@ namespace Aurora
 		virtual ~RendererDx11(void);
 
 
-		Handle  CreateShader(const ShaderCode& code) override;
+		GPUShaderObject* CreateShader(const ShaderCode& code) override;
 
 		Texture* CreateTexture(File* file) override;
 
@@ -314,14 +314,14 @@ namespace Aurora
 		void GetFrameBufferSize(uint& nWidth, uint& nHeight) override;
 
 
-		Handle CreateShaderParameterBinding(Handle shaderHandle, const ShaderParamterBindings& bindings) override;
+		Handle CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParamterBindings& bindings) override;
 
 		void UpdateShaderParameter(Handle bindingHandle) override;
 
-		void BindVertexShader(Handle shaderHandle) override;
-		void BindPixelShader(Handle shaderHandle) override;
+		void BindVertexShader(GPUShaderObject* shaderHandle) override;
+		void BindPixelShader(GPUShaderObject* shaderHandle) override;
 
-		Handle CreateShaderTextureBinding(Handle shaderHandle, const ShaderTextureBinding& bindings) override;
+		Handle CreateShaderTextureBinding(GPUShaderObject* shaderHandle, const ShaderTextureBinding& bindings) override;
 		void BindTexture(Handle binding, Texture* texture) override;
 
 		void BindGlobalParameter(Handle handle) override;
@@ -331,6 +331,8 @@ namespace Aurora
 
 		Handle CreateVertexBufferHandle(const void* data, int32 size) override;
 		Handle CreateIndexBufferHandle(const void* data, int32 size) override;
+
+		CGPUGeometryBuffer* CreateGeometryBuffer(const CGeometry* InGeometry) override;
 	};
 
 
@@ -370,7 +372,44 @@ namespace Aurora
 			ID3D11DepthStencilView* pDSView;
 		};
 	};
+	
 
+	
+	class GPUShaderObjectDX11 : public GPUShaderObject
+	{
+	public:
+		GPUShaderObjectDX11() = default;
+		
+		string Name;
+		union
+		{
+			ID3D11VertexShader* VertexShader = nullptr;
+			ID3D11PixelShader* PixelShader;			
+		};
+		ID3D11ShaderReflection* Reflector = nullptr;
+		vector<int32>	constBuffers;
+		
+	};
+
+	class CGPUGeometryBufferDX11 : public CGPUGeometryBuffer
+	{
+	public:
+
+		Handle mVertexBufferHandle = 0;
+		Handle mIndexBufferHandle = 0;		
+	};
+	
+
+	CGPUGeometryBufferDX11* AsDX11Type(CGPUGeometryBuffer* InBase)
+	{
+		return static_cast<CGPUGeometryBufferDX11*>(InBase);
+	}
+
+	GPUShaderObjectDX11* AsDX11Type(GPUShaderObject* InBase)
+	{
+		return static_cast<GPUShaderObjectDX11*>(InBase);
+	}
+	
 
 	bool CreateDX11Device(HWND hWnd)
 	{
@@ -518,9 +557,6 @@ namespace Aurora
 		return true;
 	}
 
-
-	void CreateGlobalParameterBuffer();
-
 	
 	bool InitializeOpenGLDevice(HWND hwnd, int InWidth, int InHeight);
 
@@ -529,18 +565,11 @@ namespace Aurora
 	{
 
 		
-		// bool succeeded = InitializeOpenGLDevice(GMainHWnd, nWidth, nHeight);
-
-		
 		if (!CreateDX11Device(GMainHWnd)) {
 			return nullptr;
 		}
 
 		GRenderDevice = &GRendererDx11;
-
-		CreateGlobalParameterBuffer();
-
-		
 
 		return GRenderDevice;
 	}
@@ -560,22 +589,7 @@ namespace Aurora
 	}
 
 
-	struct ShaderObject
-	{
-		string Name;
-		ID3D11VertexShader* VertexShader = nullptr;
-		ID3D11PixelShader* PixelShader = nullptr;
-		ID3D11ShaderReflection* Reflector = nullptr;
-		vector<int32>	constBuffers;
-	};
-
-
-	static vector<ShaderObject*>	VertexShaderList_;
-
-
-
-
-	Handle RendererDx11::CreateShader(const ShaderCode& code)
+	GPUShaderObject* RendererDx11::CreateShader(const ShaderCode& code)
 	{
 		vector<D3D_SHADER_MACRO> macros;
 		for (auto it = code.defines.begin(); it != code.defines.end(); ++it) {
@@ -629,10 +643,10 @@ namespace Aurora
 				pError->Release();
 			}
 
-			return -1;
+			return nullptr;
 		}
 
-		auto obj = new ShaderObject();
+		auto obj = new GPUShaderObjectDX11();
 		obj->Name = code.name;
 		if (code.type == BaseShader::VERTEX_SHADER) {
 
@@ -659,14 +673,7 @@ namespace Aurora
 
 		obj->Reflector = pReflector;
 
-		auto it = std::find(VertexShaderList_.begin(), VertexShaderList_.end(), nullptr);
-		if (it == VertexShaderList_.end()) {
-			VertexShaderList_.push_back(obj);
-			return VertexShaderList_.size() - 1;
-		}
-
-		*it = obj;
-		return std::distance(VertexShaderList_.begin(), it);
+		return obj;
 	}
 
 
@@ -727,40 +734,11 @@ namespace Aurora
 	}
 
 
-
-	void CreateGlobalParameterBuffer()
-	{
-		string pathName = "..\\dev\\data\\shader\\GlobalDefine.shader";
-		FilePtr file(GFileSys->OpenFile(pathName));
-		if (!file) {
-			return;
-		}
-		
-		ShaderCode code;
-		code.text = file->ReadAsString();
-
-		code.text += "\
-		float4 Main(float4 pos : POSITION) : SV_POSITION		\
-		{														\
-			return pos + LightColor0;						\
-		}														\
-			";
-
-		code.name = "Global Buffer";
-		code.type = BaseShader::VERTEX_SHADER;
-
-		Handle handle = GRendererDx11.CreateShader(code);
-
-		assert(handle == 0);
-	}
-
-
-
 	static vector<ShaderParameterBuffer*>  ShaderParameterBuffers_;
 
-	Handle RendererDx11::CreateShaderParameterBinding(Handle shaderHandle, const ShaderParamterBindings& bindings)
+	Handle RendererDx11::CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParamterBindings& bindings)
 	{
-		auto shader = VertexShaderList_[shaderHandle];
+		GPUShaderObjectDX11* shader = AsDX11Type(shaderHandle);
 
 		ID3D11ShaderReflection* Reflector = shader->Reflector;
 
@@ -834,9 +812,9 @@ namespace Aurora
 	}
 
 
-	Handle RendererDx11::CreateShaderTextureBinding(Handle shaderHandle, const ShaderTextureBinding& bindings)
+	Handle RendererDx11::CreateShaderTextureBinding(GPUShaderObject* shaderHandle, const ShaderTextureBinding& bindings)
 	{
-		auto shader = VertexShaderList_[shaderHandle];
+		auto shader = AsDX11Type(shaderHandle);
 		ID3D11ShaderReflection* Reflector = shader->Reflector;
 				
 		D3D11_SHADER_DESC Desc;
@@ -926,10 +904,10 @@ namespace Aurora
 		ImmediateContext->PSSetConstantBuffers(binding->Slot, 1, &binding->D3DBuffer);
 	}
 
-	void RendererDx11::BindVertexShader(Handle shaderHandle)
+	void RendererDx11::BindVertexShader(GPUShaderObject* shaderHandle)
 	{
-		assert(shaderHandle >= 0);
-		auto shader = VertexShaderList_[shaderHandle];
+		assert(shaderHandle != nullptr);
+		auto shader = AsDX11Type(shaderHandle);
 		assert(shader->VertexShader != nullptr);
 
 		ImmediateContext->VSSetShader(shader->VertexShader, nullptr, 0);
@@ -939,10 +917,10 @@ namespace Aurora
 		}
 	}
 
-	void RendererDx11::BindPixelShader(Handle shaderHandle)
+	void RendererDx11::BindPixelShader(GPUShaderObject* shaderHandle)
 	{
-		assert(shaderHandle >= 0);
-		auto shader = VertexShaderList_[shaderHandle];
+		assert(shaderHandle != nullptr);
+		auto shader = AsDX11Type(shaderHandle);
 		assert(shader->PixelShader != nullptr);
 
 		ImmediateContext->PSSetShader(shader->PixelShader, nullptr, 0);
@@ -1398,6 +1376,29 @@ namespace Aurora
 
 		return slot;
 	}
+	
+	
+	CGPUGeometryBuffer* RendererDx11::CreateGeometryBuffer(const CGeometry* InGeometry)
+	{
+		Handle VertexBufferHandle = 0;
+		Handle IndexBufferHandle = 0;
+		vector<int8> vertexData;
+		InGeometry->PrepareVertexData(vertexData, CGeometry::VertexLayoutPosNormTangentTex);
+		VertexBufferHandle = CreateVertexBufferHandle(vertexData.data(), vertexData.size());
+		 
+		vector<int8> IndexData;
+		InGeometry->PrepareIndexData(IndexData);
+		if(!IndexData.empty())
+		{
+			IndexBufferHandle = CreateIndexBufferHandle(IndexData.data(), IndexData.size());
+		}
+
+		auto GPUBuffer = new CGPUGeometryBufferDX11();
+		GPUBuffer->mVertexBufferHandle = VertexBufferHandle;
+		GPUBuffer->mIndexBufferHandle = IndexBufferHandle;
+
+		return  GPUBuffer;
+	}
 
 
 
@@ -1816,21 +1817,22 @@ namespace Aurora
 
 	void RendererDx11::ExecuteOperator(const RenderOperator& op)
 	{
-		ImmediateContext->IASetPrimitiveTopology(D3D11Mapping::PrimitiveTopology(op.PrimType_));
+		ImmediateContext->IASetPrimitiveTopology(D3D11Mapping::PrimitiveTopology(op.PrimType));
 		
-		auto layout = VertexLayouts_[op.VertexLayout_];
-		auto vertex = GeometryBufferInfos_[op.VertexBuffer_];
-		auto index = GeometryBufferInfos_[op.IndexBuffer_];
+		auto layout = VertexLayouts_[op.VertexLayout];
+		CGPUGeometryBufferDX11* GPUBuffer = AsDX11Type(op.GeometryBuffer);
+		auto vertex = GeometryBufferInfos_[GPUBuffer->mVertexBufferHandle];
+		auto index = GeometryBufferInfos_[GPUBuffer->mIndexBufferHandle];
 
 		ImmediateContext->IASetIndexBuffer(index.d3dBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-		UINT strides[] = { op.VertexStride_ };
+		UINT strides[] = { op.VertexStride };
 		UINT offsets[] = { 0 };
 
 		ImmediateContext->IASetVertexBuffers(0, 1, &vertex.d3dBuffer, strides, offsets);
 		ImmediateContext->IASetInputLayout(layout->d3d11InputLayout);
 
-		ImmediateContext->DrawIndexed(op.IndexCount_, op.StartIndex_, op.BaseVertexIndex_);
+		ImmediateContext->DrawIndexed(op.IndexCount, op.StartIndex, op.BaseVertexIndex);
 	}
 
 

@@ -284,7 +284,7 @@ void BaseShader::InitBase(ShaderType type, const string& pathname)
 		code.defines.push_back(make_pair("PIXEL_SHADER", "1"));
 	}
 
-	handle_ = GRenderDevice->CreateShader(code);
+	mDeviceHandle = GRenderDevice->CreateShader(code);
 }
 
 void BaseShader::CommitShaderParameter()
@@ -296,13 +296,13 @@ void BaseShader::CommitShaderParameter()
 
 void BaseShader::BindShader()
 {
-	assert(handle_ >= 0);
+	assert(mDeviceHandle >= 0);
 	if (type_ == VERTEX_SHADER) {
-		GRenderDevice->BindVertexShader(handle_);
+		GRenderDevice->BindVertexShader(mDeviceHandle);
 	}
 
 	if (type_ == PIXEL_SHADER) {
-		GRenderDevice->BindPixelShader(handle_);
+		GRenderDevice->BindPixelShader(mDeviceHandle);
 	}
 }
 
@@ -329,7 +329,7 @@ void ModelShaderVS::CreateBindings()
 	//ShaderParamterBindingItem 
 	bindings_.Bindings.push_back(ShaderParamterBindingItem{ "matWorld", 0, matWorld.Ptr() });
 
-	bindings_.handle = GRenderDevice->CreateShaderParameterBinding(handle_, bindings_);	
+	bindings_.handle = GRenderDevice->CreateShaderParameterBinding(mDeviceHandle, bindings_);	
 }
 
 ModelShaderPS::ModelShaderPS()
@@ -348,7 +348,7 @@ void ModelShaderPS::Initialize()
 
 void ModelShaderPS::CreateBindings()
 {
-	if (handle_ < 0) {
+	if (mDeviceHandle < 0) {
 		return;
 	}
 	//bindings_.Name = "$Globals";
@@ -359,10 +359,10 @@ void ModelShaderPS::CreateBindings()
 
 	//bindings_.handle = CreateShaderParameterBinding(handle_, bindings_);
 	texBinding_.Name = "g_txDiffuse";
-	texBinding_.handle = GRenderDevice->CreateShaderTextureBinding(handle_, texBinding_);
+	texBinding_.handle = GRenderDevice->CreateShaderTextureBinding(mDeviceHandle, texBinding_);
 
 	texEnvTex_.Name = "g_txEnv";
-	texEnvTex_.handle = GRenderDevice->CreateShaderTextureBinding(handle_, texEnvTex_);
+	texEnvTex_.handle = GRenderDevice->CreateShaderTextureBinding(mDeviceHandle, texEnvTex_);
 }
 
 

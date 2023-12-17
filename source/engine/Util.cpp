@@ -18,6 +18,11 @@ namespace Aurora
 			pByteDes += desStride;
 		}
 	}
+	
+	void Util::MemCopy(const void* Source, void* Destination, int Size)
+	{
+		memcpy(Destination, Source, Size);
+	}
 
 	uint Util::MakeFOURCC(const char* pStr)
 	{

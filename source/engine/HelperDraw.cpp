@@ -224,10 +224,10 @@ namespace Aurora
 		DrawLineVertexShader.BindShader();
 		DrawLinePixelShader.BindShader();
 		
-		RenderOperator op(VertexLayoutPositonColor_.mVertexLayout, VertexBuffer_, IndexBuffer_,
-			RenderOperator::PT_LINELIST, 0, 0, indexBase, VertexLayoutPositonColor_.Stride);
-
-		GRenderDevice->ExecuteOperator(op);
+		// RenderOperator op(VertexLayoutPositonColor_.mVertexLayout, VertexBuffer_, IndexBuffer_,
+		// 	RenderOperator::PT_LINELIST, 0, 0, indexBase, VertexLayoutPositonColor_.Stride);
+		//
+		// GRenderDevice->ExecuteOperator(op);
 	}
 
 }

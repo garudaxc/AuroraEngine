@@ -2,6 +2,7 @@
 #include "SimpleRendering.h"
 #include "Renderer.h"
 #include "Entity.h"
+#include "FileSystem.h"
 #include "SceneView.h"
 #include "Texture.h"
 #include "RenderState.h"
@@ -40,6 +41,7 @@ namespace Aurora
 		DirectionalLightInfo	DirectionLight;
 	private:
 
+		GPUShaderObject*	mShaderObject = nullptr;
 
 		ShaderParamterBindings	bindings_;
 		Handle	Handle_ = -1;
@@ -54,8 +56,39 @@ namespace Aurora
 	{
 	}
 
+	
+	GPUShaderObject* CreateGlobalParameterBuffer()
+	{
+		string pathName = "..\\dev\\data\\shader\\GlobalDefine.shader";
+		FilePtr file(GFileSys->OpenFile(pathName));
+		if (!file) {
+			return nullptr;
+		}
+		
+		ShaderCode code;
+		code.text = file->ReadAsString();
+
+		code.text += "\
+		float4 Main(float4 pos : POSITION) : SV_POSITION		\
+		{														\
+			return pos + LightColor0;						\
+		}														\
+			";
+
+		code.name = "Global Buffer";
+		code.type = BaseShader::VERTEX_SHADER;
+
+		GPUShaderObject* handle = GRenderDevice->CreateShader(code);
+
+		return handle;
+	}
+
+
+
 	void GlobalShaderParameter::CreateBinding()
 	{
+		mShaderObject = CreateGlobalParameterBuffer();
+		
 		bindings_.Name = "GlobalParameter";
 
 		//ShaderParamterBindingItem 
@@ -67,7 +100,7 @@ namespace Aurora
 		bindings_.Bindings.push_back(ShaderParamterBindingItem{ "DirectionLight0", 0, DirectionLight.Direction.Ptr() });
 		bindings_.Bindings.push_back(ShaderParamterBindingItem{ "LightColor0", 0, DirectionLight.LightColor.Ptr() });
 
-		bindings_.handle = GRenderDevice->CreateShaderParameterBinding(0, bindings_);
+		bindings_.handle = GRenderDevice->CreateShaderParameterBinding(mShaderObject, bindings_);
 	}
 
 
@@ -100,7 +133,6 @@ namespace Aurora
 	GlobalShaderParameter globalShaderParam_;
 
 
-	extern vector<VertexLayoutItem>	VertexLayoutPosNormTangentTex;
 	Handle VertexLayoutPosNormTangentTexHandle_ = -1;
 	int32  VertexLayoutPosNormTangentTexStride = 0;
 
@@ -111,8 +143,8 @@ namespace Aurora
 	public:
 		virtual void Visit(RenderOperator& op)
 		{
-			op.VertexLayout_ = VertexLayoutPosNormTangentTexHandle_;
-			op.VertexStride_ = VertexLayoutPosNormTangentTexStride;
+			op.VertexLayout = VertexLayoutPosNormTangentTexHandle_;
+			op.VertexStride = VertexLayoutPosNormTangentTexStride;
 			GRenderDevice->ExecuteOperator(op);
 		}
 	};
@@ -124,8 +156,8 @@ namespace Aurora
 
 	void SimpleRendering::Initialize()
 	{
-		VertexLayoutPosNormTangentTexHandle_ = GRenderDevice->CreateVertexLayoutHandle(VertexLayoutPosNormTangentTex);
-		VertexLayoutPosNormTangentTexStride = CGeometry::CalcVertexStride(VertexLayoutPosNormTangentTex);
+		VertexLayoutPosNormTangentTexHandle_ = GRenderDevice->CreateVertexLayoutHandle(CGeometry::VertexLayoutPosNormTangentTex);
+		VertexLayoutPosNormTangentTexStride = CGeometry::CalcVertexStride(CGeometry::VertexLayoutPosNormTangentTex);
 
 		HelperDraw.Init();
 
@@ -214,7 +246,7 @@ namespace Aurora
 		code.text = shaderCode;
 		code.type = BaseShader::VERTEX_SHADER;
 
-		Handle handle = GRenderDevice->CreateShader(code);
+		GPUShaderObject* handle = GRenderDevice->CreateShader(code);
 
 		ShaderParamterBindings bindings;
 		bindings.Name = "StaticBuffer";

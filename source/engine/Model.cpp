@@ -27,7 +27,7 @@ namespace Aurora
 
 	void Model::SetMesh(CGeometry* pMesh)
 	{
-		m_pMesh = pMesh;
+		mMesh = pMesh;
 	}
 
 	void Model::SetMaterial(uint idx, MaterialInstance* pMtl)
@@ -38,11 +38,10 @@ namespace Aurora
 
 	void Model::Accept(RenderableVisitor& visitor)
 	{
-		for (uint i = 0; i < m_pMesh->GetNumElement(); i++)
+		for (uint i = 0; i < mMesh->GetNumElement(); i++)
 		{
-			auto elem = m_pMesh->Elements_[i];
-			RenderOperator op(-1, m_pMesh->VertexBufferHandle_, 
-				m_pMesh->IndexBufferHandle_, RenderOperator::PT_TRIANGLELIST,
+			auto elem = mMesh->mElements[i];
+			RenderOperator op(-1, mMesh->GetGeometryBuffer(), RenderOperator::PT_TRIANGLELIST,
 				0, elem.IndexStart, elem.IndexCount, 0);
 			
 			visitor.Visit(op);

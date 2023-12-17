@@ -643,7 +643,7 @@ namespace Aurora
     class GLRenderDevice : public IRenderDevice
     {
     public:
-        Handle CreateShader(const ShaderCode& code) override;
+        GPUShaderObject* CreateShader(const ShaderCode& code) override;
         Texture* CreateTexture(File* file) override;
         Texture* CreateTexture(Texture::Type type, const Texture::Desc& desc) override;
         RenderTarget* CreateRenderTarget(const RenderTarget::Desc& desc) override;
@@ -658,11 +658,11 @@ namespace Aurora
         void SetDepthStencil(RenderTarget* pDepthStencil) override;
         void SetRenderTarget(uint nRTs, RenderTarget** pRenderTargets, RenderTarget* pDepthStencil) override;
         void ExecuteOperator(const RenderOperator& op) override;
-        Handle CreateShaderParameterBinding(Handle shaderHandle, const ShaderParamterBindings& bindings) override;
+        Handle CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParamterBindings& bindings) override;
         void UpdateShaderParameter(Handle bindingHandle) override;
-        void BindVertexShader(Handle shaderHandle) override;
-        void BindPixelShader(Handle shaderHandle) override;
-        Handle CreateShaderTextureBinding(Handle shaderHandle, const ShaderTextureBinding& bindings) override;
+        void BindVertexShader(GPUShaderObject* shaderHandle) override;
+        void BindPixelShader(GPUShaderObject* shaderHandle) override;
+        Handle CreateShaderTextureBinding(GPUShaderObject* shaderHandle, const ShaderTextureBinding& bindings) override;
         void BindTexture(Handle binding, Texture* texture) override;
         void BindGlobalParameter(Handle handle) override;
         Handle CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems) override;
@@ -674,11 +674,11 @@ namespace Aurora
 
 
 
-    
 
-    Handle GLRenderDevice::CreateShader(const ShaderCode& code)
+
+    GPUShaderObject* GLRenderDevice::CreateShader(const ShaderCode& code)
     {
-        return 0;
+        return nullptr;
     }
     
     Texture* GLRenderDevice::CreateTexture(File* file)
@@ -744,7 +744,7 @@ namespace Aurora
     {
     }
     
-    Handle GLRenderDevice::CreateShaderParameterBinding(Handle shaderHandle, const ShaderParamterBindings& bindings)
+    Handle GLRenderDevice::CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParamterBindings& bindings)
     {
         return 0;
     }
@@ -753,15 +753,15 @@ namespace Aurora
     {
     }
     
-    void GLRenderDevice::BindVertexShader(Handle shaderHandle)
+    void GLRenderDevice::BindVertexShader(GPUShaderObject* shaderHandle)
     {
     }
     
-    void GLRenderDevice::BindPixelShader(Handle shaderHandle)
+    void GLRenderDevice::BindPixelShader(GPUShaderObject* shaderHandle)
     {
     }
     
-    Handle GLRenderDevice::CreateShaderTextureBinding(Handle shaderHandle, const ShaderTextureBinding& bindings)
+    Handle GLRenderDevice::CreateShaderTextureBinding(GPUShaderObject* shaderHandle, const ShaderTextureBinding& bindings)
     {
         return 0;
     }

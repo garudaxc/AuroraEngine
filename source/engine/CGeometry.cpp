@@ -65,7 +65,7 @@ void ComputeFaceNormal(const T* pIndex, Vector3f* pFaceNormal, const Vector3f* p
 
 
 
-uint32 CGeometry::GetSizeOfType(Vertex::ElemType type) {
+constexpr uint32 CGeometry::GetSizeOfType(Vertex::ElemType type) {
 	switch (type)
 	{
 	case Aurora::Vertex::TYPE_FLOAT:
@@ -152,7 +152,7 @@ void ComputeNormal(Vector3f* pNormal, uint8* pIndex, uint32 nTri, Vertex::ElemTy
 }
 
 	
-vector<VertexLayoutItem>	VertexLayoutPosNormTangentTex(
+vector<VertexLayoutItem>	CGeometry::VertexLayoutPosNormTangentTex(
 	{
 	   {Vertex::TYPE_FLOAT3, Vertex::USAGE_POSITION, 0},
 	   {Vertex::TYPE_FLOAT3, Vertex::USAGE_NORMAL, 0},
@@ -163,11 +163,11 @@ vector<VertexLayoutItem>	VertexLayoutPosNormTangentTex(
 	
 
 
-CGeometry::CGeometry(uint32 nVert, uint32 nTri):m_nNumVert(nVert),
-m_nNumIndex(nTri*3) {
+CGeometry::CGeometry(uint32 InNumVertex, uint32 InNumTriangle):mNumVertex(InNumVertex),
+mNumIndex(InNumTriangle*3) {
 }
 
-CGeometry::CGeometry():m_nNumVert(0),m_nNumIndex(0) {
+CGeometry::CGeometry():mNumVertex(0),mNumIndex(0) {
 }
 
 int32 CGeometry::CalcVertexStride(const vector<VertexLayoutItem>& layout)
@@ -184,7 +184,7 @@ uint32 CGeometry::GetNumStreamOfUsage(Vertex::ElemUsage usage) const {
 	uint32 num = 0;
 	for (uint32 i = 0; i < GetNumStream(); i++)
 	{
-		if (usage == m_Streams[i].usage)
+		if (usage == mStreams[i].usage)
 		{
 			num++;
 		}
@@ -198,9 +198,9 @@ uint8* CGeometry::AddStream(Vertex::ElemUsage usage, Vertex::ElemType type) {
 
 	uint32 numElem = 0;
 	if (usage == Vertex::USAGE_INDEX)	{
-		numElem = m_nNumIndex;
+		numElem = mNumIndex;
 	} else {
-		numElem = m_nNumVert;
+		numElem = mNumVertex;
 	}
 
 	Stream_t stream;
@@ -212,15 +212,15 @@ uint8* CGeometry::AddStream(Vertex::ElemUsage usage, Vertex::ElemType type) {
 
 	stream.data = new uint8[stream.nSizeInByte];
 
-	m_Streams.push_back(stream);
+	mStreams.push_back(stream);
 
 	return stream.data;
 }
 
 
 int CGeometry::FindStream(Vertex::ElemUsage usage, uint8 usageIndex) const {
-	for (int i = 0; i < (int)m_Streams.size(); i++) {
-		if (usage == m_Streams[i].usage && usageIndex == m_Streams[i].nUsageIndex)	{
+	for (int i = 0; i < (int)mStreams.size(); i++) {
+		if (usage == mStreams[i].usage && usageIndex == mStreams[i].nUsageIndex)	{
 			return i;
 		}
 	}
@@ -234,28 +234,28 @@ uint8* CGeometry::GetStreamPointer(Vertex::ElemUsage usage, uint8 usageIndex) {
 		return nullptr;
 	}
 
-	return m_Streams[nStream].Ptr();
+	return mStreams[nStream].Ptr();
 }
 
 
 bool CGeometry::AssembleVertexElement(void* pBuffer, uint32 bufferOffset, uint32 bufferStride, Vertex::ElemType usedType, 
-										 Vertex::ElemUsage usage, uint8 usageIndex)
+										 Vertex::ElemUsage usage, uint8 usageIndex) const
 {
 	int streamIndex = FindStream(usage, usageIndex);
 
 	// compute tangent if needed
-	if (streamIndex == -1 && usage == Vertex::USAGE_TANGENT){
-		ComputeTangentSpace();
-		streamIndex = FindStream(usage, usageIndex);
-	}
+	// if (streamIndex == -1 && usage == Vertex::USAGE_TANGENT){
+	// 	ComputeTangentSpace();
+	// 	streamIndex = FindStream(usage, usageIndex);
+	// }
 
 	if (streamIndex == -1) {
 		return false;
 	}
 
-	const Stream_t& stream = m_Streams[streamIndex];
+	const Stream_t& stream = mStreams[streamIndex];
 	Util::MemMap(stream.Ptr(), stream.nStride,  (uint8*)pBuffer + bufferOffset, 
-					bufferStride, GetSizeOfType(usedType), m_nNumVert);
+					bufferStride, GetSizeOfType(usedType), mNumVertex);
 
 	return true;
 }
@@ -268,8 +268,8 @@ bool CGeometry::Load(const TiXmlNode* pXmlMesh) {
 	pMesh->Attribute("numVerts", &nNumVerts);
 	pMesh->Attribute("numTri", &nNumTri);
 
-	m_nNumVert = nNumVerts;
-	m_nNumIndex = 3 * nNumTri;
+	mNumVertex = nNumVerts;
+	mNumIndex = 3 * nNumTri;
 
 	stringstream ss;
 
@@ -339,12 +339,7 @@ bool CGeometry::Load(const TiXmlNode* pXmlMesh) {
 		ss.clear();
 	}
 
-	CreateIndexBuffer();
-
-
-	vector<int8> vertexData;
-	PrepareVertexData(vertexData, VertexLayoutPosNormTangentTex);
-	VertexBufferHandle_ = GRenderDevice->CreateVertexBufferHandle(vertexData.data(), vertexData.size());
+	mGeometryBuffer = GRenderDevice->CreateGeometryBuffer(this);
 
 	//if (pMesh->FirstChild("BlendIndex")) {
 	//	m_pVertexBuffer = CreateVertexBuffer(VertexLayout_PNTTBB);
@@ -369,8 +364,8 @@ void CGeometry::Load(File* file)
 	file->Read(numVertex);
 	file->Read(numIndex);
 
-	m_nNumVert = numVertex;
-	m_nNumIndex = numIndex;
+	mNumVertex = numVertex;
+	mNumIndex = numIndex;
 
 	uint32* pIndex = (uint32*)AddStream(Vertex::USAGE_INDEX, Vertex::TYPE_UINT);
 	Vector3f* pPos = (Vector3f*)AddStream(Vertex::USAGE_POSITION, Vertex::TYPE_FLOAT3);
@@ -407,24 +402,21 @@ void CGeometry::Load(File* file)
 			elem.IndexCount = meshGroup[i] * 3;
 			elem.IndexStart = indexOffset;
 			//elem.vertexoffset = 0;
-			Elements_.push_back(elem);
+			mElements.push_back(elem);
 
 			indexOffset += meshGroup[i] * 3;
 		}
 	}
-		
-	vector<int8> vertexData;
-	PrepareVertexData(vertexData, VertexLayoutPosNormTangentTex);
-	VertexBufferHandle_ = GRenderDevice->CreateVertexBufferHandle(&vertexData[0], vertexData.size());
 
-	CreateIndexBuffer();
-	//m_pVertexBuffer = CreateVertexBuffer(VertexLayout_PNTT);
+	ComputeTangentSpace();
+		
+	mGeometryBuffer = GRenderDevice->CreateGeometryBuffer(this);
 }
 
 
 bool CGeometry::HasSkin() const {
 	bool hasSkin = false;
-	for (vector<Stream_t>::const_iterator it = m_Streams.begin(); it != m_Streams.end(); ++it) {
+	for (vector<Stream_t>::const_iterator it = mStreams.begin(); it != mStreams.end(); ++it) {
 		if (it->usage == Vertex::USAGE_BLENDINDEX) {
 			hasSkin = true;
 		}
@@ -440,14 +432,14 @@ void CGeometry::GetMaterialInfo(set<string>& info) const {
 }
 
 
-void CGeometry::PrepareVertexData(vector<int8>& data, const vector<VertexLayoutItem>& layout)
+void CGeometry::PrepareVertexData(vector<int8>& data, const vector<VertexLayoutItem>& layout) const
 {
 	int32 stride = 0;
 	for (auto it = layout.begin(); it != layout.end(); ++it) {
-		stride += CGeometry::GetSizeOfType((Vertex::ElemType)it->type);
+		stride += GetSizeOfType((Vertex::ElemType)it->type);
 	}
 
-	data.resize(stride * m_nNumVert);
+	data.resize(stride * mNumVertex);
 	int32 elementOffset = 0;
 	for (auto it = layout.begin(); it != layout.end(); ++it) {
 		bool res = AssembleVertexElement(&data[0], elementOffset, stride,
@@ -461,21 +453,22 @@ void CGeometry::PrepareVertexData(vector<int8>& data, const vector<VertexLayoutI
 		elementOffset += GetSizeOfType((Vertex::ElemType)it->type);
 	}
 }
-
-
-void CGeometry::CreateIndexBuffer() {
-	   
+void CGeometry::PrepareIndexData(vector<int8>& InData) const
+{ 
 	int streamIndex = FindStream(Vertex::USAGE_INDEX, 0);
 	if (streamIndex == -1) {
 		GLog->Error("CreateIndexBuffer: can not find index buffer stream !");
 		return;
 	}
 
-	assert(m_Streams[streamIndex].nStride == 4);
-	auto stream = m_Streams[streamIndex];
+	assert(mStreams[streamIndex].nStride == 4);
 
-	IndexBufferHandle_ = GRenderDevice->CreateIndexBufferHandle(stream.data, stream.nSizeInByte);
+	auto stream = mStreams[streamIndex];
+	InData.resize(stream.nSizeInByte);
+
+	Util::MemCopy(stream.Ptr(), InData.data(), stream.nSizeInByte);
 }
+
 
 void CGeometry::OnReset() {
 }
@@ -570,15 +563,15 @@ void CGeometry::ComputeTangentSpace()
 	int indexStream = FindStream(Vertex::USAGE_INDEX, 0);
 
 	assert(posStream != -1 && normStream != -1 && uvStream != -1);
-	assert(m_Streams[uvStream].type == Vertex::TYPE_FLOAT2);
-	assert(m_Streams[indexStream].type == Vertex::TYPE_UINT);
+	assert(mStreams[uvStream].type == Vertex::TYPE_FLOAT2);
+	assert(mStreams[indexStream].type == Vertex::TYPE_UINT);
 
 	CalculateTangentArray(GetNumVertex(), 
-		(const Vector3f *)m_Streams[posStream].Ptr(), 
-		(const Vector3f *)m_Streams[normStream].Ptr(),
-		(const Vector2f *)m_Streams[uvStream].Ptr(), 
+		(const Vector3f *)mStreams[posStream].Ptr(), 
+		(const Vector3f *)mStreams[normStream].Ptr(),
+		(const Vector2f *)mStreams[uvStream].Ptr(), 
 		GetNumTri(), 
-		(const Triangle *)m_Streams[indexStream].Ptr(),
+		(const Triangle *)mStreams[indexStream].Ptr(),
 		(Vector4f *)pData);
 
 }

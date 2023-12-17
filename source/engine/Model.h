@@ -23,7 +23,7 @@ namespace Aurora
 
 	protected:
 		string			m_Name;
-		CGeometry*		m_pMesh;
+		CGeometry*		mMesh;
 	};
 
 

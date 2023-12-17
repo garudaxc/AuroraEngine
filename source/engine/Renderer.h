@@ -20,6 +20,8 @@ namespace Aurora
 
     extern IRenderDevice* GRenderDevice;
 
+    
+
 
     class RenderOperator
     {
@@ -35,47 +37,34 @@ namespace Aurora
 
         RenderOperator() = default;
 
-        RenderOperator(Handle VertexLayout, Handle VertexBuffer, Handle IndexBuffer,
-                       EPrimitiveType PrimType, int32 BaseVertexIndex, uint StartIndex,
-                       int32 IndexCount, uint32 VertexStride)
+        RenderOperator(Handle InVertexLayout, CGPUGeometryBuffer* InGeometryBuffer,
+                       EPrimitiveType InPrimType, int32 InBaseVertexIndex, uint InStartIndex,
+                       int32 InIndexCount, uint32 InVertexStride)
         {
-            VertexLayout_ = VertexLayout;
-            VertexBuffer_ = VertexBuffer;
-            IndexBuffer_ = IndexBuffer;
-            PrimType_ = PrimType;
-            BaseVertexIndex_ = BaseVertexIndex;
-            StartIndex_ = StartIndex;
-            IndexCount_ = IndexCount;
-            VertexStride_ = VertexStride;
+            VertexLayout = InVertexLayout;
+            GeometryBuffer = InGeometryBuffer;
+            PrimType = InPrimType;
+            BaseVertexIndex = InBaseVertexIndex;
+            StartIndex = InStartIndex;
+            IndexCount = InIndexCount;
+            VertexStride = InVertexStride;
         }
 
 
         Material* pMaterial = nullptr;
         MaterialInstance* pMtlInst = nullptr;
+        CGPUGeometryBuffer* GeometryBuffer = nullptr;
 
-        EPrimitiveType PrimType_ = PT_TRIANGLELIST;
+        EPrimitiveType PrimType = PT_TRIANGLELIST;
 
-        Handle VertexLayout_ = -1;
-        Handle VertexBuffer_ = -1;
-        Handle IndexBuffer_ = -1;
+        Handle VertexLayout = -1;
 
-        int32 BaseVertexIndex_;
-        uint StartIndex_;
-        int32 IndexCount_;
-        uint32 VertexStride_;
+        int32 BaseVertexIndex;
+        uint StartIndex;
+        int32 IndexCount;
+        uint32 VertexStride;
+        
     };
-
-
-
-    class GPUVertexBuffer
-    {
-    public:
-
-    };
-
-    typedef shared_ptr<GPUVertexBuffer> GPUVertexBufferPtr;
-
-
 
 
     template<class type>
@@ -109,6 +98,12 @@ namespace Aurora
 
     class File;
 
+    class GPUShaderObject
+    {
+    public:
+        
+    };
+
     class IRenderDevice
     {
     public:
@@ -124,7 +119,7 @@ namespace Aurora
 
         static bool Initialized();
 
-        virtual Handle CreateShader(const ShaderCode& code) = 0;
+        virtual GPUShaderObject* CreateShader(const ShaderCode& code) = 0;
 
         virtual Texture* CreateTexture(File* file) = 0;
 
@@ -152,13 +147,13 @@ namespace Aurora
 
         virtual void ExecuteOperator(const RenderOperator& op) = 0;
 
-        virtual Handle CreateShaderParameterBinding(Handle shaderHandle, const ShaderParamterBindings& bindings) = 0;
+        virtual Handle CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParamterBindings& bindings) = 0;
         virtual void UpdateShaderParameter(Handle bindingHandle) = 0;
 
-        virtual void BindVertexShader(Handle shaderHandle) = 0;
-        virtual void BindPixelShader(Handle shaderHandle) = 0;
+        virtual void BindVertexShader(GPUShaderObject* shaderHandle) = 0;
+        virtual void BindPixelShader(GPUShaderObject* shaderHandle) = 0;
 
-        virtual Handle CreateShaderTextureBinding(Handle shaderHandle, const ShaderTextureBinding& bindings) = 0;
+        virtual Handle CreateShaderTextureBinding(GPUShaderObject* shaderHandle, const ShaderTextureBinding& bindings) = 0;
         virtual void BindTexture(Handle binding, Texture* texture) = 0;
 
         virtual void BindGlobalParameter(Handle handle) = 0;
@@ -168,6 +163,8 @@ namespace Aurora
 
         virtual Handle CreateVertexBufferHandle(const void* data, int32 size) = 0;
         virtual Handle CreateIndexBufferHandle(const void* data, int32 size) = 0;
+
+        virtual CGPUGeometryBuffer* CreateGeometryBuffer(const CGeometry* InGeometry) { return nullptr; }
     };
 
     //void SetPipeline(Handle );

@@ -21,6 +21,8 @@ namespace Aurora
 		static void			MemMap(const void* pSrc, uint srcStride, void* pDes, 
 			uint desStride, uint byteToMap, uint count);
 
+		static  void		MemCopy(const void *Source, void* Destination, int Size);
+
 		static uint			MakeFOURCC(const char* pStr);
 
 		static std::string	GetFileNameExt(const std::string& fileName);

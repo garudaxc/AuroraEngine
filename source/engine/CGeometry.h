@@ -87,13 +87,21 @@ namespace Aurora
         };
     };
 
+    class CGPUGeometryBuffer
+    {
+    public:
+        virtual ~CGPUGeometryBuffer() = default;        
+        
+    };
 
 
 
     class CGeometry : public Resource
     {
     public:
-        static uint GetSizeOfType(Vertex::ElemType type);
+        static constexpr uint GetSizeOfType(Vertex::ElemType type);
+
+        static vector<VertexLayoutItem> VertexLayoutPosNormTangentTex;
 
         struct Stream_t
         {
@@ -108,25 +116,23 @@ namespace Aurora
             const uint8* Ptr() const { return data; }
         };
 
-        CGeometry(uint nVert, uint nTri);
+        CGeometry(uint InNumVertex, uint InNumTriangle);
         CGeometry();
-        ~CGeometry() override
-        {
-        }
+        ~CGeometry() override = default;
 
 
         static int32 CalcVertexStride(const vector<VertexLayoutItem>& layout);
 
-        uint GetNumVertex() const { return m_nNumVert; }
-        uint GetNumTri() const { return m_nNumIndex / 3; }
+        uint GetNumVertex() const { return mNumVertex; }
+        uint GetNumTri() const { return mNumIndex / 3; }
 
-        uint GetNumStream() const { return (uint)m_Streams.size(); }
+        uint GetNumStream() const { return (uint)mStreams.size(); }
 
         uint GetNumStreamOfUsage(Vertex::ElemUsage usage) const;
 
         uint8* AddStream(Vertex::ElemUsage usage, Vertex::ElemType type);
 
-        uint GetNumElement() const { return Elements_.size(); }
+        uint GetNumElement() const { return (uint)mElements.size(); }
 
         void ComputeTangentSpace();
 
@@ -143,32 +149,33 @@ namespace Aurora
 
         bool HasSkin() const;
         void GetMaterialInfo(set<string>& info) const;
-        void PrepareVertexData(vector<int8>& data, const vector<VertexLayoutItem>& layout);
+        
+        void PrepareVertexData(vector<int8>& data, const vector<VertexLayoutItem>& layout) const;
+        void PrepareIndexData(vector<int8>& InData) const;
 
+        CGPUGeometryBuffer* GetGeometryBuffer() const
+        {
+            return mGeometryBuffer;
+        }
 
-        //void						ComputeTangent();
-        //void						ComputeAABB();
-        //const AABB&					GetAABB() const	{	return m_AABB;	}
-
-        vector<MeshElement> Elements_;
-
-        Handle VertexBufferHandle_ = -1;
-        Handle IndexBufferHandle_ = -1;
+        vector<MeshElement> mElements;
 
     private:
         bool AssembleVertexElement(void* pBuffer, uint bufferOffset, uint bufferStride,
-                                   Vertex::ElemType usedType, Vertex::ElemUsage usage, uint8 usageIndex);
-
-        void CreateIndexBuffer();
-
-        uint m_nNumVert;
-        uint m_nNumIndex;
-
-        vector<Stream_t> m_Streams;
-
-        AABB m_AABB;
+                                   Vertex::ElemType usedType, Vertex::ElemUsage usage, uint8 usageIndex) const;
 
 
+        uint mNumVertex;
+        uint mNumIndex;
+
+        vector<Stream_t> mStreams;
+
+        AABB mAABB;
+
+        CGPUGeometryBuffer*     mGeometryBuffer = nullptr;
+
+    public:
+        
 //
 //
 //public:
