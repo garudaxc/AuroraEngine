@@ -4,7 +4,6 @@
 #include "Types.h"
 #include "CGeometry.h"
 #include "Texture.h"
-#include "Shader.h"
 
 namespace Aurora
 {
@@ -97,12 +96,53 @@ namespace Aurora
 
 
     class File;
-
+    class CShaderParameterBuffer;
+    
     class GPUShaderObject
     {
     public:
         
     };
+
+    class GPUShaderParameterBuffer
+    {
+    public:
+        
+    };
+
+
+    
+    struct ShaderCode
+    {
+        int8 type = 0;
+        string name;
+        string text;
+        vector<string> includes;
+        vector<pair<string, string>> defines;
+    };
+
+
+    struct ShaderParamterBindingItem
+    {
+        string Name;
+        int32 Size;
+        void* Source;
+    };
+
+    struct ShaderParameterBindings
+    {
+        string Name;
+        vector<ShaderParamterBindingItem> Bindings;
+        Handle handle = -1;
+    };
+
+    struct ShaderTextureBinding
+    {
+        string Name;
+        Handle handle = -1;
+    };
+
+    
 
     class IRenderDevice
     {
@@ -147,7 +187,7 @@ namespace Aurora
 
         virtual void ExecuteOperator(const RenderOperator& op) = 0;
 
-        virtual Handle CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParamterBindings& bindings) = 0;
+        virtual Handle CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParameterBindings& bindings) = 0;
         virtual void UpdateShaderParameter(Handle bindingHandle) = 0;
 
         virtual void BindVertexShader(GPUShaderObject* shaderHandle) = 0;
@@ -165,6 +205,8 @@ namespace Aurora
         virtual Handle CreateIndexBufferHandle(const void* data, int32 size) = 0;
 
         virtual CGPUGeometryBuffer* CreateGeometryBuffer(const CGeometry* InGeometry) { return nullptr; }
+
+        virtual GPUShaderParameterBuffer*   CreateShaderParameterBuffer(CShaderParameterBuffer* InBuffer) { return nullptr; }
     };
 
     //void SetPipeline(Handle );

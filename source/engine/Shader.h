@@ -1,4 +1,5 @@
 #pragma once
+#include "Renderer.h"
 #include "stdheader.h"
 
 
@@ -110,35 +111,6 @@ namespace Aurora
 
 //////////////////////////////////////////////////////////////////////////
 
-    struct ShaderCode
-    {
-        int8 type = 0;
-        string name;
-        string text;
-        vector<string> includes;
-        vector<pair<string, string>> defines;
-    };
-
-
-    struct ShaderParamterBindingItem
-    {
-        string Name;
-        int32 Size;
-        void* Source;
-    };
-
-    struct ShaderParamterBindings
-    {
-        string Name;
-        vector<ShaderParamterBindingItem> Bindings;
-        Handle handle = -1;
-    };
-
-    struct ShaderTextureBinding
-    {
-        string Name;
-        Handle handle = -1;
-    };
 
 //struct ShaderSamplerBinding
 //{
@@ -148,8 +120,21 @@ namespace Aurora
 
     class ShaderParameterBase;
     class GPUShaderObject;
+    class CShaderParameterBuffer;
+    class GPUShaderParameterBuffer;
 
-    class BaseShader
+
+    class IShaderParameterContainer
+    {
+    public:
+        IShaderParameterContainer() = default;
+        virtual ~IShaderParameterContainer() = default; 
+
+
+        virtual void    AddParameterBinding(ShaderParameterBase* InParameter) = 0;
+    };
+
+    class BaseShader : public IShaderParameterContainer
     {
     public:
         enum ShaderType : int8
@@ -161,9 +146,9 @@ namespace Aurora
         };
 
         BaseShader();
-        ~BaseShader();
+        ~BaseShader() override;
 
-        void    AddParameterBinding(ShaderParameterBase* InParameter)
+        void    AddParameterBinding(ShaderParameterBase* InParameter) override
         {
             mParameterBindings.push_back(InParameter);
         }
@@ -175,31 +160,67 @@ namespace Aurora
 
         ShaderType type_ = VERTEX_SHADER;
 
-        ShaderParamterBindings bindings_;
+        ShaderParameterBindings bindings_;
         GPUShaderObject* mDeviceHandle = nullptr;
         string name_{"test shader"};
 
         string pathname_;
 
         vector<ShaderParameterBase*>    mParameterBindings;
+        vector<CShaderParameterBuffer*> mParamterBuffers;
 
     private:
 
     };
 
+    
+
+    class CShaderParameterBuffer : public IShaderParameterContainer
+    {
+    public:
+        CShaderParameterBuffer(const string& InName):mName(InName) {}
+        virtual ~CShaderParameterBuffer() = default;
+
+        
+        void    AddParameterBinding(ShaderParameterBase* InParameter) override
+        {
+            mParameterBindings.push_back(InParameter);
+        }
+
+        string mName;
+        vector<ShaderParameterBase*>    mParameterBindings;
+        vector<int8>    mBufferMemory;
+
+        GPUShaderParameterBuffer*   mGPUBuffer = nullptr;
+    };
+
+    
 
 
     class ShaderParameterBase
     {
     public:
-        ShaderParameterBase(const string& InName, BaseShader* InShader)
+        enum ShaderParameterType
+        {
+            FLOAT,
+            FLOAT2,
+            FLOAT4,
+            MATRIX4X4,
+                        
+        };
+        
+        ShaderParameterBase(const string& InName, IShaderParameterContainer* InContainer)
         {
             mName = InName;
-            InShader->AddParameterBinding(this);
+            InContainer->AddParameterBinding(this);
         }
 
         bool IsBind() const  {   return false;   }
 
+        virtual ShaderParameterType GetType() const = 0;
+
+        uint16  mOffset = 0;
+        uint16  mSizeInByte = 0;
         string mName;
     };
 
@@ -207,10 +228,16 @@ namespace Aurora
     {
     public:
 
-        ShaderParameterMatrix(const string& InName, BaseShader* InShader)
-            : ShaderParameterBase(InName, InShader)
+        ShaderParameterMatrix(const string& InName, IShaderParameterContainer* InContainer)
+            : ShaderParameterBase(InName, InContainer)
         {
         }
+
+        ShaderParameterType GetType() const override
+        {
+            return ShaderParameterType::MATRIX4X4;
+        }
+
         ShaderParameterMatrix& operator=(const Matrix4f& other)
         {
             return *this;
@@ -223,11 +250,24 @@ namespace Aurora
     Type InParameter = {#InParameter, this};
 
 
+    
+    class CViewShaderParameterBuffer : public CShaderParameterBuffer
+    {
+    public:
+        CViewShaderParameterBuffer():CShaderParameterBuffer("View") {}
+        
+        DEFINE_SHADER_PARAMETER(mViewMatrix, ShaderParameterMatrix)
+        DEFINE_SHADER_PARAMETER(mProjectionMatrix, ShaderParameterMatrix)        
+        DEFINE_SHADER_PARAMETER(mViewProjectionMatrix, ShaderParameterMatrix)
+        
+    };
+
+
     class ModelShaderVS : public BaseShader
     {
     public:
         ModelShaderVS();
-        ~ModelShaderVS();
+        ~ModelShaderVS() override;
 
         void Initialize();
 
@@ -238,7 +278,6 @@ namespace Aurora
     private:
         DEFINE_SHADER_PARAMETER(mWorldMatrix, ShaderParameterMatrix)
 
-
     };
 
 
@@ -246,7 +285,7 @@ namespace Aurora
     {
     public:
         ModelShaderPS();
-        ~ModelShaderPS();
+        ~ModelShaderPS() override;
 
         void Initialize();
 

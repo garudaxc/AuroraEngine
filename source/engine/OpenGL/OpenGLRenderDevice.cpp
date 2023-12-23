@@ -658,7 +658,7 @@ namespace Aurora
         void SetDepthStencil(RenderTarget* pDepthStencil) override;
         void SetRenderTarget(uint nRTs, RenderTarget** pRenderTargets, RenderTarget* pDepthStencil) override;
         void ExecuteOperator(const RenderOperator& op) override;
-        Handle CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParamterBindings& bindings) override;
+        Handle CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParameterBindings& bindings) override;
         void UpdateShaderParameter(Handle bindingHandle) override;
         void BindVertexShader(GPUShaderObject* shaderHandle) override;
         void BindPixelShader(GPUShaderObject* shaderHandle) override;
@@ -744,7 +744,7 @@ namespace Aurora
     {
     }
     
-    Handle GLRenderDevice::CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParamterBindings& bindings)
+    Handle GLRenderDevice::CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParameterBindings& bindings)
     {
         return 0;
     }

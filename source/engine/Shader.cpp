@@ -317,7 +317,11 @@ ModelShaderVS::~ModelShaderVS()
 }
 
 void ModelShaderVS::Initialize()
-{	
+{
+
+	CViewShaderParameterBuffer testBuffer;
+	GRenderDevice->CreateShaderParameterBuffer(&testBuffer);
+	
 	InitBase(VERTEX_SHADER, "..\\dev\\data\\shader\\testVS.shd");
 	CreateBindings();
 }

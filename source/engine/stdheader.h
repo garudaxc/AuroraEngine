@@ -7,6 +7,7 @@
 #include <Windows.h>
 #include <assert.h>
 #include <memory>
+#include <limits>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -39,6 +40,15 @@
 
 using namespace std;
 using namespace rapidjson;
+
+namespace Aurora
+{
+    using String = std::string;
+
+    template<class  T>
+    using Array = std::vector<T>;
+    
+}
 
 
 #endif

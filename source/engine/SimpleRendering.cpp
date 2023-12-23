@@ -7,6 +7,7 @@
 #include "Texture.h"
 #include "RenderState.h"
 #include "HelperDraw.h"
+#include "Shader.h"
 namespace Aurora
 {	
 
@@ -43,7 +44,7 @@ namespace Aurora
 
 		GPUShaderObject*	mShaderObject = nullptr;
 
-		ShaderParamterBindings	bindings_;
+		ShaderParameterBindings	bindings_;
 		Handle	Handle_ = -1;
 
 	};
@@ -248,7 +249,7 @@ namespace Aurora
 
 		GPUShaderObject* handle = GRenderDevice->CreateShader(code);
 
-		ShaderParamterBindings bindings;
+		ShaderParameterBindings bindings;
 		bindings.Name = "StaticBuffer";
 		bindings.Bindings.push_back(ShaderParamterBindingItem{ "HammersleySample", 0, HammersleySample });
 		bindings.handle = GRenderDevice->CreateShaderParameterBinding(handle, bindings);
