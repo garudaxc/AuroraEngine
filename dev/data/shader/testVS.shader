@@ -2,8 +2,7 @@
 
 #include "Parameters"
 
-#include "GlobalDefine.shader"
-
+#include "ParameterBuffers"
 #include "CommonVS.shader"
 
 
@@ -26,9 +25,9 @@ VS_OUTPUT Main( GeomVertexInput input )
 	output.normal = input.normal;
 	
 	float4 worldPos = mul(input.pos, matWorld);
-	float3 eye = matInvView._41_42_43;
+	float3 eye = mViewMatrixInverse._41_42_43;
 
-	output.view = normalize(eye - worldPos.xyz);	
+	output.view = normalize(eye - worldPos.xyz);
 	output.tex = input.tex;
     return output;
 }

@@ -1,6 +1,6 @@
 
-float4x4 matWorld;
 
+float4x4 matWorld;
 
 float4 CameraParam;
 float3 CameraVec[3];
@@ -28,14 +28,14 @@ struct GeomVertexInput
 float4 GetHomogeneousCoord(GeomVertexInput input)
 {
 	float4 worldPos = mul(float4(input.pos.xyz, 1.0), mWorldMatrix);
-	return mul(worldPos, matViewProj);
+	return mul(worldPos, mViewProjectionMatrix);
 }
 
 
 void GetHomogeneousCoordAndDepth(GeomVertexInput input, out float4 pos, out float depth)
 {
 	float4 worldPos = mul(float4(input.pos.xyz, 1.0), mWorldMatrix);
-	pos = mul(worldPos, matViewProj);
+	pos = mul(worldPos, mViewProjectionMatrix);
 	depth = pos.z / CameraParam.y;
 }
 
@@ -43,7 +43,7 @@ void GetHomogeneousCoordAndDepth(GeomVertexInput input, out float4 pos, out floa
 float4 GetLightHomogeneousCoord(float3 pos)
 {
 	float4 worldPos = mul(float4(pos, 1.0), mWorldMatrix);
-	return mul(worldPos, matViewProj);
+	return mul(worldPos, mViewProjectionMatrix);
 }
 
 /*

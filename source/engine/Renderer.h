@@ -19,10 +19,7 @@ namespace Aurora
 
 
     extern IRenderDevice* GRenderDevice;
-
     
-
-
     class RenderOperator
     {
     public:
@@ -111,7 +108,6 @@ namespace Aurora
         
     };
 
-
     
     struct ShaderCode
     {
@@ -122,21 +118,7 @@ namespace Aurora
         vector<pair<string, string>> defines;
     };
 
-
-    struct ShaderParamterBindingItem
-    {
-        string Name;
-        int32 Size;
-        void* Source;
-    };
-
-    struct ShaderParameterBindings
-    {
-        string Name;
-        vector<ShaderParamterBindingItem> Bindings;
-        Handle handle = -1;
-    };
-
+    
     struct ShaderTextureBinding
     {
         string Name;
@@ -158,7 +140,7 @@ namespace Aurora
         virtual ~IRenderDevice() =default;
 
 
-        static IRenderDevice* CreateDevice(int nWidth, int nHeight);
+        static IRenderDevice* CreateDevice(CScreen* InScreen);
 
         static bool Initialized();
 
@@ -187,22 +169,13 @@ namespace Aurora
 
         virtual void ExecuteOperator(const RenderOperator& op) = 0;
 
-        virtual Handle CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParameterBindings& bindings) = 0;
-        virtual void UpdateShaderParameter(Handle bindingHandle, const CShaderParameterContainer* InParameterContainer) = 0;
-
         virtual void BindVertexShader(GPUShaderObject* shaderHandle) = 0;
         virtual void BindPixelShader(GPUShaderObject* shaderHandle) = 0;
 
         virtual Handle CreateShaderTextureBinding(GPUShaderObject* shaderHandle, const ShaderTextureBinding& bindings) = 0;
         virtual void BindTexture(Handle binding, Texture* texture) = 0;
 
-        virtual void BindGlobalParameter(Handle handle) = 0;
-
-        virtual Handle CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems) = 0;
-
-
-        virtual Handle CreateVertexBufferHandle(const void* data, int32 size) = 0;
-        virtual Handle CreateIndexBufferHandle(const void* data, int32 size) = 0;
+        virtual Handle CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems) = 0;        
 
         virtual CGPUGeometryBuffer* CreateGeometryBuffer(const CGeometry* InGeometry) { return nullptr; }
 
@@ -210,9 +183,6 @@ namespace Aurora
 
         virtual void UpdateGPUShaderParameterBuffer(GPUShaderParameterBuffer* InBuffer, const Array<int8>& InData) {};
     };
-
-    //void SetPipeline(Handle );
-
 
 
     class ResourceBufferMapper

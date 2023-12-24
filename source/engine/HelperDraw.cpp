@@ -15,6 +15,7 @@ namespace Aurora
 
 	void CDrawLineVertexShader::Initialize()
 	{
+		AddShaderParameterBuffer(CViewShaderParameterBuffer::Instance);
 		InitBase(BaseShader::VERTEX_SHADER, "..\\dev\\data\\shader\\Helper.shader");
 	}
 
@@ -169,8 +170,8 @@ namespace Aurora
 		DrawLinePixelShader.Initialize();
 
 		VertexLayoutPositonColor_.Init();
-		VertexBuffer_ = GRenderDevice->CreateVertexBufferHandle(nullptr, MaxVertexCount * VertexLayoutPositonColor_.Stride);
-		IndexBuffer_ = GRenderDevice->CreateIndexBufferHandle(nullptr, MaxIndexCount * 4);
+		// VertexBuffer_ = GRenderDevice->CreateVertexBufferHandle(nullptr, MaxVertexCount * VertexLayoutPositonColor_.Stride);
+		// IndexBuffer_ = GRenderDevice->CreateIndexBufferHandle(nullptr, MaxIndexCount * 4);
 	}
 
 	void CHelperDraw::AddLine(const Vector3f& a, const Vector3f& b, const Color& color, float life)

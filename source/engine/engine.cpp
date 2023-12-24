@@ -26,8 +26,8 @@ namespace Aurora
 	const char* ENGINE_VERSION = "0.1";
 
 	static Engine* g_pEngine;
-
-	Window	GMainWindow;
+	
+	IRenderDevice* GRenderDevice = nullptr;
 
 	Engine* GetEngine()
 	{
@@ -53,7 +53,30 @@ namespace Aurora
 
 	}
 
-	void Engine::Init(int nWidth, int nHeight)
+	bool CreateDX11Device(CScreen* InScreen);
+    bool CreateOpenGLDevice(CScreen* InScreen);
+	
+	IRenderDevice* IRenderDevice::CreateDevice(CScreen* InScreen)
+	{		
+		// if (!CreateDX11Device(InScreen)) {
+		// 	return nullptr;
+		// }
+
+			
+		if (!CreateOpenGLDevice(InScreen)) {
+			return nullptr;
+		}
+		
+		return GRenderDevice;
+	}
+
+	bool IRenderDevice::Initialized()
+	{
+		return  GRenderDevice != nullptr;
+	}
+
+
+	void Engine::Init(CScreen* InScreen)
 	{
 		Config::Initialize();
 
@@ -61,10 +84,9 @@ namespace Aurora
 		
 		InitPlatform();
 
-		m_pTimer = new Timer();
+		m_pTimer = new Timer();		
 		
-		
-		m_pRenderer = IRenderDevice::CreateDevice(nWidth, nHeight);
+		m_pRenderer = IRenderDevice::CreateDevice(InScreen);
 
 		m_pResourceManager = new ResourceManager();
 		m_pResourceManager->Init();
@@ -81,14 +103,14 @@ namespace Aurora
 
 		ModelManager.Initialize();
 
-		GPipeline.Initialize(nWidth, nHeight);
+		GPipeline.Initialize(100, 100);
 		GSimpleRendering.Initialize();
 
 		EntityFactory.Initialize();
 
 		m_pTimer->Reset();
 
-		GuiInit();
+		GuiInit(InScreen);
 	}
 
 
@@ -171,8 +193,6 @@ namespace Aurora
 	void Engine::ResizeFrameBuffer(int nWidth, int nHeight)
 	{
 		LostDevice();
-
-
 		ResetDevice();
 	}
 

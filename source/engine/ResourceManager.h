@@ -8,8 +8,6 @@ class Resource
 public:
 	virtual void*			GetBindID()		{	return nullptr;	}
 	virtual ~Resource()	{}
-	virtual void			OnReset()		{}
-	virtual void			OnLost()		{}
 
 	void*			HALHandle;
 
@@ -147,7 +145,6 @@ ResourcePtr<ResType>::operator bool() const
 
 
 class Texture;
-class VertexLayout;
 class CGeometry;
 class Material;
 class RenderTarget;

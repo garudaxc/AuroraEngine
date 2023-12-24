@@ -10,12 +10,6 @@ namespace Aurora
 
     vector<Application*>    GApplications;
 
-    extern RectSize GCanvasSize;
-
-    RectSize CCanvas::GetSize()
-    {
-        return GCanvasSize;
-    }
 
     Application* Application::GetCurrentApplication()
     {

@@ -4,7 +4,7 @@
 
 namespace Aurora
 {
-	void	GuiInit();
+	void	GuiInit(class CScreen* InScreen);
 	void	GuiNewFrame();
 	void	GuiRender();
 	void	GuiCleanup();

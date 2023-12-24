@@ -1,7 +1,7 @@
 #include "stdafx.shader"
-#include "CommonPS.shader"
 
-#include "GlobalDefine.shader"
+#include "ParameterBuffers"
+#include "CommonPS.shader"
 
 
 struct PS_INPUT
@@ -67,12 +67,12 @@ PS_OUTPUT Main(PS_INPUT input)
 	
 	float3 SpecularColor_ = float3(0.8f, 0.8f, 0.8f);
 
-	float ndl = max(0, dot(input.normal, DirectionLight0));
+	float ndl = max(0, dot(input.normal, DirectionLightDirection0));
 	float ndv = max(0, dot(input.normal, input.view));
 
 	float3 ibl = SpecularIBL(SpecularColor_, 0.1, input.normal, input.view);
 
-	c = vDiffuse.xyz * LightColor0.xyz * ndl + ibl;
+	c = vDiffuse.xyz * DirectionLightColor0.xyz * ndl + ibl;
 
 	output.c0 = float4(input.normal, 1.0);
 

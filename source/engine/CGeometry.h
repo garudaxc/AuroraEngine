@@ -47,7 +47,6 @@ namespace Aurora
     class RendererObject;
     class IRenderDevice;
     class CGeometry;
-    class VertexLayout;
     class File;
 
 
@@ -95,6 +94,31 @@ namespace Aurora
     };
 
 
+    
+    struct VertexLayoutItem
+    {
+        uint8	type;
+        uint8	usage;
+        uint8	usageIndex;
+    };
+
+    class CVertexFactory
+    {
+    public:
+
+        int GetLayoutCount() const
+        {
+            return mVertexLayouts.size();
+        }
+
+        // void AddVertexLayout(const VertexLayoutItem& In)
+
+        Array<VertexLayoutItem> mVertexLayouts;        
+    };
+
+
+    
+
 
     class CGeometry : public Resource
     {
@@ -138,9 +162,6 @@ namespace Aurora
 
         int FindStream(Vertex::ElemUsage usage, uint8 usageIndex) const;
         uint8* GetStreamPointer(Vertex::ElemUsage usage, uint8 usageIndex);
-
-        virtual void OnReset();
-        virtual void OnLost();
 
         bool Load(const TiXmlNode* pXmlMesh);
         void Save(TiXmlNode* pXmlMesh) const;

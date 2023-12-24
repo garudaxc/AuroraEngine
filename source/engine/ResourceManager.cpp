@@ -181,20 +181,10 @@ void ResourceManager::Init()
 
 void ResourceManager::OnResetDevice()
 {
-	map<string, ResPtrHolder*>::iterator it = m_Resources.begin();
-	for (; it != m_Resources.end(); ++it)
-	{
-		it->second->GetResPtr()->OnReset();
-	}
 }
 
 void ResourceManager::OnLostDevice()
 {
-	map<string, ResPtrHolder*>::iterator it = m_Resources.begin();
-	for (; it != m_Resources.end(); ++it)
-	{
-		it->second->GetResPtr()->OnLost();
-	}
 }
 
 void ResourceManager::CleanUp()

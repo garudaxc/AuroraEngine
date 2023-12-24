@@ -1,8 +1,6 @@
 
 #include "stdafx.shader"
 
-#include "GlobalDefine.shader"
-
 struct VS_INPUT
 {
     float4 Position		: SV_POSITION;
@@ -17,11 +15,12 @@ struct VS_OUTPUT
 };
 
 #ifdef VERTEX_SHADER
+#include "ParameterBuffers"
 
 VS_OUTPUT Main( VS_INPUT input )
 {
 	VS_OUTPUT output;
-	output.Position = mul(float4(input.Position.xyz, 1), matViewProj);
+	output.Position = mul(float4(input.Position.xyz, 1), mViewProjectionMatrix);
 	output.Color = input.Color;
     return output;
 }

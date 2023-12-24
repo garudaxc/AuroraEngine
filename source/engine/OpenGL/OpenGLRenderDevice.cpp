@@ -2,8 +2,8 @@
 #include <gl\gl.h>
 #include "Shader.h"
 #include "Log.h"
-
 #include "Renderer.h"
+#include "PlatformWin.h"
 
 
 #pragma comment(lib, "opengl32.lib")
@@ -79,6 +79,8 @@ namespace Aurora
     typedef void (APIENTRY * PFNGLDISABLEVERTEXATTRIBARRAYPROC)(GLuint index);
     typedef void (APIENTRY * PFNGLUNIFORM3FVPROC)(GLint location, GLsizei count, const GLfloat* value);
     typedef void (APIENTRY * PFNGLUNIFORM4FVPROC)(GLint location, GLsizei count, const GLfloat* value);
+    typedef void (APIENTRY * PFNGLCLEARDEPTHFPROC)(GLclampf depth);
+    
 
     PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
     PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
@@ -118,231 +120,61 @@ namespace Aurora
     PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
     PFNGLUNIFORM3FVPROC glUniform3fv;
     PFNGLUNIFORM4FVPROC glUniform4fv;
-
+    PFNGLCLEARDEPTHFPROC glClearDepthf;
 
     HDC m_deviceContext;
     HGLRC m_renderingContext;
 
+    #define LOAD_GL_PROC_WIN(proc, proc_def) \
+    proc = (proc_def) wglGetProcAddress(#proc); \
+    if((proc) == nullptr) \
+    { \
+        GLog->Error("wglGetProcAddress %s failed!", #proc); \
+        return false; \
+    }
+    
 
-    bool LoadExtensionList()
+    static bool LoadExtensionList()
     {
-        // Load the OpenGL extensions that this application will be using.
-        wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-        if (!wglChoosePixelFormatARB)
-        {
-            return false;
-        }
+        LOAD_GL_PROC_WIN(wglChoosePixelFormatARB, PFNWGLCHOOSEPIXELFORMATARBPROC)
+        LOAD_GL_PROC_WIN(wglCreateContextAttribsARB, PFNWGLCREATECONTEXTATTRIBSARBPROC)
+        LOAD_GL_PROC_WIN(wglSwapIntervalEXT, PFNWGLSWAPINTERVALEXTPROC)
+        LOAD_GL_PROC_WIN(glAttachShader, PFNGLATTACHSHADERPROC)
+        LOAD_GL_PROC_WIN(glBindBuffer, PFNGLBINDBUFFERPROC)
+        LOAD_GL_PROC_WIN(glBindVertexArray, PFNGLBINDVERTEXARRAYPROC)
+        LOAD_GL_PROC_WIN(glBufferData, PFNGLBUFFERDATAPROC)
+        LOAD_GL_PROC_WIN(glCompileShader, PFNGLCOMPILESHADERPROC)
+        LOAD_GL_PROC_WIN(glCreateProgram, PFNGLCREATEPROGRAMPROC)
+        LOAD_GL_PROC_WIN(glCreateShader, PFNGLCREATESHADERPROC)
+        LOAD_GL_PROC_WIN(glDeleteBuffers, PFNGLDELETEBUFFERSPROC)
+        LOAD_GL_PROC_WIN(glDeleteProgram, PFNGLDELETEPROGRAMPROC)
+        LOAD_GL_PROC_WIN(glDeleteShader, PFNGLDELETESHADERPROC)
+        LOAD_GL_PROC_WIN(glDeleteVertexArrays, PFNGLDELETEVERTEXARRAYSPROC)
+        LOAD_GL_PROC_WIN(glDetachShader, PFNGLDETACHSHADERPROC)
+        LOAD_GL_PROC_WIN(glEnableVertexAttribArray, PFNGLENABLEVERTEXATTRIBARRAYPROC)
+        LOAD_GL_PROC_WIN(glGenBuffers, PFNGLGENBUFFERSPROC)
+        LOAD_GL_PROC_WIN(glGenVertexArrays, PFNGLGENVERTEXARRAYSPROC)
+        LOAD_GL_PROC_WIN(glGetAttribLocation, PFNGLGETATTRIBLOCATIONPROC)
+        LOAD_GL_PROC_WIN(glGetProgramInfoLog, PFNGLGETPROGRAMINFOLOGPROC)
+        LOAD_GL_PROC_WIN(glGetProgramiv, PFNGLGETPROGRAMIVPROC)
+        LOAD_GL_PROC_WIN(glGetShaderInfoLog, PFNGLGETSHADERINFOLOGPROC)
+        LOAD_GL_PROC_WIN(glGetShaderiv, PFNGLGETSHADERIVPROC)
+        LOAD_GL_PROC_WIN(glLinkProgram, PFNGLLINKPROGRAMPROC)
+        LOAD_GL_PROC_WIN(glShaderSource, PFNGLSHADERSOURCEPROC)
+        LOAD_GL_PROC_WIN(glUseProgram, PFNGLUSEPROGRAMPROC)
+        LOAD_GL_PROC_WIN(glVertexAttribPointer, PFNGLVERTEXATTRIBPOINTERPROC)
+        LOAD_GL_PROC_WIN(glBindAttribLocation, PFNGLBINDATTRIBLOCATIONPROC)
+        LOAD_GL_PROC_WIN(glGetUniformLocation, PFNGLGETUNIFORMLOCATIONPROC)
+        LOAD_GL_PROC_WIN(glUniformMatrix4fv, PFNGLUNIFORMMATRIX4FVPROC)
+        LOAD_GL_PROC_WIN(glActiveTexture, PFNGLACTIVETEXTUREPROC)
+        LOAD_GL_PROC_WIN(glUniform1i, PFNGLUNIFORM1IPROC)
+        LOAD_GL_PROC_WIN(glGenerateMipmap, PFNGLGENERATEMIPMAPPROC)
+        LOAD_GL_PROC_WIN(glDisableVertexAttribArray, PFNGLDISABLEVERTEXATTRIBARRAYPROC)
+        LOAD_GL_PROC_WIN(glUniform3fv, PFNGLUNIFORM3FVPROC)
+        LOAD_GL_PROC_WIN(glUniform4fv, PFNGLUNIFORM4FVPROC)
+        LOAD_GL_PROC_WIN(glClearDepthf, PFNGLCLEARDEPTHFPROC)
 
-        wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
-        if (!wglCreateContextAttribsARB)
-        {
-            return false;
-        }
-
-        wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
-        if (!wglSwapIntervalEXT)
-        {
-            return false;
-        }
-
-        glAttachShader = (PFNGLATTACHSHADERPROC)wglGetProcAddress("glAttachShader");
-        if (!glAttachShader)
-        {
-            return false;
-        }
-
-        glBindBuffer = (PFNGLBINDBUFFERPROC)wglGetProcAddress("glBindBuffer");
-        if (!glBindBuffer)
-        {
-            return false;
-        }
-
-        glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)wglGetProcAddress("glBindVertexArray");
-        if (!glBindVertexArray)
-        {
-            return false;
-        }
-
-        glBufferData = (PFNGLBUFFERDATAPROC)wglGetProcAddress("glBufferData");
-        if (!glBufferData)
-        {
-            return false;
-        }
-
-        glCompileShader = (PFNGLCOMPILESHADERPROC)wglGetProcAddress("glCompileShader");
-        if (!glCompileShader)
-        {
-            return false;
-        }
-
-        glCreateProgram = (PFNGLCREATEPROGRAMPROC)wglGetProcAddress("glCreateProgram");
-        if (!glCreateProgram)
-        {
-            return false;
-        }
-
-        glCreateShader = (PFNGLCREATESHADERPROC)wglGetProcAddress("glCreateShader");
-        if (!glCreateShader)
-        {
-            return false;
-        }
-
-        glDeleteBuffers = (PFNGLDELETEBUFFERSPROC)wglGetProcAddress("glDeleteBuffers");
-        if (!glDeleteBuffers)
-        {
-            return false;
-        }
-
-        glDeleteProgram = (PFNGLDELETEPROGRAMPROC)wglGetProcAddress("glDeleteProgram");
-        if (!glDeleteProgram)
-        {
-            return false;
-        }
-
-        glDeleteShader = (PFNGLDELETESHADERPROC)wglGetProcAddress("glDeleteShader");
-        if (!glDeleteShader)
-        {
-            return false;
-        }
-
-        glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)wglGetProcAddress("glDeleteVertexArrays");
-        if (!glDeleteVertexArrays)
-        {
-            return false;
-        }
-
-        glDetachShader = (PFNGLDETACHSHADERPROC)wglGetProcAddress("glDetachShader");
-        if (!glDetachShader)
-        {
-            return false;
-        }
-
-        glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glEnableVertexAttribArray");
-        if (!glEnableVertexAttribArray)
-        {
-            return false;
-        }
-
-        glGenBuffers = (PFNGLGENBUFFERSPROC)wglGetProcAddress("glGenBuffers");
-        if (!glGenBuffers)
-        {
-            return false;
-        }
-
-        glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)wglGetProcAddress("glGenVertexArrays");
-        if (!glGenVertexArrays)
-        {
-            return false;
-        }
-
-        glGetAttribLocation = (PFNGLGETATTRIBLOCATIONPROC)wglGetProcAddress("glGetAttribLocation");
-        if (!glGetAttribLocation)
-        {
-            return false;
-        }
-
-        glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)wglGetProcAddress("glGetProgramInfoLog");
-        if (!glGetProgramInfoLog)
-        {
-            return false;
-        }
-
-        glGetProgramiv = (PFNGLGETPROGRAMIVPROC)wglGetProcAddress("glGetProgramiv");
-        if (!glGetProgramiv)
-        {
-            return false;
-        }
-
-        glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)wglGetProcAddress("glGetShaderInfoLog");
-        if (!glGetShaderInfoLog)
-        {
-            return false;
-        }
-
-        glGetShaderiv = (PFNGLGETSHADERIVPROC)wglGetProcAddress("glGetShaderiv");
-        if (!glGetShaderiv)
-        {
-            return false;
-        }
-
-        glLinkProgram = (PFNGLLINKPROGRAMPROC)wglGetProcAddress("glLinkProgram");
-        if (!glLinkProgram)
-        {
-            return false;
-        }
-
-        glShaderSource = (PFNGLSHADERSOURCEPROC)wglGetProcAddress("glShaderSource");
-        if (!glShaderSource)
-        {
-            return false;
-        }
-
-        glUseProgram = (PFNGLUSEPROGRAMPROC)wglGetProcAddress("glUseProgram");
-        if (!glUseProgram)
-        {
-            return false;
-        }
-
-        glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)wglGetProcAddress("glVertexAttribPointer");
-        if (!glVertexAttribPointer)
-        {
-            return false;
-        }
-
-        glBindAttribLocation = (PFNGLBINDATTRIBLOCATIONPROC)wglGetProcAddress("glBindAttribLocation");
-        if (!glBindAttribLocation)
-        {
-            return false;
-        }
-
-        glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)wglGetProcAddress("glGetUniformLocation");
-        if (!glGetUniformLocation)
-        {
-            return false;
-        }
-
-        glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC)wglGetProcAddress("glUniformMatrix4fv");
-        if (!glUniformMatrix4fv)
-        {
-            return false;
-        }
-
-        glActiveTexture = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress("glActiveTexture");
-        if (!glActiveTexture)
-        {
-            return false;
-        }
-
-        glUniform1i = (PFNGLUNIFORM1IPROC)wglGetProcAddress("glUniform1i");
-        if (!glUniform1i)
-        {
-            return false;
-        }
-
-        glGenerateMipmap = (PFNGLGENERATEMIPMAPPROC)wglGetProcAddress("glGenerateMipmap");
-        if (!glGenerateMipmap)
-        {
-            return false;
-        }
-
-        glDisableVertexAttribArray = (PFNGLDISABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glDisableVertexAttribArray");
-        if (!glDisableVertexAttribArray)
-        {
-            return false;
-        }
-
-        glUniform3fv = (PFNGLUNIFORM3FVPROC)wglGetProcAddress("glUniform3fv");
-        if (!glUniform3fv)
-        {
-            return false;
-        }
-
-        glUniform4fv = (PFNGLUNIFORM4FVPROC)wglGetProcAddress("glUniform4fv");
-        if (!glUniform4fv)
-        {
-            return false;
-        }
-
+        // GLog->Info("glClearDepthf %p", glClearDepthf);
 
         return true;
     }
@@ -468,14 +300,13 @@ namespace Aurora
             0, // End
         };
 
-
         // Query for a pixel format that fits the attributes we want.
         result = wglChoosePixelFormatARB(m_deviceContext, attribList, NULL, 1, pixelFormat, &formatCount);
         if (result != 1 || formatCount == 0)
         {
+            GLog->Error("open gl wglChoosePixelFormatARB failed!");
             return false;
         }
-
         
         PIXELFORMATDESCRIPTOR pfd = {0};
 
@@ -567,7 +398,6 @@ namespace Aurora
 
     bool InitializeOpenGLDevice(HWND hwnd, int InWidth, int InHeight)
     {
-
         auto CreateDummyWindow = []()
         {
             int width = 800;
@@ -624,31 +454,35 @@ namespace Aurora
         bool result = InitializeGLExtensions(TempWindow);
         if(!result)
         {
-            // MessageBox(hwnd, L"Could not initialize the OpenGL extensions.", L"Error", MB_OK);
+            GLog->Error("Could not initialize the OpenGL extensions.");
             return false;
         }
 
         result = InitializeOpenGL(hwnd, InWidth, InHeight, false);
         if(!result)
         {
-            // MessageBox(m_hwnd, L"Could not initialize OpenGL, check if video card supports OpenGL 4.0.", L"Error", MB_OK);
+            GLog->Error("Could not initialize OpenGL, check if video card supports OpenGL 4.0.");
             return false;
         }
-
 
         return true;
     }
 
 
+
     class GLRenderDevice : public IRenderDevice
     {
     public:
+        ~GLRenderDevice() override;
         GPUShaderObject* CreateGPUShaderObject(const ShaderCode& code, BaseShader* InShader) override;
         Texture* CreateTexture(File* file) override;
         Texture* CreateTexture(Texture::Type type, const Texture::Desc& desc) override;
         RenderTarget* CreateRenderTarget(const RenderTarget::Desc& desc) override;
         void Clear(int clearMask, const Color& clearColor, float fDepth, uint8 nStencil) override;
         void Present() override;
+        CGPUGeometryBuffer* CreateGeometryBuffer(const CGeometry* InGeometry) override;
+        GPUShaderParameterBuffer* CreateShaderParameterBuffer(CShaderParameterBuffer* InBuffer) override;
+        void UpdateGPUShaderParameterBuffer(GPUShaderParameterBuffer* InBuffer, const Array<int8>& InData) override;
         RenderTarget* GetFrameBuffer() override;
         RenderTarget* GetDepthStencil() override;
         void GetFrameBufferSize(uint& nWidth, uint& nHeight) override;
@@ -656,20 +490,38 @@ namespace Aurora
         void SetDepthStencil(RenderTarget* pDepthStencil) override;
         void SetRenderTarget(uint nRTs, RenderTarget** pRenderTargets, RenderTarget* pDepthStencil) override;
         void ExecuteOperator(const RenderOperator& op) override;
-        Handle CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParameterBindings& bindings) override;
-        void UpdateShaderParameter(Handle bindingHandle, const CShaderParameterContainer* InParameterContainer) override;
         void BindVertexShader(GPUShaderObject* shaderHandle) override;
         void BindPixelShader(GPUShaderObject* shaderHandle) override;
         Handle CreateShaderTextureBinding(GPUShaderObject* shaderHandle, const ShaderTextureBinding& bindings) override;
         void BindTexture(Handle binding, Texture* texture) override;
-        void BindGlobalParameter(Handle handle) override;
         Handle CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems) override;
-        Handle CreateVertexBufferHandle(const void* data, int32 size) override;
-        Handle CreateIndexBufferHandle(const void* data, int32 size) override;
     };
 
 
+    GLRenderDevice::~GLRenderDevice()
+    {
+    }
+    
+    static GLRenderDevice GLRenderDevice;
+    
 
+    
+    bool CreateOpenGLDevice(CScreen* InScreen)
+    {
+        HWND MainWnd = GetHWNDFromScreen(InScreen);
+
+        RectSize ScreenSize = InScreen->GetSize();
+
+        if(!InitializeOpenGLDevice(MainWnd, ScreenSize.Width, ScreenSize.Height))
+        {
+            GLog->Error("InitializeOpenGLDevice failed!");
+            return false;
+        }
+
+        GRenderDevice = &GLRenderDevice;
+        
+        return true;
+    }
 
 
 
@@ -695,14 +547,75 @@ namespace Aurora
     }
     
     void GLRenderDevice::Clear(int clearMask, const Color& clearColor, float fDepth, uint8 nStencil)
-    {
-        
+    {        
+        glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+
+        glClearDepthf(fDepth);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);        
     }
     
     void GLRenderDevice::Present()
     {
     }
+
+    class CGPUGeometryBufferGL : public CGPUGeometryBuffer
+    {
+    public:
+        
+
+    };
     
+    CGPUGeometryBuffer* GLRenderDevice::CreateGeometryBuffer(const CGeometry* InGeometry)
+    {        
+        GLuint vertexBuffer;
+        GLuint indexBuffer;
+        
+        vector<int8> vertexData;
+        InGeometry->PrepareVertexData(vertexData, CGeometry::VertexLayoutPosNormTangentTex);
+        
+        // glGenBuffers(1, &vertexBuffer);
+        // glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        // glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+        //
+        // glEnableVertexAttribArray(0);
+        // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(MyVertex), BUFFER_OFFSET(0));
+        //
+        // glEnableVertexAttribArray(1);
+        // glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(MyVertex), BUFFER_OFFSET(12));
+        //
+        // glEnableVertexAttribArray(2);
+        // glVertexAttribPointer(2, 2, GL_FLOAT,  GL_FALSE, sizeof(MyVertex), BUFFER_OFFSET(28));
+
+
+        unsigned int indexdata[] = 
+        {
+            0, 1, 2, 2, 1, 3
+        };
+
+        glGenBuffers(1, &indexBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexdata), 
+                        indexdata, GL_STATIC_DRAW);
+
+        glBindVertexArray(0);
+
+
+        
+    
+        
+        return IRenderDevice::CreateGeometryBuffer(InGeometry);
+    }
+    
+    GPUShaderParameterBuffer* GLRenderDevice::CreateShaderParameterBuffer(CShaderParameterBuffer* InBuffer)
+    {
+        return IRenderDevice::CreateShaderParameterBuffer(InBuffer);
+    }
+    
+    void GLRenderDevice::UpdateGPUShaderParameterBuffer(GPUShaderParameterBuffer* InBuffer, const Array<int8>& InData)
+    {
+        IRenderDevice::UpdateGPUShaderParameterBuffer(InBuffer, InData);
+    }
+
     RenderTarget* GLRenderDevice::GetFrameBuffer()
     {
         return nullptr;
@@ -734,14 +647,6 @@ namespace Aurora
     {
     }
     
-    Handle GLRenderDevice::CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParameterBindings& bindings)
-    {
-        return 0;
-    }
-    
-    void GLRenderDevice::UpdateShaderParameter(Handle bindingHandle, const CShaderParameterContainer* InParameterContainer)
-    {
-    }
     
     void GLRenderDevice::BindVertexShader(GPUShaderObject* shaderHandle)
     {
@@ -760,11 +665,6 @@ namespace Aurora
     {
     }
     
-    void GLRenderDevice::BindGlobalParameter(Handle handle)
-    {
-    }
-
-    
     struct VertexLayoutInfo
     {
         
@@ -779,13 +679,4 @@ namespace Aurora
         return 0;
     }
     
-    Handle GLRenderDevice::CreateVertexBufferHandle(const void* data, int32 size)
-    {
-        return 0;
-    }
-    
-    Handle GLRenderDevice::CreateIndexBufferHandle(const void* data, int32 size)
-    {
-        return 0;
-    }
 }

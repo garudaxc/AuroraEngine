@@ -37,9 +37,7 @@ namespace Aurora
         {
         }
 
-        RectSize()
-        {
-        }
+        RectSize() = default;
 
         int32 Width = 0;
         int32 Height = 0;

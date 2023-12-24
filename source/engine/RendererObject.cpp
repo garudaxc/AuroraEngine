@@ -12,8 +12,6 @@
 
 namespace Aurora
 {
-    VertexLayout* VertexLayout::PositionNormalTangentTexture = nullptr;    
-    VertexLayout* VertexLayout::PositionTexture = nullptr;
-    VertexLayout* VertexLayout::Position = nullptr;
+    
 
 }

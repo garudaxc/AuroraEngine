@@ -3,17 +3,17 @@
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
 #include <d3d11.h>
+#include "PlatformWin.h"
 
 namespace Aurora
 {
 
 
-	extern HWND	GMainHWnd;
 	extern ID3D11Device* D3D11Device;
 	extern ID3D11DeviceContext* ImmediateContext;
 
 
-	void	GuiInit()
+	void GuiInit(CScreen* InScreen)
 	{
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -24,9 +24,10 @@ namespace Aurora
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();
 		//ImGui::StyleColorsClassic();
-
+		
+		HWND MainHWnd = GetHWNDFromScreen(InScreen);
 		// Setup Platform/Renderer bindings
-		ImGui_ImplWin32_Init(GMainHWnd);
+		ImGui_ImplWin32_Init(MainHWnd);
 		ImGui_ImplDX11_Init(D3D11Device, ImmediateContext);
 	}
 

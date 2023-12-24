@@ -94,12 +94,15 @@ public:
     IScene* m_pScene;
     
     Camera camera_;
-    // RectSize mainView_;
+
+    CScreen*    mMainScreen = nullptr;
 };
 
 
 bool MyApp::OnInitApp()
 {
+    mMainScreen = CPlatform::MainScreen;
+    
     cameraControl_.Transform_.LootAt(Vector3f(0.f, -2.0f, 1.0f), Vector3f(0.0f, 0.0f, 0.0f), Vector3f::UNIT_Z);
 
     camera_.SetFov(Mathf::PI / 4.0f);
@@ -181,9 +184,8 @@ bool show_demo_window = true;
 Color  clearColor;
 
 void MyApp::OnRender()
-{
-    const RectSize CanvasSize = CCanvas::GetSize();
-    SceneView* pRenderView = m_pScene->MakeSceneView(&camera_, CanvasSize);
+{    
+    SceneView* pRenderView = m_pScene->MakeSceneView(&camera_, mMainScreen->GetSize());
 
      if (pRenderView)
      {
@@ -193,7 +195,7 @@ void MyApp::OnRender()
     
     GFrameMemoryBuffer->Clear();
 
-    DrawGrid();
+    // DrawGrid();
 
     GuiNewFrame();
     // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.

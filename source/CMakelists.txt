@@ -51,8 +51,13 @@ file(GLOB SHADER_FILES "../dev/data/shader/*.shader")
 
 if(CMAKE_HOST_WIN32)
 	message("CMAKE_HOST_WIN32 " ${CMAKE_HOST_WIN32})
+	
+    include_directories(platform/windows)
+	file(GLOB PLATFORM_H_FILES "platform/windows/*.h")
+	
 	aux_source_directory(ThirdParty/imgui/win srcs)
 	aux_source_directory(platform/windows srcs)
+	
 		# # # # include_directories(../code/win)
 		# # # # aux_source_directory(../code/win srcs)
 		# # # # link_directories(../libs/win32)
@@ -89,9 +94,10 @@ function(DefineAProject projectName projsrc)
 	
 	source_group_by_dir(srcs)
 	source_group_by_dir(H_FILES)
+	source_group_by_dir(PLATFORM_H_FILES)
 	source_group_by_dir(SHADER_FILES)
 	
-	add_executable(${ARGV0} WIN32 ${srcs} ${H_FILES} ${ARGV1} ${SHADER_FILES})
+	add_executable(${ARGV0} WIN32 ${srcs} ${H_FILES} ${ARGV1} ${SHADER_FILES} ${PLATFORM_H_FILES})
 	target_link_libraries(${ARGV0} winmm.lib)
 	set_target_properties(${ARGV0} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
 	set_target_properties(${ARGV0} PROPERTIES PDB_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)

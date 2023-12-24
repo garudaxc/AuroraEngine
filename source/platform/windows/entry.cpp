@@ -8,18 +8,34 @@ IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARA
 
 namespace Aurora
 {
-    HWND GMainHWnd = nullptr;
-    HINSTANCE ModuleInstance = nullptr;
+    class CScreenWindows : public CScreen
+    {
+    public:
+        CScreenWindows()
+        {
+            CPlatform::MainScreen = this;
+        }
+        
+        HWND MainHWnd = nullptr;
+        HINSTANCE ModuleInstance = nullptr;        
+    };
+    
+    static CScreenWindows GMainScreen;
 
-    RectSize    GCanvasSize;
+    
+    HWND GetHWNDFromScreen(CScreen* InScreen)
+    {
+        auto WindowsScreen = static_cast<CScreenWindows*>(InScreen);
+        return WindowsScreen->MainHWnd;        
+    }
 
 
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     bool CreateCanvas(int nWidth, int nHeight)
     {
-        ModuleInstance = ::GetModuleHandle(nullptr);
-        static wchar_t s_acWindowClass[] = L"GaEngine Application";
+        GMainScreen.ModuleInstance = ::GetModuleHandle(nullptr);
+        static wchar_t s_acWindowClass[] = L"Aurora Engine";
         // Register the window class
         WNDCLASSEXW wc;
         wc.cbSize = sizeof(wc);
@@ -27,7 +43,7 @@ namespace Aurora
         wc.lpfnWndProc = WndProc;
         wc.cbClsExtra = 0;
         wc.cbWndExtra = 0;
-        wc.hInstance = ModuleInstance;
+        wc.hInstance = GMainScreen.ModuleInstance;
         wc.hIcon = nullptr;
         wc.hCursor = ::LoadCursor(nullptr, IDC_ARROW);
         wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
@@ -52,23 +68,23 @@ namespace Aurora
 
         const wchar_t* appName = L"Aurora";
 
-        GMainHWnd = CreateWindowExW(WS_EX_APPWINDOW, s_acWindowClass, appName, dwWindowStyle,
+        GMainScreen.MainHWnd = CreateWindowExW(WS_EX_APPWINDOW, s_acWindowClass, appName, dwWindowStyle,
                                     CW_USEDEFAULT, CW_USEDEFAULT, rcWindow.right - rcWindow.left,
-                                    rcWindow.bottom - rcWindow.top, NULL, NULL, ModuleInstance, NULL);
+                                    rcWindow.bottom - rcWindow.top, NULL, NULL, GMainScreen.ModuleInstance, NULL);
         // GMainHWnd = CreateWindowW(s_acWindowClass, appName, dwWindowStyle,
         // 	CW_USEDEFAULT, CW_USEDEFAULT, rcWindow.right - rcWindow.left, 
         // 	rcWindow.bottom - rcWindow.top, 0, 0, ModuleInstance, 0);
 
-        if (!GMainHWnd)
+        if (!GMainScreen.MainHWnd)
         {
             return false;
         }
 
-        ShowWindow(GMainHWnd, SW_SHOW);
-        UpdateWindow(GMainHWnd);
-
-        GCanvasSize.Width = nWidth;
-        GCanvasSize.Height = nHeight;
+        ShowWindow(GMainScreen.MainHWnd, SW_SHOW);
+        UpdateWindow(GMainScreen.MainHWnd);
+        
+        GMainScreen.mScreenSize.Width = nWidth;
+        GMainScreen.mScreenSize.Height = nHeight;
         
         return true;
     }
@@ -304,7 +320,7 @@ namespace Aurora
         };
 
         GEngineInstance = Engine::Create();
-        GEngineInstance->Init(Width, Height);
+        GEngineInstance->Init(&GMainScreen);
 
         EngineLoop();
 

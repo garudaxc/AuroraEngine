@@ -69,7 +69,6 @@ namespace Aurora
 
         ShaderType type_ = VERTEX_SHADER;
 
-        ShaderParameterBindings bindings_;
         GPUShaderObject* mDeviceHandle = nullptr;
         string name_{"test shader"};
 
@@ -241,14 +240,19 @@ namespace Aurora
     class CViewShaderParameterBuffer : public CShaderParameterBuffer
     {
     public:
-        CViewShaderParameterBuffer():CShaderParameterBuffer("View") {}
+        static CShaderParameterBuffer* Instance;
+        
+        CViewShaderParameterBuffer():CShaderParameterBuffer("View")
+        {
+            Instance = this;
+        }
         
         DEFINE_SHADER_PARAMETER(mViewMatrix, ShaderParameterMatrix);
+        DEFINE_SHADER_PARAMETER(mViewMatrixInverse, ShaderParameterMatrix);
         DEFINE_SHADER_PARAMETER(mProjectionMatrix, ShaderParameterMatrix);
         DEFINE_SHADER_PARAMETER(mViewProjectionMatrix, ShaderParameterMatrix);
-        DEFINE_SHADER_PARAMETER(DirectionLight0, ShaderParameterFloat3);
-        DEFINE_SHADER_PARAMETER(LightColor0, ShaderParameterFloat4);
-        
+        DEFINE_SHADER_PARAMETER(DirectionLightDirection0, ShaderParameterFloat3);
+        DEFINE_SHADER_PARAMETER(DirectionLightColor0, ShaderParameterFloat4);        
     };
 
 
@@ -259,10 +263,6 @@ namespace Aurora
         ~ModelShaderVS() override;
 
         void Initialize();
-
-        void CreateBindings();
-
-        Matrix4f matWorld;
 
         DEFINE_SHADER_PARAMETER(mWorldMatrix, ShaderParameterMatrix);
 
@@ -276,10 +276,6 @@ namespace Aurora
         ~ModelShaderPS() override;
 
         void Initialize();
-
-        void CreateBindings();
-
-        void BindTextureToRender(Texture* texture, Texture* envTex);
 
     private:
         ShaderTextureBinding texBinding_;

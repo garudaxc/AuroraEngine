@@ -8,11 +8,6 @@
 
 namespace Aurora
 {
-    class CCanvas
-    {
-    public:        
-        static RectSize GetSize();
-    };
 
     
     class Application

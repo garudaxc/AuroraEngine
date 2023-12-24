@@ -469,12 +469,6 @@ void CGeometry::PrepareIndexData(vector<int8>& InData) const
 }
 
 
-void CGeometry::OnReset() {
-}
-
-void CGeometry::OnLost() {
-}
-
 
 
 struct Triangle

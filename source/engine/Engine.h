@@ -9,19 +9,9 @@ namespace Aurora
 	class IRenderDevice;
 	class Timer;
 	class ResourceManager;
+	class CScreen;
 
 	Engine*		GetEngine();
-
-
-
-	struct Window
-	{
-		int32		width;
-		int32		height;
-	};
-
-	extern Window GMainWindow;
-
 
 
 	class Engine
@@ -30,7 +20,7 @@ namespace Aurora
 		static Engine*		Create();
 
 		~Engine();
-		void			Init(int nWidth, int nHeight);
+		void			Init(CScreen* InScreen);
 		void			Destroy();
 
 		IRenderDevice*		GetRenderer();
