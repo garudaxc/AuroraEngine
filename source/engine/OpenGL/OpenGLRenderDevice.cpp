@@ -468,6 +468,50 @@ namespace Aurora
         return true;
     }
 
+    char const* glErrorString(GLenum const err) noexcept
+    {
+        switch (err)
+        {
+            // opengl 2 errors (8)
+            case GL_NO_ERROR:
+                return "GL_NO_ERROR";
+
+        case GL_INVALID_ENUM:
+            return "GL_INVALID_ENUM";
+
+        case GL_INVALID_VALUE:
+            return "GL_INVALID_VALUE";
+
+        case GL_INVALID_OPERATION:
+            return "GL_INVALID_OPERATION";
+
+        case GL_STACK_OVERFLOW:
+            return "GL_STACK_OVERFLOW";
+
+        case GL_STACK_UNDERFLOW:
+            return "GL_STACK_UNDERFLOW";
+
+        case GL_OUT_OF_MEMORY:
+            return "GL_OUT_OF_MEMORY";
+
+        default:
+                assert(!"unknown error");
+            return nullptr;
+        }
+    }
+
+    bool TestNoGLError(const String& Message = "")
+    {
+        GLenum err;
+        bool NoError = true;
+        while((err = glGetError()) != GL_NO_ERROR)
+        {
+            GLog->Error("GL error : %s (%s)", glErrorString(err), Message.c_str());
+            NoError = false;
+        }
+
+        return NoError;
+    }
 
 
     class GLRenderDevice : public IRenderDevice
@@ -480,7 +524,7 @@ namespace Aurora
         RenderTarget* CreateRenderTarget(const RenderTarget::Desc& desc) override;
         void Clear(int clearMask, const Color& clearColor, float fDepth, uint8 nStencil) override;
         void Present() override;
-        CGPUGeometryBuffer* CreateGeometryBuffer(const CGeometry* InGeometry) override;
+        CGPUGeometryBuffer* CreateGeometryBuffer(const CGeometry* InGeometry, CVertexFactory* InVertexFactory) override;
         GPUShaderParameterBuffer* CreateShaderParameterBuffer(CShaderParameterBuffer* InBuffer) override;
         void UpdateGPUShaderParameterBuffer(GPUShaderParameterBuffer* InBuffer, const Array<int8>& InData) override;
         RenderTarget* GetFrameBuffer() override;
@@ -494,7 +538,6 @@ namespace Aurora
         void BindPixelShader(GPUShaderObject* shaderHandle) override;
         Handle CreateShaderTextureBinding(GPUShaderObject* shaderHandle, const ShaderTextureBinding& bindings) override;
         void BindTexture(Handle binding, Texture* texture) override;
-        Handle CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems) override;
     };
 
 
@@ -522,7 +565,6 @@ namespace Aurora
         
         return true;
     }
-
 
 
 
@@ -560,25 +602,38 @@ namespace Aurora
 
     class CGPUGeometryBufferGL : public CGPUGeometryBuffer
     {
-    public:
-        
-
+    public:    
+        GLuint mVertexBuffer = -1;
+        GLuint mIndexBuffer = -1;
+        GLenum IndexType;
     };
     
-    CGPUGeometryBuffer* GLRenderDevice::CreateGeometryBuffer(const CGeometry* InGeometry)
+#define BUFFER_OFFSET(offset) reinterpret_cast<GLvoid*>(offset)
+    CGPUGeometryBuffer* GLRenderDevice::CreateGeometryBuffer(const CGeometry* InGeometry, CVertexFactory* InVertexFactory)
     {        
         GLuint vertexBuffer;
         GLuint indexBuffer;
         
         vector<int8> vertexData;
-        InGeometry->PrepareVertexData(vertexData, CGeometry::VertexLayoutPosNormTangentTex);
+        InGeometry->PrepareVertexData(vertexData, InVertexFactory->mVertexLayouts);
         
-        // glGenBuffers(1, &vertexBuffer);
-        // glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-        // glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-        //
-        // glEnableVertexAttribArray(0);
-        // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(MyVertex), BUFFER_OFFSET(0));
+        glGenBuffers(1, &vertexBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+        glBufferData(GL_ARRAY_BUFFER, (ptrdiff_t)vertexData.size(), vertexData.data(), GL_STATIC_DRAW);
+
+        {
+            int Index = 0;
+            int Offset = 0;
+            uint Stride = InVertexFactory->GetStride();
+            for(auto& VertexItem : InVertexFactory->mVertexLayouts)
+            {
+                uint NumElement = Vertex::NumElement((Vertex::ElemType)(VertexItem.type));
+                glEnableVertexAttribArray(Index);
+                glVertexAttribPointer(Index, (int)NumElement, GL_FLOAT, GL_FALSE, Stride, BUFFER_OFFSET(Offset));
+                Offset += CGeometry::GetSizeOfType((Vertex::ElemType)VertexItem.type);
+            }            
+        }
+        
         //
         // glEnableVertexAttribArray(1);
         // glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(MyVertex), BUFFER_OFFSET(12));
@@ -586,24 +641,28 @@ namespace Aurora
         // glEnableVertexAttribArray(2);
         // glVertexAttribPointer(2, 2, GL_FLOAT,  GL_FALSE, sizeof(MyVertex), BUFFER_OFFSET(28));
 
-
-        unsigned int indexdata[] = 
-        {
-            0, 1, 2, 2, 1, 3
-        };
-
+        vector<int8> IndexData;
+        InGeometry->PrepareIndexData(IndexData);
+        
         glGenBuffers(1, &indexBuffer);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexdata), 
-                        indexdata, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, IndexData.size(), IndexData.data(), GL_STATIC_DRAW);
 
         glBindVertexArray(0);
-
-
         
-    
+        if(!TestNoGLError("GLRenderDevice::CreateGeometryBuffer"))
+        {
+            return nullptr;
+        }
+
+        CGPUGeometryBufferGL* GPUBuffer = new CGPUGeometryBufferGL();
+        GPUBuffer->mVertexBuffer = vertexBuffer;
+        GPUBuffer->mIndexBuffer = indexBuffer;
+
+        assert(InGeometry->GetIndexStride() > 0);
+        GPUBuffer->IndexType = InGeometry->GetIndexStride() == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
         
-        return IRenderDevice::CreateGeometryBuffer(InGeometry);
+        return GPUBuffer;
     }
     
     GPUShaderParameterBuffer* GLRenderDevice::CreateShaderParameterBuffer(CShaderParameterBuffer* InBuffer)
@@ -671,12 +730,5 @@ namespace Aurora
     };
     static vector<VertexLayoutInfo*>  VertexLayouts_;
     
-    Handle GLRenderDevice::CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems)
-    {
-        
-
-        
-        return 0;
-    }
     
 }

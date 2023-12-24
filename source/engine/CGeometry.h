@@ -84,16 +84,18 @@ namespace Aurora
             USAGE_BLENDWEIGHT,
             USAGE_INDEX,
         };
+
+        static uint NumElement(Vertex::ElemType type);
+
     };
 
     class CGPUGeometryBuffer
     {
     public:
-        virtual ~CGPUGeometryBuffer() = default;        
+        virtual ~CGPUGeometryBuffer() = default;
         
     };
-
-
+    
     
     struct VertexLayoutItem
     {
@@ -111,21 +113,49 @@ namespace Aurora
             return mVertexLayouts.size();
         }
 
-        // void AddVertexLayout(const VertexLayoutItem& In)
+        void AddVertexLayout(const VertexLayoutItem& InItem)
+        {
+            mVertexLayouts.push_back(InItem);
+        }
 
-        Array<VertexLayoutItem> mVertexLayouts;        
+        uint32 GetStride() const
+        {
+            return mStride;
+        }
+
+        Array<VertexLayoutItem> mVertexLayouts;
+        uint32 mStride = 0;        
+        
+        Handle VertexLayout = -1;
+
+    protected:
+        uint32 CalcVertexStride() const;
+        
     };
 
 
-    
+    // position normal tangent UV 
+    class CVertexFactoryPNTT : public CVertexFactory
+    {
+    public:
+        static CVertexFactory* Instance;
+        
+        CVertexFactoryPNTT()
+        {            
+            AddVertexLayout({Vertex::TYPE_FLOAT3, Vertex::USAGE_POSITION, 0});
+            AddVertexLayout({Vertex::TYPE_FLOAT3, Vertex::USAGE_NORMAL, 0});
+            AddVertexLayout({Vertex::TYPE_FLOAT4, Vertex::USAGE_TANGENT, 0});
+            AddVertexLayout({Vertex::TYPE_FLOAT2, Vertex::USAGE_TEXCOORD, 0});
+
+            mStride = CalcVertexStride();
+        }        
+    };
 
 
     class CGeometry : public Resource
     {
     public:
-        static constexpr uint GetSizeOfType(Vertex::ElemType type);
-
-        static vector<VertexLayoutItem> VertexLayoutPosNormTangentTex;
+        static uint GetSizeOfType(Vertex::ElemType type);
 
         struct Stream_t
         {
@@ -144,8 +174,8 @@ namespace Aurora
         CGeometry();
         ~CGeometry() override = default;
 
+        uint GetIndexStride() const;
 
-        static int32 CalcVertexStride(const vector<VertexLayoutItem>& layout);
 
         uint GetNumVertex() const { return mNumVertex; }
         uint GetNumTri() const { return mNumIndex / 3; }

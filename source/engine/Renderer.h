@@ -16,6 +16,7 @@ namespace Aurora
     class RenderTarget;
     class StateValuePair;
     class CShaderParameterContainer;
+    class CVertexFactory;
 
 
     extern IRenderDevice* GRenderDevice;
@@ -34,33 +35,29 @@ namespace Aurora
 
         RenderOperator() = default;
 
-        RenderOperator(Handle InVertexLayout, CGPUGeometryBuffer* InGeometryBuffer,
+        RenderOperator(CGPUGeometryBuffer* InGeometryBuffer,
                        EPrimitiveType InPrimType, int32 InBaseVertexIndex, uint InStartIndex,
-                       int32 InIndexCount, uint32 InVertexStride)
+                       int32 InIndexCount, CVertexFactory* InVertexFactory)
         {
-            VertexLayout = InVertexLayout;
             GeometryBuffer = InGeometryBuffer;
             PrimType = InPrimType;
             BaseVertexIndex = InBaseVertexIndex;
             StartIndex = InStartIndex;
             IndexCount = InIndexCount;
-            VertexStride = InVertexStride;
+            mVertexFactory = InVertexFactory;
         }
 
 
         Material* pMaterial = nullptr;
         MaterialInstance* pMtlInst = nullptr;
         CGPUGeometryBuffer* GeometryBuffer = nullptr;
+        CVertexFactory* mVertexFactory = nullptr;
 
         EPrimitiveType PrimType = PT_TRIANGLELIST;
-
-        Handle VertexLayout = -1;
 
         int32 BaseVertexIndex;
         uint StartIndex;
         int32 IndexCount;
-        uint32 VertexStride;
-        
     };
 
 
@@ -175,9 +172,7 @@ namespace Aurora
         virtual Handle CreateShaderTextureBinding(GPUShaderObject* shaderHandle, const ShaderTextureBinding& bindings) = 0;
         virtual void BindTexture(Handle binding, Texture* texture) = 0;
 
-        virtual Handle CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems) = 0;        
-
-        virtual CGPUGeometryBuffer* CreateGeometryBuffer(const CGeometry* InGeometry) { return nullptr; }
+        virtual CGPUGeometryBuffer* CreateGeometryBuffer(const CGeometry* InGeometry, CVertexFactory* InVertexFactory) { return nullptr; }
 
         virtual GPUShaderParameterBuffer*   CreateShaderParameterBuffer(CShaderParameterBuffer* InBuffer) { return nullptr; }
 

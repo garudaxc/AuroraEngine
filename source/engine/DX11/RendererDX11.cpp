@@ -349,13 +349,13 @@ namespace Aurora
 		Handle CreateShaderTextureBinding(GPUShaderObject* shaderHandle, const ShaderTextureBinding& bindings) override;
 		void BindTexture(Handle binding, Texture* texture) override;
 
-		Handle CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems) override;
+		Handle CreateVertexLayoutHandle(const vector<VertexLayoutItem>& layoutItems);
 
 
 		Handle CreateVertexBufferHandle(const void* data, int32 size);
 		Handle CreateIndexBufferHandle(const void* data, int32 size);
 
-		CGPUGeometryBuffer* CreateGeometryBuffer(const CGeometry* InGeometry) override;
+		CGPUGeometryBuffer* CreateGeometryBuffer(const CGeometry* InGeometry, CVertexFactory* InVertexFactory) override;
 		
 		GPUShaderParameterBuffer* CreateShaderParameterBuffer(CShaderParameterBuffer* InBuffer) override;
 
@@ -1458,12 +1458,17 @@ namespace Aurora
 	}
 	
 	
-	CGPUGeometryBuffer* RendererDx11::CreateGeometryBuffer(const CGeometry* InGeometry)
+	CGPUGeometryBuffer* RendererDx11::CreateGeometryBuffer(const CGeometry* InGeometry, CVertexFactory* InVertexFactory)
 	{
+		if(InVertexFactory->VertexLayout == -1)
+		{
+			InVertexFactory->VertexLayout = CreateVertexLayoutHandle(InVertexFactory->mVertexLayouts);
+		}
+		
 		Handle VertexBufferHandle = 0;
 		Handle IndexBufferHandle = 0;
 		vector<int8> vertexData;
-		InGeometry->PrepareVertexData(vertexData, CGeometry::VertexLayoutPosNormTangentTex);
+		InGeometry->PrepareVertexData(vertexData, InVertexFactory->mVertexLayouts);
 		VertexBufferHandle = CreateVertexBufferHandle(vertexData.data(), vertexData.size());
 		 
 		vector<int8> IndexData;
@@ -1883,8 +1888,7 @@ namespace Aurora
 		assert(SUCCEEDED(hr));
 
 		return pInputSig;
-	}
-	   
+	}   
 
 
 	struct VertexLayoutInfo
@@ -1892,7 +1896,6 @@ namespace Aurora
 		string	VertexInputCode;
 		ID3D11InputLayout* d3d11InputLayout = nullptr;
 	};
-
 
 
 	static vector<VertexLayoutInfo*>  VertexLayouts_;
@@ -1938,15 +1941,17 @@ namespace Aurora
 	void RendererDx11::ExecuteOperator(const RenderOperator& op)
 	{
 		ImmediateContext->IASetPrimitiveTopology(D3D11Mapping::PrimitiveTopology(op.PrimType));
+
+		assert(op.mVertexFactory->VertexLayout != -1);
 		
-		auto layout = VertexLayouts_[op.VertexLayout];
+		auto layout = VertexLayouts_[op.mVertexFactory->VertexLayout];
 		CGPUGeometryBufferDX11* GPUBuffer = AsDX11Type(op.GeometryBuffer);
 		auto vertex = GeometryBufferInfos_[GPUBuffer->mVertexBufferHandle];
 		auto index = GeometryBufferInfos_[GPUBuffer->mIndexBufferHandle];
 
 		ImmediateContext->IASetIndexBuffer(index.d3dBuffer, DXGI_FORMAT_R32_UINT, 0);
 
-		UINT strides[] = { op.VertexStride };
+		UINT strides[] = { op.mVertexFactory->GetStride() };
 		UINT offsets[] = { 0 };
 
 		ImmediateContext->IASetVertexBuffers(0, 1, &vertex.d3dBuffer, strides, offsets);

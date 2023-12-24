@@ -31,27 +31,20 @@ namespace Aurora
 
 	RasterizerState<true> rasterState;
 
-
 	SimpleRendering GSimpleRendering;
 
 	Texture* pTexture = nullptr;
 
 	Texture* TextureEnvCube = nullptr;
-
-	Handle VertexLayoutPosNormTangentTexHandle_ = -1;
-	int32  VertexLayoutPosNormTangentTexStride = 0;
-
 	
 	CViewShaderParameterBuffer ViewShaderParameter;
-
 
 	class CSimpleVisitor : public RenderableVisitor
 	{
 	public:
 		virtual void Visit(RenderOperator& op)
 		{
-			op.VertexLayout = VertexLayoutPosNormTangentTexHandle_;
-			op.VertexStride = VertexLayoutPosNormTangentTexStride;
+			op.mVertexFactory = CVertexFactoryPNTT::Instance;
 			GRenderDevice->ExecuteOperator(op);
 		}
 	};
@@ -63,9 +56,6 @@ namespace Aurora
 
 	void SimpleRendering::Initialize()
 	{
-		VertexLayoutPosNormTangentTexHandle_ = GRenderDevice->CreateVertexLayoutHandle(CGeometry::VertexLayoutPosNormTangentTex);
-		VertexLayoutPosNormTangentTexStride = CGeometry::CalcVertexStride(CGeometry::VertexLayoutPosNormTangentTex);
-
 		bool Result = ViewShaderParameter.CreateDeviceObject();
 		assert(Result);
 		
@@ -74,7 +64,6 @@ namespace Aurora
 		modelvs_.Initialize();
 		modelps_.Initialize();
 		rasterState.CreateDeviceObject();
-
 
 		pTexture =  GTextureManager.GetTexture("resource:Model/T_White_GrenadeLauncher_D.TGA");
 		TextureEnvCube = GTextureManager.GetTexture("resource:sky_cube_mipmap.dds");

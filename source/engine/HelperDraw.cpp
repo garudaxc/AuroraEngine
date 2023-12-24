@@ -36,23 +36,23 @@ namespace Aurora
 	CDrawLinePixelShader	DrawLinePixelShader;
 
 
-	struct CVertexLayoutPositonColor
-	{
-		vector<VertexLayoutItem> items = {
-			{Vertex::TYPE_FLOAT3, Vertex::USAGE_POSITION, 0},
-			{Vertex::TYPE_UBYTE4_UNORM, Vertex::USAGE_COLOR, 0}
-		};
-
-		Handle  mVertexLayout = -1;
-		int32	Stride = 0;
-
-		void Init() {
-			mVertexLayout = GRenderDevice->CreateVertexLayoutHandle(items);
-			Stride = CGeometry::CalcVertexStride(items);
-		}
-	};
-
-	CVertexLayoutPositonColor   VertexLayoutPositonColor_;
+	// struct CVertexLayoutPositonColor
+	// {
+	// 	vector<VertexLayoutItem> items = {
+	// 		{Vertex::TYPE_FLOAT3, Vertex::USAGE_POSITION, 0},
+	// 		{Vertex::TYPE_UBYTE4_UNORM, Vertex::USAGE_COLOR, 0}
+	// 	};
+	//
+	// 	Handle  mVertexLayout = -1;
+	// 	int32	Stride = 0;
+	//
+	// 	void Init() {
+	// 		mVertexLayout = GRenderDevice->CreateVertexLayoutHandle(items);
+	// 		Stride = CGeometry::CalcVertexStride(items);
+	// 	}
+	// };
+	//
+	// CVertexLayoutPositonColor   VertexLayoutPositonColor_;
 
 
 
@@ -169,7 +169,7 @@ namespace Aurora
 		DrawLineVertexShader.Initialize();
 		DrawLinePixelShader.Initialize();
 
-		VertexLayoutPositonColor_.Init();
+		// VertexLayoutPositonColor_.Init();
 		// VertexBuffer_ = GRenderDevice->CreateVertexBufferHandle(nullptr, MaxVertexCount * VertexLayoutPositonColor_.Stride);
 		// IndexBuffer_ = GRenderDevice->CreateIndexBufferHandle(nullptr, MaxIndexCount * 4);
 	}

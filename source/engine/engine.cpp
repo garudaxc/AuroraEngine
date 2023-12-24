@@ -58,14 +58,13 @@ namespace Aurora
 	
 	IRenderDevice* IRenderDevice::CreateDevice(CScreen* InScreen)
 	{		
-		// if (!CreateDX11Device(InScreen)) {
-		// 	return nullptr;
-		// }
-
-			
-		if (!CreateOpenGLDevice(InScreen)) {
+		if (!CreateDX11Device(InScreen)) {
 			return nullptr;
 		}
+			
+		// if (!CreateOpenGLDevice(InScreen)) {
+		// 	return nullptr;
+		// }
 		
 		return GRenderDevice;
 	}

@@ -41,8 +41,8 @@ namespace Aurora
 		for (uint i = 0; i < mMesh->GetNumElement(); i++)
 		{
 			auto elem = mMesh->mElements[i];
-			RenderOperator op(-1, mMesh->GetGeometryBuffer(), RenderOperator::PT_TRIANGLELIST,
-				0, elem.IndexStart, elem.IndexCount, 0);
+			RenderOperator op(mMesh->GetGeometryBuffer(), RenderOperator::PT_TRIANGLELIST,
+				0, elem.IndexStart, elem.IndexCount, nullptr);
 			
 			visitor.Visit(op);
 		}		
