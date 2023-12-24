@@ -1,6 +1,7 @@
 
-#include "stdafx.shd"
+#include "stdafx.shader"
 
+#include "GlobalDefine.shader"
 
 struct VS_INPUT
 {

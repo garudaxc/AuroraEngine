@@ -8,13 +8,14 @@
 namespace Aurora
 {
 
-    class Shader;
+    class BaseShader;
     class ShaderConstTable;
     class Texture;
     class RenderOperator;
     class VertexLayout;
     class RenderTarget;
     class StateValuePair;
+    class CShaderParameterContainer;
 
 
     extern IRenderDevice* GRenderDevice;
@@ -154,12 +155,14 @@ namespace Aurora
             CLEAR_FRAME_BUFFER   = 0x4,
         };
 
+        virtual ~IRenderDevice() =default;
+
 
         static IRenderDevice* CreateDevice(int nWidth, int nHeight);
 
         static bool Initialized();
 
-        virtual GPUShaderObject* CreateShader(const ShaderCode& code) = 0;
+        virtual GPUShaderObject* CreateGPUShaderObject(const ShaderCode& code, BaseShader* InShader) = 0;
 
         virtual Texture* CreateTexture(File* file) = 0;
 
@@ -177,9 +180,6 @@ namespace Aurora
         virtual RenderTarget* GetDepthStencil() = 0;
         virtual void GetFrameBufferSize(uint& nWidth, uint& nHeight) = 0;
 
-        virtual void SetVertexShader(Shader* pShader) = 0;
-        virtual void SetPixelShader(Shader* pShader) = 0;
-
         virtual void SetRenderTarget(uint idx, RenderTarget* pRenderTarget) = 0;
         virtual void SetDepthStencil(RenderTarget* pDepthStencil) = 0;
 
@@ -188,7 +188,7 @@ namespace Aurora
         virtual void ExecuteOperator(const RenderOperator& op) = 0;
 
         virtual Handle CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParameterBindings& bindings) = 0;
-        virtual void UpdateShaderParameter(Handle bindingHandle) = 0;
+        virtual void UpdateShaderParameter(Handle bindingHandle, const CShaderParameterContainer* InParameterContainer) = 0;
 
         virtual void BindVertexShader(GPUShaderObject* shaderHandle) = 0;
         virtual void BindPixelShader(GPUShaderObject* shaderHandle) = 0;
@@ -207,6 +207,8 @@ namespace Aurora
         virtual CGPUGeometryBuffer* CreateGeometryBuffer(const CGeometry* InGeometry) { return nullptr; }
 
         virtual GPUShaderParameterBuffer*   CreateShaderParameterBuffer(CShaderParameterBuffer* InBuffer) { return nullptr; }
+
+        virtual void UpdateGPUShaderParameterBuffer(GPUShaderParameterBuffer* InBuffer, const Array<int8>& InData) {};
     };
 
     //void SetPipeline(Handle );

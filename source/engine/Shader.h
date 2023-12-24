@@ -1,115 +1,11 @@
 #pragma once
 #include "Renderer.h"
 #include "stdheader.h"
+#include "Util.h"
 
 
 namespace Aurora
 {
-
-    class ShaderConstTable;
-    class ShaderConstBuffer;
-    class Texture;
-
-
-    template<class ResType> class ResourcePtr;
-
-    typedef int32 ShaderObjectHandle;
-
-
-    class ShaderConstTable
-    {
-    public:
-        class ShaderConst
-        {
-        public:
-            string name;
-            uint startReg;
-            uint numReg;
-            uint offsetInBuffer;
-            uint id;
-        };
-/*
-	class ConstBuffer
-	{
-	public:
-
-		string				name;
-		int					index;
-		int					numVariable;
-		int					sizeInByte;
-	};*/
-
-        ShaderConstBuffer* CreateShaderConstBuffer() const;
-
-        void AddConstBuffer(const string& name, int index, int numVariable, int sizeInByte);
-
-        void AddShaderConstF(const string& name, uint startReg, uint numReg, uint id);
-
-        void AddSampler(const string& name, uint nRegister);
-
-        uint GetNumRegisterF() const;
-
-        void FlushShaderConst(ShaderConstBuffer* pBuffer, uint category);
-
-        bool FindShaderConst(const string& name, uint& offsetInBuffer, uint& numReg);
-
-        bool FindTexture(const string& name, uint& offsetInBuffer);
-        bool FindTextureReg(const string& name, uint& nRegIndex);
-
-        void UpdateShaderConst(ShaderConstBuffer* pBuffer, ShaderConstProvider* pProvider);
-
-    private:
-        vector<ShaderConst> m_table;
-        vector<ShaderConst> m_sampler;
-
-        vector<ShaderConstBuffer> m_ShaderConstBuffers;
-    };
-
-
-
-
-    class ShaderConstBuffer
-    {
-    public:
-        ShaderConstBuffer(uint numFloatRegister, uint numTexture);
-        ~ShaderConstBuffer();
-
-        float* GetBufferPointer(uint nRegOffset);
-        void SetTexture(uint idx, const ResourcePtr<Texture>& pTex);
-        Texture* GetTexture(uint idx) const;
-
-    private:
-        uint m_nNumFloatRegister;
-        uint m_nNumTexture;
-        float* m_FloatBuffer;
-        //shared_array<ResourcePtr<Texture>>	m_Textures;
-
-    };
-
-
-    class Shader
-    {
-    public:
-        Shader(void);
-        Shader(void* handle, uint instructionCount);
-        ~Shader(void);
-
-        static uint MapShaderConstNameToID(const string& name);
-
-        ShaderConstTable* GetShaderConstTable() const;
-
-        virtual void* GetBindID() const { return nullptr; }
-
-
-        void* HALHandle;
-
-    private:
-        uint m_nInstructionCount;
-        ShaderConstTable* m_pShaderConstTable;
-
-    };
-
-//////////////////////////////////////////////////////////////////////////
 
 
 //struct ShaderSamplerBinding
@@ -124,17 +20,30 @@ namespace Aurora
     class GPUShaderParameterBuffer;
 
 
-    class IShaderParameterContainer
+    class CShaderParameterContainer
     {
     public:
-        IShaderParameterContainer() = default;
-        virtual ~IShaderParameterContainer() = default; 
+        CShaderParameterContainer() = default;
+        virtual ~CShaderParameterContainer() = default; 
 
 
-        virtual void    AddParameterBinding(ShaderParameterBase* InParameter) = 0;
+        void AddParameterBinding(ShaderParameterBase* InParameter)
+        {            
+            mParameterBindings.push_back(InParameter);
+        }
+        
+        void UpdateValue(const uint8* InData, uint16 InOffset, int InSize)
+        {
+            Util::MemCopy(InData, mBufferMemory.data() + InOffset, InSize);
+        }
+        
+        vector<ShaderParameterBase*>    mParameterBindings;
+        vector<int8>    mBufferMemory;
+
+        GPUShaderParameterBuffer*   mGPUBuffer = nullptr;
     };
 
-    class BaseShader : public IShaderParameterContainer
+    class BaseShader : public CShaderParameterContainer
     {
     public:
         enum ShaderType : int8
@@ -148,15 +57,15 @@ namespace Aurora
         BaseShader();
         ~BaseShader() override;
 
-        void    AddParameterBinding(ShaderParameterBase* InParameter) override
-        {
-            mParameterBindings.push_back(InParameter);
-        }
-
         void InitBase(ShaderType type, const string& pathname);
 
         void CommitShaderParameter();
         void BindShader();
+
+        void AddShaderParameterBuffer(CShaderParameterBuffer* InBuffer)
+        {
+            mParameterBuffers.push_back(InBuffer);
+        }
 
         ShaderType type_ = VERTEX_SHADER;
 
@@ -165,9 +74,8 @@ namespace Aurora
         string name_{"test shader"};
 
         string pathname_;
-
-        vector<ShaderParameterBase*>    mParameterBindings;
-        vector<CShaderParameterBuffer*> mParamterBuffers;
+        
+        vector<CShaderParameterBuffer*> mParameterBuffers;
 
     private:
 
@@ -175,27 +83,20 @@ namespace Aurora
 
     
 
-    class CShaderParameterBuffer : public IShaderParameterContainer
+    class CShaderParameterBuffer : public CShaderParameterContainer
     {
     public:
         CShaderParameterBuffer(const string& InName):mName(InName) {}
-        virtual ~CShaderParameterBuffer() = default;
-
+        ~CShaderParameterBuffer() override = default;
         
-        void    AddParameterBinding(ShaderParameterBase* InParameter) override
-        {
-            mParameterBindings.push_back(InParameter);
-        }
+        bool CreateDeviceObject();
+
+        void Commit() const;
 
         string mName;
-        vector<ShaderParameterBase*>    mParameterBindings;
-        vector<int8>    mBufferMemory;
-
-        GPUShaderParameterBuffer*   mGPUBuffer = nullptr;
     };
 
     
-
 
     class ShaderParameterBase
     {
@@ -204,34 +105,117 @@ namespace Aurora
         {
             FLOAT,
             FLOAT2,
+            FLOAT3,
             FLOAT4,
             MATRIX4X4,
-                        
+            INVALID,
         };
         
-        ShaderParameterBase(const string& InName, IShaderParameterContainer* InContainer)
+        ShaderParameterBase(const string& InName, CShaderParameterContainer* InContainer)
         {
             mName = InName;
             InContainer->AddParameterBinding(this);
+            mContainer = InContainer;
         }
 
-        bool IsBind() const  {   return false;   }
+        virtual ~ShaderParameterBase() = default;
+
+        bool IsBind() const  {   return mSizeInByte > 0;   }
+
+        void Update(const uint8* InData)
+        {
+            if(IsBind() && mContainer)
+            {
+                mContainer->UpdateValue(InData, mOffset, mSizeInByte);
+            }
+        }
 
         virtual ShaderParameterType GetType() const = 0;
 
         uint16  mOffset = 0;
         uint16  mSizeInByte = 0;
         string mName;
+        CShaderParameterContainer* mContainer = nullptr;        
     };
+
+    template<int NumFloat>
+    class ShaderParameterFloatN : public ShaderParameterBase
+    {
+        template<int Num, ShaderParameterBase::ShaderParameterType TValue> struct type_trace_base
+        {
+            constexpr static ShaderParameterBase::ShaderParameterType Type = TValue; 
+        };
+
+        template<int Num> struct type_trace : public type_trace_base<Num, ShaderParameterBase::INVALID> {};        
+        template<> struct type_trace<1> : public type_trace_base<1, ShaderParameterBase::FLOAT> {};
+        template<> struct type_trace<2> : public type_trace_base<2, ShaderParameterBase::FLOAT2> {};
+        template<> struct type_trace<3> : public type_trace_base<3, ShaderParameterBase::FLOAT3> {};
+        template<> struct type_trace<4> : public type_trace_base<4, ShaderParameterBase::FLOAT4> {};
+        
+    public:
+        
+        ShaderParameterFloatN(const string& InName, CShaderParameterContainer* InContainer)
+            : ShaderParameterBase(InName, InContainer)
+        {
+        }
+
+        ~ShaderParameterFloatN() override = default;
+        
+        ShaderParameterType GetType() const override
+        {
+            return type_trace<NumFloat>::Type;
+        }
+
+        float operator = (float InValue);
+        const Vector2f& operator = (const Vector2f& InValue);
+        const Vector3f& operator = (const Vector3f& InValue);
+        const Vector4f& operator = (const Vector4f& InValue);
+    };
+    
+    template<int NumFloat> float ShaderParameterFloatN<NumFloat>::operator=(float InValue)
+    {
+        const float TempData[] = {InValue, 0, 0, 0};
+        Update(reinterpret_cast<const uint8*>(TempData));
+        return  InValue;
+    }
+    
+    template<int NumFloat> const Vector2f& ShaderParameterFloatN<NumFloat>::operator=(const Vector2f& InValue)
+    {
+        const float TempData[] = {InValue.x, InValue.y, 0, 0};
+        Update(reinterpret_cast<const uint8*>(TempData));
+        return  InValue;
+    }
+    
+    template<int NumFloat> const Vector3f& ShaderParameterFloatN<NumFloat>::operator=(const Vector3f& InValue)
+    {
+        const float TempData[] = {InValue.x, InValue.y, InValue.z, 0};
+        Update(reinterpret_cast<const uint8*>(TempData));
+        return  InValue;
+    }
+    
+    template<int NumFloat> const Vector4f& ShaderParameterFloatN<NumFloat>::operator=(const Vector4f& InValue)
+    {
+        const float TempData[] = {InValue.x, InValue.y, InValue.z, InValue.w};
+        Update(reinterpret_cast<const uint8*>(TempData));
+        return  InValue;
+    }
+
+    typedef ShaderParameterFloatN<1> ShaderParameterFloat;
+    typedef ShaderParameterFloatN<2> ShaderParameterFloat2;
+    typedef ShaderParameterFloatN<3> ShaderParameterFloat3;
+    typedef ShaderParameterFloatN<4> ShaderParameterFloat4;
+    
 
     class ShaderParameterMatrix : public ShaderParameterBase
     {
     public:
 
-        ShaderParameterMatrix(const string& InName, IShaderParameterContainer* InContainer)
+        ShaderParameterMatrix(const string& InName, CShaderParameterContainer* InContainer)
             : ShaderParameterBase(InName, InContainer)
         {
         }
+
+        ~ShaderParameterMatrix() override = default;
 
         ShaderParameterType GetType() const override
         {
@@ -240,14 +224,17 @@ namespace Aurora
 
         ShaderParameterMatrix& operator=(const Matrix4f& other)
         {
+            Matrix4f Temp = other;
+            Temp.TransposeSelf();
+            const auto DataPtr = reinterpret_cast<const uint8*>(Temp.Ptr());
+            Update(DataPtr);
             return *this;
         }
-
     };
 
 
     #define DEFINE_SHADER_PARAMETER(InParameter, Type) \
-    Type InParameter = {#InParameter, this};
+    Type InParameter = {#InParameter, this}
 
 
     
@@ -256,9 +243,11 @@ namespace Aurora
     public:
         CViewShaderParameterBuffer():CShaderParameterBuffer("View") {}
         
-        DEFINE_SHADER_PARAMETER(mViewMatrix, ShaderParameterMatrix)
-        DEFINE_SHADER_PARAMETER(mProjectionMatrix, ShaderParameterMatrix)        
-        DEFINE_SHADER_PARAMETER(mViewProjectionMatrix, ShaderParameterMatrix)
+        DEFINE_SHADER_PARAMETER(mViewMatrix, ShaderParameterMatrix);
+        DEFINE_SHADER_PARAMETER(mProjectionMatrix, ShaderParameterMatrix);
+        DEFINE_SHADER_PARAMETER(mViewProjectionMatrix, ShaderParameterMatrix);
+        DEFINE_SHADER_PARAMETER(DirectionLight0, ShaderParameterFloat3);
+        DEFINE_SHADER_PARAMETER(LightColor0, ShaderParameterFloat4);
         
     };
 
@@ -275,8 +264,7 @@ namespace Aurora
 
         Matrix4f matWorld;
 
-    private:
-        DEFINE_SHADER_PARAMETER(mWorldMatrix, ShaderParameterMatrix)
+        DEFINE_SHADER_PARAMETER(mWorldMatrix, ShaderParameterMatrix);
 
     };
 

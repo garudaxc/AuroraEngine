@@ -1,5 +1,10 @@
-#include "stdafx.shd"
-#include "CommonVS.shd"
+#include "stdafx.shader"
+
+#include "Parameters"
+
+#include "GlobalDefine.shader"
+
+#include "CommonVS.shader"
 
 
 struct VS_OUTPUT
@@ -18,12 +23,12 @@ VS_OUTPUT Main( GeomVertexInput input )
 	//output.pos = input.pos;
 	
 	output.normal = mul(input.normal, (float3x3)matWorld);
+	output.normal = input.normal;
 	
 	float4 worldPos = mul(input.pos, matWorld);
 	float3 eye = matInvView._41_42_43;
 
 	output.view = normalize(eye - worldPos.xyz);	
 	output.tex = input.tex;
-			
     return output;
 }

@@ -1,4 +1,3 @@
-#include "GlobalDefine.shader"
 
 #ifndef USE_TANGENT
 #define USE_TANGENT 0
@@ -7,7 +6,6 @@
 #ifndef USE_VERTEX_COLOR
 #define USE_VERTEX_COLOR 0
 #endif
-
 
 
 

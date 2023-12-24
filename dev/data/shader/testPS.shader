@@ -1,4 +1,4 @@
-#include "stdafx.shd"
+#include "stdafx.shader"
 
 
 samplerCUBE texCube;
@@ -24,11 +24,15 @@ PS_OUTPUT Main(PS_INPUT input)
 
 	float4 tex = texCUBE(texCube, float3(input.normal.x, input.normal.z, -input.normal.y));
 	
-	float d = 0;
-	if (ceil(tex.r * 256.0) == ceil(tex.g))
-		d = 1;
+	float3 LightDirection =  float3(0, 1, 0);
+	
+	float dnl = max(0, dot(LightDirection, input.normal));
+	
+	//float d = 0;
+	//if (ceil(tex.r * 256.0) == ceil(tex.g))
+	//	d = 1;
 
-	output.c0 = float4(d, d, d, d);
+	output.c0 = float4(1, dnl, dnl, dnl);
 	
 	return output;
 }

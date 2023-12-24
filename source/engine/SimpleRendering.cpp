@@ -79,7 +79,7 @@ namespace Aurora
 		code.name = "Global Buffer";
 		code.type = BaseShader::VERTEX_SHADER;
 
-		GPUShaderObject* handle = GRenderDevice->CreateShader(code);
+		GPUShaderObject* handle = GRenderDevice->CreateGPUShaderObject(code, nullptr);
 
 		return handle;
 	}
@@ -112,7 +112,7 @@ namespace Aurora
 
 		MatrixProj.TransposeSelf();
 		MatrixViewProj.TransposeSelf();
-		GRenderDevice->UpdateShaderParameter(bindings_.handle);
+		GRenderDevice->UpdateShaderParameter(bindings_.handle, nullptr);
 		GRenderDevice->BindGlobalParameter(bindings_.handle);
 	}
 
@@ -127,9 +127,7 @@ namespace Aurora
 
 	Texture* pTexture = nullptr;
 
-
 	Texture* TextureEnvCube = nullptr;
-
 
 	GlobalShaderParameter globalShaderParam_;
 
@@ -137,6 +135,9 @@ namespace Aurora
 	Handle VertexLayoutPosNormTangentTexHandle_ = -1;
 	int32  VertexLayoutPosNormTangentTexStride = 0;
 
+	
+
+	CViewShaderParameterBuffer ViewShaderParameter;
 
 
 	class CSimpleVisitor : public RenderableVisitor
@@ -160,8 +161,12 @@ namespace Aurora
 		VertexLayoutPosNormTangentTexHandle_ = GRenderDevice->CreateVertexLayoutHandle(CGeometry::VertexLayoutPosNormTangentTex);
 		VertexLayoutPosNormTangentTexStride = CGeometry::CalcVertexStride(CGeometry::VertexLayoutPosNormTangentTex);
 
+		bool Result = ViewShaderParameter.CreateDeviceObject();
+		assert(Result);
+		
 		HelperDraw.Init();
 
+		modelvs_.AddShaderParameterBuffer(&ViewShaderParameter);
 
 		modelvs_.Initialize();
 		modelps_.Initialize();
@@ -173,6 +178,9 @@ namespace Aurora
 		TextureEnvCube = GTextureManager.GetTexture("resource:sky_cube_mipmap.dds");
 		//pTexture =  GTextureManager.GetTexture("resource:test cube.dds");
 
+		
+
+		
 		InitRandomSampleing();
 
 	}
@@ -180,6 +188,11 @@ namespace Aurora
 	void SimpleRendering::RenderSceneView(SceneView* view)
 	{
 		GRenderDevice->Clear(IRenderDevice::CLEAR_FRAME_BUFFER | IRenderDevice::CLEAR_DEPTH_BUFFER, Color(0.2f, 0.2f, 0.2f, 0.2f));
+
+		ViewShaderParameter.mViewMatrix = view->matView;
+		ViewShaderParameter.mProjectionMatrix = view->matProj;
+		ViewShaderParameter.mViewProjectionMatrix = view->matViewProj;
+		ViewShaderParameter.Commit();
 
 		globalShaderParam_.MatrixView = view->matView;
 		globalShaderParam_.MatrixProj = view->matProj;
@@ -189,8 +202,7 @@ namespace Aurora
 		lightDir.Normalize();
 		globalShaderParam_.DirectionLight.Direction = lightDir;
 
-		globalShaderParam_.Bind();
-		
+		globalShaderParam_.Bind();		
 
 		modelvs_.BindShader();
 		modelps_.BindShader();
@@ -202,6 +214,8 @@ namespace Aurora
 		{
 			modelvs_.matWorld = pEntity->mWorld;
 			modelvs_.matWorld.TransposeSelf();
+
+			modelvs_.mWorldMatrix = pEntity->mWorld;
 
 			modelvs_.CommitShaderParameter();
 			modelps_.CommitShaderParameter();
@@ -225,9 +239,13 @@ namespace Aurora
 
 	void InitRandomSampleing()
 	{
+
+		
 		for (int i = 0; i < 2048; i++) {
 			HammersleySample[i] = Mathf::Rand01();
 		}
+
+		
 
 		ShaderCode code;
 		char* shaderCode = "                     \
@@ -247,14 +265,14 @@ namespace Aurora
 		code.text = shaderCode;
 		code.type = BaseShader::VERTEX_SHADER;
 
-		GPUShaderObject* handle = GRenderDevice->CreateShader(code);
+		GPUShaderObject* handle = GRenderDevice->CreateGPUShaderObject(code, nullptr);
 
 		ShaderParameterBindings bindings;
 		bindings.Name = "StaticBuffer";
 		bindings.Bindings.push_back(ShaderParamterBindingItem{ "HammersleySample", 0, HammersleySample });
 		bindings.handle = GRenderDevice->CreateShaderParameterBinding(handle, bindings);
 		
-		GRenderDevice->UpdateShaderParameter(bindings.handle);
+		GRenderDevice->UpdateShaderParameter(bindings.handle, nullptr);
 		GRenderDevice->BindGlobalParameter(bindings.handle);
 	}
 	

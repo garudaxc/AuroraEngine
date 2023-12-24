@@ -27,14 +27,14 @@ struct GeomVertexInput
 
 float4 GetHomogeneousCoord(GeomVertexInput input)
 {
-	float4 worldPos = mul(float4(input.pos.xyz, 1.0), matWorld);
+	float4 worldPos = mul(float4(input.pos.xyz, 1.0), mWorldMatrix);
 	return mul(worldPos, matViewProj);
 }
 
 
 void GetHomogeneousCoordAndDepth(GeomVertexInput input, out float4 pos, out float depth)
 {
-	float4 worldPos = mul(float4(input.pos.xyz, 1.0), matWorld);
+	float4 worldPos = mul(float4(input.pos.xyz, 1.0), mWorldMatrix);
 	pos = mul(worldPos, matViewProj);
 	depth = pos.z / CameraParam.y;
 }
@@ -42,22 +42,22 @@ void GetHomogeneousCoordAndDepth(GeomVertexInput input, out float4 pos, out floa
 
 float4 GetLightHomogeneousCoord(float3 pos)
 {
-	float4 worldPos = mul(float4(pos, 1.0), matWorld);
+	float4 worldPos = mul(float4(pos, 1.0), mWorldMatrix);
 	return mul(worldPos, matViewProj);
 }
 
 /*
 void GetNTB(GeomVertexInput input, out float3 normal, out float3 tangent, out float3 binormal)
 {
-	normal = normalize(mul(input.normal, (float3x3)matWorld));
-	tangent = normalize(mul(input.tangentEx.xyz, (float3x3)matWorld));
+	normal = normalize(mul(input.normal, (float3x3)mWorldMatrix));
+	tangent = normalize(mul(input.tangentEx.xyz, (float3x3)mWorldMatrix));
 	binormal = cross(normal, tangent) * input.tangentEx.w;
 }
 */
 
 float3 GetNormal(GeomVertexInput input)
 {
-	return normalize(mul(input.normal, (float3x3)matWorld));
+	return normalize(mul(input.normal, (float3x3)mWorldMatrix));
 }
 
 float3 GetEyeDir(float4 hPos)

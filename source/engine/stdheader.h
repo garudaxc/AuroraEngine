@@ -44,9 +44,11 @@ using namespace rapidjson;
 namespace Aurora
 {
     using String = std::string;
+    using StringStream = std::stringstream;
 
     template<class  T>
     using Array = std::vector<T>;
+    
     
 }
 

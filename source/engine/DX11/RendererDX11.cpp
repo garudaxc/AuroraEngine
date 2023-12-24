@@ -36,31 +36,66 @@ namespace Aurora
 		virtual HRESULT DECLSPEC_NOTHROW STDMETHODCALLTYPE Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes) override;
 		virtual HRESULT DECLSPEC_NOTHROW STDMETHODCALLTYPE Close(LPCVOID pData) override { return S_OK; }
 
-		vector<unique_ptr<int8[]>>	cache_;
-		string	path_;
+		vector<shared_ptr<int8[]>>	mCaches;
+		string	mIncludePath;
+
+		String mParameterBufferCode;
+		String mParametersCode;
 	};
-
-	void ReplaceShaderInclude(unique_ptr<int8[]>& data, int32* size);
-
-
+	
 
 	HRESULT MyInclude::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, UINT* pBytes)
 	{
-		if (_stricmp(pFileName, "Replace.shader") == 0) {
-			unique_ptr<int8[]> data;
-			int32 size = 0;
-
-			ReplaceShaderInclude(data, &size);
-
+		auto MakeDataBlock = [](const String& code, LPCVOID* ppData, UINT* pBytes)
+		{
+			uint32 size = static_cast<uint32>(code.size());
+			shared_ptr<int8[]> data;
+			data.reset(new int8[size]);
+			memcpy_s(data.get(), size, code.c_str(), size);
+			
 			*ppData = data.get();
 			*pBytes = size;
+			return data;
+		};
+		
+		//
+		// if (_stricmp(pFileName, "Replace.shader") == 0) {
+		// 	unique_ptr<int8[]> data;
+		// 	int32 size = 0;
+		//
+		// 	ReplaceShaderInclude(data, &size);
+		//
+		// 	*ppData = data.get();
+		// 	*pBytes = size;
+		//
+		// 	mCaches.push_back(move(data));
+		// 	return S_OK;
+		// }
 
-			cache_.push_back(move(data));
+		if (_stricmp(pFileName, "ParameterBuffers") == 0)
+		{
+			if(!mParameterBufferCode.empty())
+			{
+				auto data = MakeDataBlock(mParameterBufferCode, ppData, pBytes);
+				mCaches.push_back(data);				
+			}
+			
 			return S_OK;
 		}
 
+		if (_stricmp(pFileName, "Parameters") == 0)
+		{
+			if(!mParametersCode.empty())
+			{
+				auto data = MakeDataBlock(mParametersCode, ppData, pBytes);
+				mCaches.push_back(data);				
+			}
+			
+			return S_OK;
+		}			
 
-		string pathName = path_ + pFileName;
+
+		string pathName = mIncludePath + pFileName;
 		
 		FILE* file = nullptr;
 		if (fopen_s(&file, pathName.c_str(), "rb")) {
@@ -80,7 +115,7 @@ namespace Aurora
 		*ppData = data.get();
 		*pBytes = size;	
 
-		cache_.push_back(move(data));
+		mCaches.push_back(move(data));
 		return S_OK;
 	}
 
@@ -280,10 +315,9 @@ namespace Aurora
 	public:
 		
 		RendererDx11();
-		virtual ~RendererDx11(void);
+		~RendererDx11(void) override;
 
-
-		GPUShaderObject* CreateShader(const ShaderCode& code) override;
+		GPUShaderObject* CreateGPUShaderObject(const ShaderCode& code, BaseShader* InShader) override;
 
 		Texture* CreateTexture(File* file) override;
 
@@ -301,9 +335,6 @@ namespace Aurora
 
 		virtual void SetVertexDesc(VertexLayout* pVertDesc);
 
-		void SetVertexShader(Shader* pShader) override;
-		void SetPixelShader(Shader* pShader) override;
-
 
 		void SetRenderTarget(uint idx, RenderTarget* pRenderTarget) override;
 		void SetDepthStencil(RenderTarget* pDepthStencil) override;
@@ -317,7 +348,7 @@ namespace Aurora
 
 		Handle CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParameterBindings& bindings) override;
 
-		void UpdateShaderParameter(Handle bindingHandle) override;
+		void UpdateShaderParameter(Handle bindingHandle, const CShaderParameterContainer* InParameterContainer) override;
 
 		void BindVertexShader(GPUShaderObject* shaderHandle) override;
 		void BindPixelShader(GPUShaderObject* shaderHandle) override;
@@ -336,8 +367,9 @@ namespace Aurora
 		CGPUGeometryBuffer* CreateGeometryBuffer(const CGeometry* InGeometry) override;
 		
 		GPUShaderParameterBuffer* CreateShaderParameterBuffer(CShaderParameterBuffer* InBuffer) override;
-	};
 
+		void UpdateGPUShaderParameterBuffer(GPUShaderParameterBuffer* InBuffer, const Array<int8>& InData) override;
+	};
 
 
 
@@ -381,17 +413,24 @@ namespace Aurora
 	class GPUShaderObjectDX11 : public GPUShaderObject
 	{
 	public:
+		struct SReferenceBufferInfo
+		{
+			int32 Slot;
+			class GPUShaderParameterBufferDX11*	Buffer = nullptr;
+		};
+		
 		GPUShaderObjectDX11() = default;
 		
 		string Name;
-		union
-		{
-			ID3D11VertexShader* VertexShader = nullptr;
-			ID3D11PixelShader* PixelShader;			
-		};
+
+		ID3D11VertexShader* VertexShader = nullptr;
+		ID3D11PixelShader* PixelShader = nullptr;			
 		ID3D11ShaderReflection* Reflector = nullptr;
 		vector<int32>	constBuffers;
-		
+
+		class GPUShaderParameterBufferDX11*		ParameterBuffer = nullptr;
+
+		Array<SReferenceBufferInfo>	ReferencedBuffers;
 	};
 
 	class CGPUGeometryBufferDX11 : public CGPUGeometryBuffer
@@ -401,6 +440,30 @@ namespace Aurora
 		Handle mVertexBufferHandle = 0;
 		Handle mIndexBufferHandle = 0;		
 	};
+
+	
+	struct ShaderParameterBindInfo
+	{
+		string	Name;
+		int32	Offset;
+		int32	Size;
+		void* Source;
+	};
+
+
+	struct GPUShaderParameterBufferDX11 : public GPUShaderParameterBuffer
+	{
+		string	Name;
+		int32	Slot = 0;
+		int32	Size = 0;
+		ID3D11Buffer* D3DBuffer = nullptr;
+
+		vector<ShaderParameterBindInfo>	Bindings;
+
+		String HLSLCode;
+	};
+
+
 	
 
 	CGPUGeometryBufferDX11* AsDX11Type(CGPUGeometryBuffer* InBase)
@@ -565,9 +628,7 @@ namespace Aurora
 
 	
 	IRenderDevice* IRenderDevice::CreateDevice(int nWidth, int nHeight)
-	{
-
-		
+	{		
 		if (!CreateDX11Device(GMainHWnd)) {
 			return nullptr;
 		}
@@ -592,7 +653,151 @@ namespace Aurora
 	}
 
 
-	GPUShaderObject* RendererDx11::CreateShader(const ShaderCode& code)
+	String GenerateParameterHLSLCode(const Array<ShaderParameterBase*>& Parameters)
+	{		
+		auto ParameterTypeString = [](ShaderParameterBase::ShaderParameterType type)
+		{			
+			switch (type)
+			{
+			case ShaderParameterBase::FLOAT:
+				return "float";
+			case ShaderParameterBase::FLOAT2:
+				return "float2";
+			case ShaderParameterBase::FLOAT3:
+				return "float3";
+			case ShaderParameterBase::FLOAT4:
+				return "float4";
+			case ShaderParameterBase::MATRIX4X4:
+				return "float4x4";
+			case ShaderParameterBase::INVALID:
+				assert(0);
+			}
+
+			return "error type";
+		};
+
+		StringStream stream;
+
+		stream << "// Generate Parameter Code\n";
+		
+		for(auto& Parameter : Parameters)
+		{
+			stream << '\t' << ParameterTypeString(Parameter->GetType()) << ' ' << Parameter->mName << ";\n";
+		}
+
+		stream << "\n";		
+
+		return stream.str();
+	}
+
+
+	GPUShaderParameterBufferDX11* CollectShaderParameters(ID3D11ShaderReflection* InReflector, const String& InName, CShaderParameterContainer* InParameterContainer)
+	{
+		D3D11_SHADER_DESC shaderDesc;
+		InReflector->GetDesc(&shaderDesc);
+
+		const bool logShaderInfo = true;
+		if(logShaderInfo)
+		{			
+			GLog->Info("shader %s info :", InName.c_str());
+			GLog->Info("ConstantBuffers num %d", shaderDesc.ConstantBuffers);
+
+			for(int Index = 0; Index < shaderDesc.ConstantBuffers; Index++)
+			{
+				D3D11_SHADER_BUFFER_DESC desc;
+				auto Item = InReflector->GetConstantBufferByIndex(Index);
+				Item->GetDesc(&desc);
+
+				GLog->Info("\tconst buffer %d : name %s Variables num %d", Index, desc.Name, desc.Variables);
+
+				for(int VariableIndex = 0; VariableIndex < desc.Variables; VariableIndex++)
+				{
+					auto Variable = Item->GetVariableByIndex(VariableIndex);
+					D3D11_SHADER_VARIABLE_DESC VariableDesc;
+					Variable->GetDesc(&VariableDesc);
+
+					GLog->Info("\t\t variable %d : name %s", VariableIndex, VariableDesc.Name);
+				}
+			}
+			
+			GLog->Info("BoundResources num %d", shaderDesc.BoundResources);
+
+			for(int Index = 0; Index < shaderDesc.BoundResources; Index++)
+			{
+				D3D11_SHADER_INPUT_BIND_DESC desc;
+				HRESULT hr = InReflector->GetResourceBindingDesc(Index, &desc);
+
+				GLog->Info("\tBoundResources %d :name %s", Index, desc.Name);				
+			}			
+			
+			GLog->Info("InputParameters num %d", shaderDesc.InputParameters);
+		}
+		
+		auto constBuffer = InReflector->GetConstantBufferByName(InName.c_str());
+
+		D3D11_SHADER_BUFFER_DESC desc;
+		if (FAILED(constBuffer->GetDesc(&desc))) {
+			// GLog->Error("can't find shader const buffer by name \"%s\"", InName.c_str());
+			return nullptr;
+		}
+
+		D3D11_SHADER_INPUT_BIND_DESC bindDesc;
+		if (FAILED(InReflector->GetResourceBindingDescByName(InName.c_str(), &bindDesc))) {
+			GLog->Error("GetResourceBindingDescByName failed! bind name : %s", InName.c_str());
+			return nullptr;
+		}
+		
+		D3D11_BUFFER_DESC cbDesc;
+		cbDesc.ByteWidth = desc.Size;
+		cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+		cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		cbDesc.MiscFlags = 0;
+		cbDesc.StructureByteStride = 0;
+
+		ID3D11Buffer* d3DBuffer = nullptr;
+		if (FAILED(D3D11Device->CreateBuffer(&cbDesc, nullptr, &d3DBuffer))) {
+			GLog->Error("create shader const buffer failed! shader : %s", InName.c_str());
+			return nullptr;
+		}
+
+		auto GPUShaderParameterBuffer = new GPUShaderParameterBufferDX11();
+		GPUShaderParameterBuffer->Name = InName;
+		GPUShaderParameterBuffer->Slot = bindDesc.BindPoint;
+		GPUShaderParameterBuffer->Size = desc.Size;
+		GPUShaderParameterBuffer->D3DBuffer = d3DBuffer;
+
+		InParameterContainer->mBufferMemory.resize((int)desc.Size);
+		
+		for(auto& Parameter : InParameterContainer->mParameterBindings) {
+
+			const string& ParameterName = Parameter->mName;
+			auto variable = constBuffer->GetVariableByName(ParameterName.c_str());
+
+			D3D11_SHADER_VARIABLE_DESC varDesc;
+			if (FAILED(variable->GetDesc(&varDesc))) {
+				GLog->Info("can't find shader variable by name \"%s\" in buffer %s of shader %s",
+					ParameterName.c_str(), InName.c_str(), InName.c_str());
+				continue;
+			}
+
+			//if (!(varDesc.uFlags & D3D_SVF_USED)) {
+			//	continue;
+			//}
+
+			// assert(varDesc.StartOffset < MaxValueOfType<decltype(Parameter->mOffset)>());
+			// assert(varDesc.Size < MaxValueOfType<decltype(Parameter->mSizeInByte)>());
+			
+			Parameter->mOffset = static_cast<decltype(Parameter->mOffset)>(varDesc.StartOffset);
+			Parameter->mSizeInByte = static_cast<decltype(Parameter->mSizeInByte)>(varDesc.Size);			
+		}
+
+		return GPUShaderParameterBuffer;
+	}
+	
+
+
+	GPUShaderObject* RendererDx11::CreateGPUShaderObject(const ShaderCode& code, BaseShader* InShader)
 	{
 		vector<D3D_SHADER_MACRO> macros;
 		for (auto it = code.defines.begin(); it != code.defines.end(); ++it) {
@@ -601,7 +806,26 @@ namespace Aurora
 		}
 		D3D_SHADER_MACRO m = { nullptr, nullptr };
 		macros.push_back(m);
+		
+		String ParameterCode;
+		if(InShader && !InShader->mParameterBindings.empty())
+		{
+			ParameterCode = GenerateParameterHLSLCode(InShader->mParameterBindings);
+		}
 
+		String ParameterBufferCode;
+		if(InShader && !InShader->mParameterBuffers.empty())
+		{
+			StringStream stream;
+			for(auto ParameterBuffer : InShader->mParameterBuffers)
+			{
+				auto GPUBuffer = static_cast<GPUShaderParameterBufferDX11*>(ParameterBuffer->mGPUBuffer);
+				assert(GPUBuffer);
+				stream << GPUBuffer->HLSLCode << endl;
+			}
+
+			ParameterBufferCode = stream.str();
+		}
 
 		ID3DBlob* pCompiledShader = nullptr;
 		ID3DBlob* pError = nullptr;
@@ -623,13 +847,18 @@ namespace Aurora
 		}
 
 		MyInclude includeObject;
-		includeObject.path_ = Util::GetPath(code.name);
+		includeObject.mIncludePath = Util::GetPath(code.name);
+		includeObject.mParametersCode = ParameterCode;
+		includeObject.mParameterBufferCode = ParameterBufferCode;
 
 		//HRESULT hr = D3DCompile(code.text.c_str(), code.text.length(), code.name.c_str(),
 		//	&macros[0], D3D_COMPILE_STANDARD_FILE_INCLUDE, "Main",
 		//	target, flag, 0, &pCompiledShader, &pError);
 
-		HRESULT hr = D3DCompile(code.text.c_str(), code.text.length(), code.name.c_str(),
+		String FinalCode = code.text;
+		// GLog->Info("%s", FinalCode.c_str());
+
+		HRESULT hr = D3DCompile(FinalCode.c_str(), FinalCode.size(), code.name.c_str(),
 			&macros[0], &includeObject, "Main",
 			target, flag, 0, &pCompiledShader, &pError);
 
@@ -647,6 +876,13 @@ namespace Aurora
 			}
 
 			return nullptr;
+		}
+		else
+		{
+			if(InShader)
+			{
+				GLog->Info("%s shader %s created", InShader->type_ == BaseShader::VERTEX_SHADER ? "Vertex" : "Pixel", InShader->pathname_.c_str());				
+			}
 		}
 
 		auto obj = new GPUShaderObjectDX11();
@@ -673,8 +909,41 @@ namespace Aurora
 		pCompiledShader->Release();
 		pCompiledShader = nullptr;
 
-
 		obj->Reflector = pReflector;
+
+		obj->ParameterBuffer = CollectShaderParameters(pReflector, "$Globals", InShader);
+		if(InShader)
+		{
+			InShader->mGPUBuffer = obj->ParameterBuffer;
+		}
+		
+		if(InShader && !InShader->mParameterBuffers.empty())
+		{
+			for(auto ParameterBuffer : InShader->mParameterBuffers)
+			{
+				auto GPUBuffer = static_cast<GPUShaderParameterBufferDX11*>(ParameterBuffer->mGPUBuffer);
+				assert(GPUBuffer);
+
+				auto ConstBuffer = pReflector->GetConstantBufferByName(GPUBuffer->Name.c_str());
+				if(ConstBuffer == nullptr)
+				{
+					continue;
+				}
+
+				D3D11_SHADER_BUFFER_DESC desc;
+				if (FAILED(ConstBuffer->GetDesc(&desc))) {
+					continue;
+				}
+				
+				D3D11_SHADER_INPUT_BIND_DESC bindDesc;
+				if (FAILED(pReflector->GetResourceBindingDescByName(GPUBuffer->Name.c_str(), &bindDesc))) {
+					continue;
+				}			
+
+				GPUShaderObjectDX11::SReferenceBufferInfo RefBuffer = {(int32)bindDesc.BindPoint, GPUBuffer};
+				obj->ReferencedBuffers.push_back(RefBuffer);
+			}
+		}
 
 		return obj;
 	}
@@ -695,46 +964,7 @@ namespace Aurora
 
 
 
-	struct ShaderParameterBindInfo
-	{
-		string	Name;
-		int32	Offset;
-		int32	Size;
-		void* Source;
-	};
 
-
-	struct GPUShaderParameterBufferDX11 : public GPUShaderParameterBuffer
-	{
-		string	Name;
-		int32	Slot = 0;
-		int32	Size = 0;
-		ID3D11Buffer* D3DBuffer = nullptr;
-
-		vector<ShaderParameterBindInfo>	Bindings;
-	};
-
-
-
-	string GlobalParameterDef = "\
-												 \
-		cbuffer GlobalParameter: register(b0)	 \
-		{										 \
-			float4x4 matView;					 \
-			float4x4 matProj;					 \
-			float4x4 matViewProj;				 \
-			float3	DirectionLight0;			 \
-			float4	LightColor0;				 \
-		};										 \
-";
-	
-
-	void ReplaceShaderInclude(unique_ptr<int8[]>& data, int32* size)
-	{
-		*size = GlobalParameterDef.size();
-		data.reset(new int8[*size]);
-		memcpy_s(data.get(), *size, GlobalParameterDef.c_str(), *size);
-	}
 
 
 	static vector<GPUShaderParameterBufferDX11*>  ShaderParameterBuffers_;
@@ -860,7 +1090,7 @@ namespace Aurora
 	}
 
 
-	void RendererDx11::UpdateShaderParameter(Handle bindingHandle)
+	void RendererDx11::UpdateShaderParameter(Handle bindingHandle, const CShaderParameterContainer* InParameterContainer)
 	{
 		assert(bindingHandle >= 0);
 		auto binding = ShaderParameterBuffers_[bindingHandle];
@@ -915,9 +1145,15 @@ namespace Aurora
 
 		ImmediateContext->VSSetShader(shader->VertexShader, nullptr, 0);
 
-		for (int i = 0; i < shader->constBuffers.size(); i++) {
-			BindVertexShaderParameter(shader->constBuffers[i]);
+		if(shader->ParameterBuffer)
+		{
+			auto binding = shader->ParameterBuffer;
+			ImmediateContext->VSSetConstantBuffers(binding->Slot, 1, &binding->D3DBuffer);			
 		}
+
+		// for (int i = 0; i < shader->constBuffers.size(); i++) {
+		// 	BindVertexShaderParameter(shader->constBuffers[i]);
+		// }
 	}
 
 	void RendererDx11::BindPixelShader(GPUShaderObject* shaderHandle)
@@ -1409,37 +1645,16 @@ namespace Aurora
 		stringstream stream;
 
 		const string& BufferName = InBuffer->mName;
+		const String HLSLCode = GenerateParameterHLSLCode(InBuffer->mParameterBindings);
 		
 		stream << "cbuffer " << BufferName << " \n{\n";
-
-		auto ParameterTypeString = [](ShaderParameterBase::ShaderParameterType type)
-		{
-			switch (type)
-			{
-			case ShaderParameterBase::FLOAT:
-				return "float";
-			case ShaderParameterBase::FLOAT2:
-				return "float2";
-			case ShaderParameterBase::FLOAT4:
-				return "float4";
-			case ShaderParameterBase::MATRIX4X4:
-				return "float4x4";
-			}
-
-			return "error type";
-		};
-		
-		for(auto& Parameter : InBuffer->mParameterBindings)
-		{
-			stream << '\t' << ParameterTypeString(Parameter->GetType()) << ' ' << Parameter->mName << ";\n";
-		}
-
-		stream << "};";
+		stream << HLSLCode;
+		stream << "};\n";		
 
 		stream << " \
 		float4 Main(float4 pos : POSITION) : SV_POSITION		\
 		{														\
-			return pos;						\
+			return pos + mViewMatrix[0];						\
 		}														\
 		";
 
@@ -1448,85 +1663,113 @@ namespace Aurora
 
 		const string ShaderName = "DummyShaderToCreateBuffer";
 		ShaderCode code;
-		code.name = "Global Buffer";
+		code.name = ShaderName;
+		code.text = stream.str();
 		code.type = BaseShader::VERTEX_SHADER;
 
-		GPUShaderObjectDX11* ShaderObject = AsDX11Type(this->CreateShader(code));
+		GPUShaderObjectDX11* ShaderObject = AsDX11Type(this->CreateGPUShaderObject(code, nullptr));
 
 		ID3D11ShaderReflection* Reflector = ShaderObject->Reflector;
 
-		D3D11_SHADER_DESC shaderDesc;
-		Reflector->GetDesc(&shaderDesc);
+		GPUShaderParameterBufferDX11* GPUShaderParameterBuffer = CollectShaderParameters(Reflector, BufferName, InBuffer);
 
-		auto constBuffer = Reflector->GetConstantBufferByName(InBuffer->mName.c_str());
-
-		D3D11_SHADER_BUFFER_DESC desc;
-		if (FAILED(constBuffer->GetDesc(&desc))) {
-			GLog->Error("can't find shader const buffer by name \"%s\"", BufferName.c_str());
-			return nullptr;
-		}
-
-		D3D11_SHADER_INPUT_BIND_DESC bindDesc;
-		if (FAILED(Reflector->GetResourceBindingDescByName(BufferName.c_str(), &bindDesc))) {
-			GLog->Error("GetResourceBindingDescByName failed! bind name : %s", BufferName.c_str());
-			return nullptr;
-		}
-
-		//if (strcmp(desc.Name, "$Globals") != 0)
-		//{
-		//	continue;
-		//}
+		GPUShaderParameterBuffer->HLSLCode = std::move(HLSLCode);
 		
-		D3D11_BUFFER_DESC cbDesc;
-		cbDesc.ByteWidth = desc.Size;
-		cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-		cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		cbDesc.MiscFlags = 0;
-		cbDesc.StructureByteStride = 0;
-
-		ID3D11Buffer* d3DBuffer = nullptr;
-		if (FAILED(D3D11Device->CreateBuffer(&cbDesc, nullptr, &d3DBuffer))) {
-			GLog->Error("create shader const buffer failed! shader : %s", BufferName.c_str());
-			return nullptr;
-		}
-
-		auto newBuffer = new GPUShaderParameterBufferDX11();
-		newBuffer->Name = BufferName;
-		newBuffer->Slot = bindDesc.BindPoint;
-		newBuffer->Size = desc.Size;
-		newBuffer->D3DBuffer = d3DBuffer;
-
-		
-		for(auto& Parameter : InBuffer->mParameterBindings) {
-
-			const string& ParameterName = Parameter->mName;
-			auto variable = constBuffer->GetVariableByName(ParameterName.c_str());
-
-			D3D11_SHADER_VARIABLE_DESC varDesc;
-			if (FAILED(variable->GetDesc(&varDesc))) {
-				GLog->Info("can't find shader variable by name \"%s\" in buffer %s of shader %s",
-					ParameterName.c_str(), BufferName.c_str(), ShaderName.c_str());
-				continue;
-			}
-
-			//if (!(varDesc.uFlags & D3D_SVF_USED)) {
-			//	continue;
-			//}
-
-			// assert(varDesc.StartOffset < MaxValueOfType<decltype(Parameter->mOffset)>());
-			// assert(varDesc.Size < MaxValueOfType<decltype(Parameter->mSizeInByte)>());
-
-			
-			Parameter->mOffset = static_cast<decltype(Parameter->mOffset)>(varDesc.StartOffset);
-			Parameter->mSizeInByte = static_cast<decltype(Parameter->mSizeInByte)>(varDesc.Size);			
-		}
-
-		return  newBuffer;
+		return GPUShaderParameterBuffer;
+		//
+		// D3D11_SHADER_DESC shaderDesc;
+		// Reflector->GetDesc(&shaderDesc);
+		//
+		// auto constBuffer = Reflector->GetConstantBufferByName(InBuffer->mName.c_str());
+		//
+		// D3D11_SHADER_BUFFER_DESC desc;
+		// if (FAILED(constBuffer->GetDesc(&desc))) {
+		// 	GLog->Error("can't find shader const buffer by name \"%s\"", BufferName.c_str());
+		// 	return nullptr;
+		// }
+		//
+		// D3D11_SHADER_INPUT_BIND_DESC bindDesc;
+		// if (FAILED(Reflector->GetResourceBindingDescByName(BufferName.c_str(), &bindDesc))) {
+		// 	GLog->Error("GetResourceBindingDescByName failed! bind name : %s", BufferName.c_str());
+		// 	return nullptr;
+		// }
+		//
+		// //if (strcmp(desc.Name, "$Globals") != 0)
+		// //{
+		// //	continue;
+		// //}
+		//
+		// D3D11_BUFFER_DESC cbDesc;
+		// cbDesc.ByteWidth = desc.Size;
+		// cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+		// cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		// cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		// cbDesc.MiscFlags = 0;
+		// cbDesc.StructureByteStride = 0;
+		//
+		// ID3D11Buffer* d3DBuffer = nullptr;
+		// if (FAILED(D3D11Device->CreateBuffer(&cbDesc, nullptr, &d3DBuffer))) {
+		// 	GLog->Error("create shader const buffer failed! shader : %s", BufferName.c_str());
+		// 	return nullptr;
+		// }
+		//
+		// auto GPUShaderParameterBuffer = new GPUShaderParameterBufferDX11();
+		// GPUShaderParameterBuffer->Name = BufferName;
+		// GPUShaderParameterBuffer->Slot = bindDesc.BindPoint;
+		// GPUShaderParameterBuffer->Size = desc.Size;
+		// GPUShaderParameterBuffer->D3DBuffer = d3DBuffer;
+		//
+		// InBuffer->mBufferMemory.resize(desc.Size);
+		//
+		// for(auto& Parameter : InBuffer->mParameterBindings) {
+		//
+		// 	const string& ParameterName = Parameter->mName;
+		// 	auto variable = constBuffer->GetVariableByName(ParameterName.c_str());
+		//
+		// 	D3D11_SHADER_VARIABLE_DESC varDesc;
+		// 	if (FAILED(variable->GetDesc(&varDesc))) {
+		// 		GLog->Info("can't find shader variable by name \"%s\" in buffer %s of shader %s",
+		// 			ParameterName.c_str(), BufferName.c_str(), ShaderName.c_str());
+		// 		continue;
+		// 	}
+		//
+		// 	//if (!(varDesc.uFlags & D3D_SVF_USED)) {
+		// 	//	continue;
+		// 	//}
+		//
+		// 	// assert(varDesc.StartOffset < MaxValueOfType<decltype(Parameter->mOffset)>());
+		// 	// assert(varDesc.Size < MaxValueOfType<decltype(Parameter->mSizeInByte)>());
+		// 	
+		// 	Parameter->mOffset = static_cast<decltype(Parameter->mOffset)>(varDesc.StartOffset);
+		// 	Parameter->mSizeInByte = static_cast<decltype(Parameter->mSizeInByte)>(varDesc.Size);			
+		// }
+		//
+		// return  GPUShaderParameterBuffer;
 	}
 
 
+	void RendererDx11::UpdateGPUShaderParameterBuffer(GPUShaderParameterBuffer* InBuffer, const Array<int8>& InData)
+	{
+		GPUShaderParameterBufferDX11* ParameterBufferDX11 = static_cast<GPUShaderParameterBufferDX11*>(InBuffer);
+		
+		ID3D11Buffer* D3D11Buffer = ParameterBufferDX11->D3DBuffer;
+		
+		D3D11_MAPPED_SUBRESOURCE res = { 0 };
 
+		HRESULT hr = ImmediateContext->Map(
+			D3D11Buffer,  0,
+			D3D11_MAP_WRITE_DISCARD, 0, &res);
+
+		if (FAILED(hr)) {
+			GLog->Error("map shader parameter buffer failed. name : %s", ParameterBufferDX11->Name.c_str());
+			return;
+		}
+		
+		memcpy((int8*)res.pData, InData.data(), InData.size());
+
+		ImmediateContext->Unmap(D3D11Buffer, 0);
+	}
+	
 
 	ResourceBufferMapper::ResourceBufferMapper(Handle handle)
 	{
@@ -1620,17 +1863,7 @@ namespace Aurora
 		ImmediateContext->IASetInputLayout(layout);
 
 	}
-
-	void RendererDx11::SetVertexShader(Shader* pShader)
-	{
-		ImmediateContext->VSSetShader((ID3D11VertexShader*)pShader->HALHandle, nullptr, 0);
-	}
-
-	void RendererDx11::SetPixelShader(Shader* pShader)
-	{
-		ImmediateContext->PSSetShader((ID3D11PixelShader*)pShader->HALHandle, nullptr, 0);
-	}
-
+	
 
 	void RendererDx11::SetRenderTarget(uint idx, RenderTarget* pRenderTarget)
 	{

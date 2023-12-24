@@ -643,7 +643,7 @@ namespace Aurora
     class GLRenderDevice : public IRenderDevice
     {
     public:
-        GPUShaderObject* CreateShader(const ShaderCode& code) override;
+        GPUShaderObject* CreateGPUShaderObject(const ShaderCode& code, BaseShader* InShader) override;
         Texture* CreateTexture(File* file) override;
         Texture* CreateTexture(Texture::Type type, const Texture::Desc& desc) override;
         RenderTarget* CreateRenderTarget(const RenderTarget::Desc& desc) override;
@@ -652,14 +652,12 @@ namespace Aurora
         RenderTarget* GetFrameBuffer() override;
         RenderTarget* GetDepthStencil() override;
         void GetFrameBufferSize(uint& nWidth, uint& nHeight) override;
-        void SetVertexShader(Shader* pShader) override;
-        void SetPixelShader(Shader* pShader) override;
         void SetRenderTarget(uint idx, RenderTarget* pRenderTarget) override;
         void SetDepthStencil(RenderTarget* pDepthStencil) override;
         void SetRenderTarget(uint nRTs, RenderTarget** pRenderTargets, RenderTarget* pDepthStencil) override;
         void ExecuteOperator(const RenderOperator& op) override;
         Handle CreateShaderParameterBinding(GPUShaderObject* shaderHandle, const ShaderParameterBindings& bindings) override;
-        void UpdateShaderParameter(Handle bindingHandle) override;
+        void UpdateShaderParameter(Handle bindingHandle, const CShaderParameterContainer* InParameterContainer) override;
         void BindVertexShader(GPUShaderObject* shaderHandle) override;
         void BindPixelShader(GPUShaderObject* shaderHandle) override;
         Handle CreateShaderTextureBinding(GPUShaderObject* shaderHandle, const ShaderTextureBinding& bindings) override;
@@ -676,7 +674,7 @@ namespace Aurora
 
 
 
-    GPUShaderObject* GLRenderDevice::CreateShader(const ShaderCode& code)
+    GPUShaderObject* GLRenderDevice::CreateGPUShaderObject(const ShaderCode& code, BaseShader* InShader)
     {
         return nullptr;
     }
@@ -720,14 +718,6 @@ namespace Aurora
         
     }
     
-    void GLRenderDevice::SetVertexShader(Shader* pShader)
-    {
-    }
-    
-    void GLRenderDevice::SetPixelShader(Shader* pShader)
-    {
-    }
-    
     void GLRenderDevice::SetRenderTarget(uint idx, RenderTarget* pRenderTarget)
     {
     }
@@ -749,7 +739,7 @@ namespace Aurora
         return 0;
     }
     
-    void GLRenderDevice::UpdateShaderParameter(Handle bindingHandle)
+    void GLRenderDevice::UpdateShaderParameter(Handle bindingHandle, const CShaderParameterContainer* InParameterContainer)
     {
     }
     

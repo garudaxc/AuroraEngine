@@ -1,5 +1,8 @@
-#include "stdafx.shd"
+#include "stdafx.shader"
 #include "CommonPS.shader"
+
+#include "GlobalDefine.shader"
+
 
 struct PS_INPUT
 {
@@ -71,7 +74,7 @@ PS_OUTPUT Main(PS_INPUT input)
 
 	c = vDiffuse.xyz * LightColor0.xyz * ndl + ibl;
 
-	output.c0 = float4(c, 1.0);
+	output.c0 = float4(input.normal, 1.0);
 
 	return output;
 }

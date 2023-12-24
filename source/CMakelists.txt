@@ -46,7 +46,7 @@ aux_source_directory(ThirdParty/imgui srcs)
 
 
 file(GLOB H_FILES "engine/*.h" "ThirdParty/TinyXml/*.h" "ThirdParty/zip/*.h" "ThirdParty/stb/*.h" "ThirdParty/dxTools/*.h" "ThirdParty/imgui/*.h")
-
+file(GLOB SHADER_FILES "../dev/data/shader/*.shader")
 
 
 if(CMAKE_HOST_WIN32)
@@ -89,8 +89,9 @@ function(DefineAProject projectName projsrc)
 	
 	source_group_by_dir(srcs)
 	source_group_by_dir(H_FILES)
+	source_group_by_dir(SHADER_FILES)
 	
-	add_executable(${ARGV0} WIN32 ${srcs} ${H_FILES} ${ARGV1})
+	add_executable(${ARGV0} WIN32 ${srcs} ${H_FILES} ${ARGV1} ${SHADER_FILES})
 	target_link_libraries(${ARGV0} winmm.lib)
 	set_target_properties(${ARGV0} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
 	set_target_properties(${ARGV0} PROPERTIES PDB_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
