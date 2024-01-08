@@ -846,7 +846,7 @@ namespace Aurora
 		{
 			if(InShader)
 			{
-				GLog->Info("%s shader %s created", InShader->type_ == BaseShader::VERTEX_SHADER ? "Vertex" : "Pixel", InShader->pathname_.c_str());				
+				GLog->Info("%s shader %s created", InShader->mType == BaseShader::VERTEX_SHADER ? "Vertex" : "Pixel", InShader->pathname_.c_str());				
 			}
 		}
 

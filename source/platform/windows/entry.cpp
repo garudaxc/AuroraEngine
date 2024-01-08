@@ -3,11 +3,34 @@
 #include "Engine.h"
 #include "Renderer.h"
 #include "imgui.h"
+#include "Platform.h"
+#include "Log.h"
 
 IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace Aurora
 {
+
+    
+    bool CreateDX11Device(CScreen* InScreen);
+    bool CreateOpenGLDevice(CScreen* InScreen);
+	
+    IRenderDevice* IRenderDevice::CreateDevice(RendererType InType, CScreen* InScreen)
+    {
+        if(InType == RendererType::DirectX11)
+        {
+            CreateDX11Device(InScreen);
+        }
+        else if(InType == RendererType::OpenGL)
+        {
+            CreateOpenGLDevice(InScreen);
+        }
+		
+        return GRenderDevice;
+    }
+
+
+    
     class CScreenWindows : public CScreen
     {
     public:
@@ -309,7 +332,7 @@ namespace Aurora
     }
 
 
-    int EngineMain()
+    int EngineMain(LPTSTR lpCmdLine)
     {
         int Width = 1200;
         int Height = 800;
@@ -320,6 +343,8 @@ namespace Aurora
         };
 
         GEngineInstance = Engine::Create();
+        GEngineInstance->mCommandLine = lpCmdLine;
+        
         GEngineInstance->Init(&GMainScreen);
 
         EngineLoop();
@@ -337,8 +362,10 @@ int WINAPI WinMain(HINSTANCE hInstance,
     //GCommandSystem->AddCommand("MyCommand", MyCommand, "abck");
     //GCommandSystem->ExecuteCommand("MyCommand");
 
+    
 
-    int Result = Aurora::EngineMain();
+
+    int Result = Aurora::EngineMain(lpCmdLine);
 
     return Result;
 }

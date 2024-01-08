@@ -1,6 +1,4 @@
-#ifndef __STDHEADER_H__
-#define __STDHEADER_H__
-
+#pragma once
 
 #pragma warning(disable : 4003)
 
@@ -33,9 +31,6 @@
 #include "MathFunction.h"
 
 #include "Types.h"
-#include "Engine.h"
-#include "Interface.h"
-#include "Log.h"
 
 
 using namespace std;
@@ -51,6 +46,3 @@ namespace Aurora
     
     
 }
-
-
-#endif

@@ -67,10 +67,10 @@ namespace Aurora
             mParameterBuffers.push_back(InBuffer);
         }
 
-        ShaderType type_ = VERTEX_SHADER;
+        ShaderType mType = VERTEX_SHADER;
 
         GPUShaderObject* mDeviceHandle = nullptr;
-        string name_{"test shader"};
+        string mName{"test shader"};
 
         string pathname_;
         

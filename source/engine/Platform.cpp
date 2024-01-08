@@ -8,6 +8,8 @@
 #include <string>
 #include <intrin.h>
 
+#include "Log.h"
+
 namespace Aurora
 {
 	
@@ -577,10 +579,6 @@ void InitPlatform()
 
 
 
-
-
-
-
 	//bool IsFileExist(const string& pathName)
 	//{
 	//	HANDLE hFile = CreateFileA(pathName.c_str(), 0, 0, nullptr, 0, OPEN_EXISTING, nullptr);
@@ -588,15 +586,76 @@ void InitPlatform()
 	//	return true;
 	//}
 
-	bool IsFileExist(const string& pathName)
-	{
-		if (_access(pathName.c_str(), 0) == -1)
-		{
-			return false;
-		}
+	static CPlatform _GPlatform;
+	CPlatform* GPlatform = &_GPlatform;
 
-		return true;
-	}
+	 bool CPlatform::IsFileExist(const String& pathName) const
+	 {
+	 	if (_access(pathName.c_str(), 0) == -1)
+	 	{
+	 		return false;
+	 	}
+	
+	 	return true;
+	 }
+
+
+	// DIR *dir;
+	// struct dirent *ent;
+	// if ((dir = opendir ("c:\\src\\")) != NULL) {
+	// 	/* print all the files and directories within directory */
+	// 	while ((ent = readdir (dir)) != NULL) {
+	// 		printf ("%s\n", ent->d_name);
+	// 	}
+	// 	closedir (dir);
+	// } else {
+	// 	/* could not open directory */
+	// 	perror ("");
+	// 	return EXIT_FAILURE;
+	// }
+	//
+	
+	 Array<String> CPlatform::ListFile(const String& InPath, const String& InFilter) const
+	 {
+	 	WIN32_FIND_DATA FindFileData;
+
+	 	Array<String> result;
+
+	 	String path = InPath + '/';
+	 	path += InFilter.empty() ? "*.*" : InFilter;
+
+
+	 	HANDLE hFind = FindFirstFile(path.c_str(), &FindFileData);
+	 	if (hFind == INVALID_HANDLE_VALUE) 
+	 	{
+	 		GLog->Error("FindFirstFile failed  in path %s", InPath.c_str());
+	 		return result;
+	 	}
+	 	
+	    do
+	    {
+		    if (! (FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+		    {
+			    result.push_back(FindFileData.cFileName);
+		    }
+	    } while (::FindNextFile(hFind, &FindFileData));
+
+	    FindClose(hFind);
+
+	 	return result;	 	
+	 }
+	 String CPlatform::GetShaderFilePath() const
+	 {
+	 	return "../dev/data/shader";
+	 }
+
+	 String CPlatform::GetWorkingPath() const
+	 {
+	 	return ".";
+	 }
+
+	
+
 
 	//////////////////////////////////////////////////////////////////////////
 	class SectionLock 

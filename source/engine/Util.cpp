@@ -74,6 +74,40 @@ namespace Aurora
 		assert(0);
 		return tmp;
 	}
+	
+	String& Util::StringToLower(String& InString)
+	{
+		std::transform(InString.begin(), InString.end(), InString.begin(),
+			[](unsigned char c){ return std::tolower(c); });
+		return InString;
+	}
+	
+	String& Util::StringToUpper(String& InString)
+	{		
+		std::transform(InString.begin(), InString.end(), InString.begin(),
+			[](unsigned char c){ return std::toupper(c); });
+		return InString;
+	}
+	
+	int Util::SplitString(const String& InString, char InSplitChar, Array<String>& OutResult)
+	{
+			size_t pos = InString.find( InSplitChar );
+			size_t initialPos = 0;
+			OutResult.clear();
+
+			// Decompose statement
+			while( pos != std::string::npos ) {
+				OutResult.push_back( InString.substr( initialPos, pos - initialPos ) );
+				initialPos = pos + 1;
+
+				pos = InString.find( InSplitChar, initialPos );
+			}
+
+			// Add the last one
+			OutResult.push_back( InString.substr( initialPos, min( pos, InString.size() ) - initialPos + 1 ) );
+
+			return OutResult.size();
+	}
 
 
 	EEncoding Util::GetEncoding(const int8* str)

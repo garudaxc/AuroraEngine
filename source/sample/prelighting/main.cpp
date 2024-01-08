@@ -16,6 +16,7 @@
 #include "SimpleRendering.h"
 #include "HelperDraw.h"
 #include "Gui.h"
+#include "Platform.h"
 
 
 using namespace Aurora;

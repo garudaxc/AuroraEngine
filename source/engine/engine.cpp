@@ -12,10 +12,12 @@
 #include "Model.h"
 #include "Texture.h"
 #include "Config.h"
+#include "dirent.h"
 #include "Entity.h"
 #include "Mesh.h"
 #include "SimpleRendering.h"
 #include "Gui.h"
+#include "Util.h"
 
 
 
@@ -25,19 +27,19 @@ namespace Aurora
 	const char* ENGINE_NAME = "Aurora Engine";
 	const char* ENGINE_VERSION = "0.1";
 
-	static Engine* g_pEngine;
+	static Engine* GEngine;
 	
 	IRenderDevice* GRenderDevice = nullptr;
 
 	Engine* GetEngine()
 	{
-		return g_pEngine;
+		return GEngine;
 	}
 
 	Engine* Engine::Create()
 	{
-		g_pEngine = new Engine();
-		return g_pEngine;
+		GEngine = new Engine();
+		return GEngine;
 	}
 
 
@@ -53,21 +55,6 @@ namespace Aurora
 
 	}
 
-	bool CreateDX11Device(CScreen* InScreen);
-    bool CreateOpenGLDevice(CScreen* InScreen);
-	
-	IRenderDevice* IRenderDevice::CreateDevice(CScreen* InScreen)
-	{		
-		if (!CreateDX11Device(InScreen)) {
-			return nullptr;
-		}
-			
-		// if (!CreateOpenGLDevice(InScreen)) {
-		// 	return nullptr;
-		// }
-		
-		return GRenderDevice;
-	}
 
 	bool IRenderDevice::Initialized()
 	{
@@ -80,12 +67,14 @@ namespace Aurora
 		Config::Initialize();
 
 		GLog->Initialize();
+
+		ParseCommandLine(mCommandLine);
 		
 		InitPlatform();
 
 		m_pTimer = new Timer();		
 		
-		m_pRenderer = IRenderDevice::CreateDevice(InScreen);
+		m_pRenderer = IRenderDevice::CreateDevice(mRendererType, InScreen);
 
 		m_pResourceManager = new ResourceManager();
 		m_pResourceManager->Init();
@@ -204,6 +193,31 @@ namespace Aurora
 		GPipeline.Render();
 		GPipeline.EndPipe();
 		return GPipeline.EndOcclusionQuery();
+	}
+	
+	void Engine::ParseCommandLine(const String& cmd)
+	{
+		GLog->Info("command line : %s", cmd.c_str());
+
+		Array<String> tokens;
+		int numTokens = Util::SplitString(cmd, ' ', tokens);
+		for (int Index = 0; Index < numTokens; ++Index)
+		{
+			if(tokens[Index] == "-renderer")
+			{
+				RendererType type = DirectX11;
+				++Index;
+
+				if(tokens[Index] == "opengl")
+				{
+					type = OpenGL;
+				}
+
+				mRendererType = type;
+			}
+		}
+
+		
 	}
 
 

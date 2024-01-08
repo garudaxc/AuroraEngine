@@ -1,16 +1,14 @@
 #pragma once
 
+
 #include "stdheader.h"
 
 namespace Aurora
 {
 
-
 	void InitPlatform();
 
-	bool IsFileExist(const std::string& pathName);
-
-
+	
 	class ILock
 	{
 	public:
@@ -76,7 +74,6 @@ namespace Aurora
 
 
 
-	
 	class CScreen
 	{
 	public:
@@ -99,8 +96,16 @@ namespace Aurora
 
 		static CScreen*	MainScreen;
 
-		static std::string		GetWorkingPath();		
+		String GetWorkingPath() const;
+		
+		bool IsFileExist(const String& pathName) const;
+
+		Array<String> ListFile(const String& InPath, const String& InFilter = "") const;
+
+		String GetShaderFilePath() const;
 	};
+
+	extern CPlatform* GPlatform;
 
 
 }

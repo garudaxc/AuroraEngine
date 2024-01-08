@@ -3,6 +3,7 @@
 #include "SceneView.h"
 #include "Timer.h"
 #include "Camera.h"
+#include "Platform.h"
 
 namespace Aurora
 {

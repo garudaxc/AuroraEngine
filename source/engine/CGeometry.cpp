@@ -6,6 +6,7 @@
 #include "RendererObject.h"
 #include "Renderer.h"
 #include "FileSystem.h"
+#include "Log.h"
 namespace Aurora
 {
 

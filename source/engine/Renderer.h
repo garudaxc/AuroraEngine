@@ -17,6 +17,13 @@ namespace Aurora
     class StateValuePair;
     class CShaderParameterContainer;
     class CVertexFactory;
+    class CScreen;
+
+    enum RendererType
+    {
+        DirectX11,
+        OpenGL,
+    };
 
 
     extern IRenderDevice* GRenderDevice;
@@ -137,7 +144,7 @@ namespace Aurora
         virtual ~IRenderDevice() =default;
 
 
-        static IRenderDevice* CreateDevice(CScreen* InScreen);
+        static IRenderDevice* CreateDevice(RendererType InType, CScreen* InScreen);
 
         static bool Initialized();
 

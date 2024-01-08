@@ -1,71 +1,77 @@
 #pragma once
 #include "stdheader.h"
+#include "Renderer.h"
 
 namespace Aurora
 {
 
-	class Engine;
-	class Pipeline;
-	class IRenderDevice;
-	class Timer;
-	class ResourceManager;
-	class CScreen;
+    class Engine;
+    class Pipeline;
+    class IRenderDevice;
+    class Timer;
+    class ResourceManager;
+    class CScreen;
 
-	Engine*		GetEngine();
+    Engine* GetEngine();
 
+    class Engine
+    {
+    public:
+        static Engine* Create();
 
-	class Engine
-	{
-	public:
-		static Engine*		Create();
+        ~Engine();
+        void Init(CScreen* InScreen);
+        void Destroy();
 
-		~Engine();
-		void			Init(CScreen* InScreen);
-		void			Destroy();
+        IRenderDevice* GetRenderer();
+        Timer* GetTimer();
+        ResourceManager* GetResourceManager();
 
-		IRenderDevice*		GetRenderer();
-		Timer*				GetTimer();
-		ResourceManager*		GetResourceManager();
+        void ResetDevice();
+        void LostDevice();
 
-		void		ResetDevice();
-		void		LostDevice();
+        void RenderOneFrame();
+        void ResizeFrameBuffer(int width, int height);
+        int IssuePickupTest(int x, int y, int windowSize);
 
-		void		RenderOneFrame();
-		void		ResizeFrameBuffer(int width, int height);
-		int			IssuePickupTest(int x, int y, int windowSize);
+        float GetFPS() const;
 
-		float		GetFPS() const;
+        void ParseCommandLine(const String& cmd);
 
-	private:
-		Engine();
+        String mCommandLine;
 
-		IRenderDevice*			m_pRenderer;
-		Timer*			m_pTimer;
-		ResourceManager*	m_pResourceManager;
+    private:
+        Engine();
 
-		float				m_fps;
+        IRenderDevice* m_pRenderer;
+        Timer* m_pTimer;
+        ResourceManager* m_pResourceManager;
 
-	};
+        float m_fps;
 
-	inline IRenderDevice* Engine::GetRenderer()
-	{
-		return m_pRenderer;
-	}
+        RendererType mRendererType = DirectX11;
 
-	inline Timer* Engine::GetTimer()
-	{
-		return m_pTimer;
-	}
+    };
 
-	inline ResourceManager* Engine::GetResourceManager()
-	{
-		return m_pResourceManager;
-	}
+    inline IRenderDevice* Engine::GetRenderer()
+    {
+        return m_pRenderer;
+    }
 
-	inline float Engine::GetFPS() const
-	{
-		return m_fps;
-	}
+    inline Timer* Engine::GetTimer()
+    {
+        return m_pTimer;
+    }
+
+    inline ResourceManager* Engine::GetResourceManager()
+    {
+        return m_pResourceManager;
+    }
+
+    inline float Engine::GetFPS() const
+    {
+        return m_fps;
+    }
 
 
 

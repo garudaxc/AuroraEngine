@@ -62,6 +62,8 @@ namespace Aurora
 	class FileSystem
 	{
 	public:
+		static String CombinePath(const String& InBasePath, const String& SubPath);
+		
 		virtual void	SetRootPath(const string& path, bool addPak) = 0;
 		virtual bool	AddPakFile(const string& pathname) = 0;
 

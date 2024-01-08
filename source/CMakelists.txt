@@ -54,6 +54,7 @@ if(CMAKE_HOST_WIN32)
 	
     include_directories(platform/windows)
 	file(GLOB PLATFORM_H_FILES "platform/windows/*.h")
+	file(GLOB PLATFORM_H_FILES "engine/OpenGL/*.h")
 	
 	aux_source_directory(ThirdParty/imgui/win srcs)
 	aux_source_directory(platform/windows srcs)

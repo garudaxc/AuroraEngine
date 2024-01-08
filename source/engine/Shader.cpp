@@ -18,24 +18,24 @@ namespace Aurora
     {
     }
 
-    void BaseShader::InitBase(ShaderType type, const string& pathname)
+    void BaseShader::InitBase(ShaderType type, const String& pathname)
     {
-        type_ = type;
+        mType = type;
         pathname_ = pathname;
 
         FilePtr file(GFileSys->OpenFile(pathname_));
 
         ShaderCode code;
         code.text = file->ReadAsString();
-        code.type = type_;
+        code.type = mType;
         code.name = pathname_;
 
-        if (type_ == VERTEX_SHADER)
+        if (mType == VERTEX_SHADER)
         {
             code.defines.push_back(make_pair("VERTEX_SHADER", "1"));
         }
 
-        if (type_ == PIXEL_SHADER)
+        if (mType == PIXEL_SHADER)
         {
             code.defines.push_back(make_pair("PIXEL_SHADER", "1"));
         }
@@ -54,12 +54,12 @@ namespace Aurora
     void BaseShader::BindShader()
     {
         assert(mDeviceHandle >= 0);
-        if (type_ == VERTEX_SHADER)
+        if (mType == VERTEX_SHADER)
         {
             GRenderDevice->BindVertexShader(mDeviceHandle);
         }
 
-        if (type_ == PIXEL_SHADER)
+        if (mType == PIXEL_SHADER)
         {
             GRenderDevice->BindPixelShader(mDeviceHandle);
         }

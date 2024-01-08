@@ -1,9 +1,12 @@
 #include <windows.h>
 #include <gl\gl.h>
+
+#include "FileSystem.h"
 #include "Shader.h"
 #include "Log.h"
 #include "Renderer.h"
 #include "PlatformWin.h"
+#include "GLFunctions.h"
 
 
 #pragma comment(lib, "opengl32.lib")
@@ -24,108 +27,13 @@ namespace Aurora
 #define WGL_TYPE_RGBA_ARB              0x202B
 #define WGL_CONTEXT_MAJOR_VERSION_ARB  0x2091
 #define WGL_CONTEXT_MINOR_VERSION_ARB  0x2092
-#define GL_ARRAY_BUFFER                   0x8892
-#define GL_STATIC_DRAW                    0x88E4
-#define GL_FRAGMENT_SHADER                0x8B30
-#define GL_VERTEX_SHADER                  0x8B31
-#define GL_COMPILE_STATUS                 0x8B81
-#define GL_LINK_STATUS                    0x8B82
-#define GL_INFO_LOG_LENGTH                0x8B84
-#define GL_TEXTURE0                       0x84C0
-#define GL_BGRA                           0x80E1
-#define GL_ELEMENT_ARRAY_BUFFER           0x8893
 
-
-    typedef BOOL (WINAPI * PFNWGLCHOOSEPIXELFORMATARBPROC)(HDC hdc, const int* piAttribIList,
-                                                           const FLOAT* pfAttribFList, UINT nMaxFormats,
-                                                           int* piFormats, UINT* nNumFormats);
-    typedef HGLRC (WINAPI * PFNWGLCREATECONTEXTATTRIBSARBPROC)(HDC hDC, HGLRC hShareContext, const int* attribList);
-    typedef BOOL (WINAPI * PFNWGLSWAPINTERVALEXTPROC)(int interval);
-    typedef void (APIENTRY * PFNGLATTACHSHADERPROC)(GLuint program, GLuint shader);
-    typedef void (APIENTRY * PFNGLBINDBUFFERPROC)(GLenum target, GLuint buffer);
-    typedef void (APIENTRY * PFNGLBINDVERTEXARRAYPROC)(GLuint array);
-    typedef void (APIENTRY * PFNGLBUFFERDATAPROC)(GLenum target, ptrdiff_t size, const GLvoid* data, GLenum usage);
-    typedef void (APIENTRY * PFNGLCOMPILESHADERPROC)(GLuint shader);
-    typedef GLuint (APIENTRY * PFNGLCREATEPROGRAMPROC)(void);
-    typedef GLuint (APIENTRY * PFNGLCREATESHADERPROC)(GLenum type);
-    typedef void (APIENTRY * PFNGLDELETEBUFFERSPROC)(GLsizei n, const GLuint* buffers);
-    typedef void (APIENTRY * PFNGLDELETEPROGRAMPROC)(GLuint program);
-    typedef void (APIENTRY * PFNGLDELETESHADERPROC)(GLuint shader);
-    typedef void (APIENTRY * PFNGLDELETEVERTEXARRAYSPROC)(GLsizei n, const GLuint* arrays);
-    typedef void (APIENTRY * PFNGLDETACHSHADERPROC)(GLuint program, GLuint shader);
-    typedef void (APIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC)(GLuint index);
-    typedef void (APIENTRY * PFNGLGENBUFFERSPROC)(GLsizei n, GLuint* buffers);
-    typedef void (APIENTRY * PFNGLGENVERTEXARRAYSPROC)(GLsizei n, GLuint* arrays);
-    typedef GLint (APIENTRY * PFNGLGETATTRIBLOCATIONPROC)(GLuint program, const char* name);
-    typedef void (APIENTRY * PFNGLGETPROGRAMINFOLOGPROC)(GLuint program, GLsizei bufSize, GLsizei* length,
-                                                         char* infoLog);
-    typedef void (APIENTRY * PFNGLGETPROGRAMIVPROC)(GLuint program, GLenum pname, GLint* params);
-    typedef void (APIENTRY * PFNGLGETSHADERINFOLOGPROC)(GLuint shader, GLsizei bufSize, GLsizei* length, char* infoLog);
-    typedef void (APIENTRY * PFNGLGETSHADERIVPROC)(GLuint shader, GLenum pname, GLint* params);
-    typedef void (APIENTRY * PFNGLLINKPROGRAMPROC)(GLuint program);
-    typedef void (APIENTRY * PFNGLSHADERSOURCEPROC)(GLuint shader, GLsizei count, const char* * string,
-                                                    const GLint* length);
-    typedef void (APIENTRY * PFNGLUSEPROGRAMPROC)(GLuint program);
-    typedef void (APIENTRY * PFNGLVERTEXATTRIBPOINTERPROC)(GLuint index, GLint size, GLenum type, GLboolean normalized,
-                                                           GLsizei stride,
-                                                           const GLvoid* pointer);
-    typedef void (APIENTRY * PFNGLBINDATTRIBLOCATIONPROC)(GLuint program, GLuint index, const char* name);
-    typedef GLint (APIENTRY * PFNGLGETUNIFORMLOCATIONPROC)(GLuint program, const char* name);
-    typedef void (APIENTRY * PFNGLUNIFORMMATRIX4FVPROC)(GLint location, GLsizei count, GLboolean transpose,
-                                                        const GLfloat* value);
-    typedef void (APIENTRY * PFNGLACTIVETEXTUREPROC)(GLenum texture);
-    typedef void (APIENTRY * PFNGLUNIFORM1IPROC)(GLint location, GLint v0);
-    typedef void (APIENTRY * PFNGLGENERATEMIPMAPPROC)(GLenum target);
-    typedef void (APIENTRY * PFNGLDISABLEVERTEXATTRIBARRAYPROC)(GLuint index);
-    typedef void (APIENTRY * PFNGLUNIFORM3FVPROC)(GLint location, GLsizei count, const GLfloat* value);
-    typedef void (APIENTRY * PFNGLUNIFORM4FVPROC)(GLint location, GLsizei count, const GLfloat* value);
-    typedef void (APIENTRY * PFNGLCLEARDEPTHFPROC)(GLclampf depth);
     
-
-    PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
-    PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
-    PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
-
-
-    PFNGLATTACHSHADERPROC glAttachShader;
-    PFNGLBINDBUFFERPROC glBindBuffer;
-    PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
-    PFNGLBUFFERDATAPROC glBufferData;
-    PFNGLCOMPILESHADERPROC glCompileShader;
-    PFNGLCREATEPROGRAMPROC glCreateProgram;
-    PFNGLCREATESHADERPROC glCreateShader;
-    PFNGLDELETEBUFFERSPROC glDeleteBuffers;
-    PFNGLDELETEPROGRAMPROC glDeleteProgram;
-    PFNGLDELETESHADERPROC glDeleteShader;
-    PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
-    PFNGLDETACHSHADERPROC glDetachShader;
-    PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
-    PFNGLGENBUFFERSPROC glGenBuffers;
-    PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
-    PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation;
-    PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
-    PFNGLGETPROGRAMIVPROC glGetProgramiv;
-    PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
-    PFNGLGETSHADERIVPROC glGetShaderiv;
-    PFNGLLINKPROGRAMPROC glLinkProgram;
-    PFNGLSHADERSOURCEPROC glShaderSource;
-    PFNGLUSEPROGRAMPROC glUseProgram;
-    PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
-    PFNGLBINDATTRIBLOCATIONPROC glBindAttribLocation;
-    PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
-    PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
-    PFNGLACTIVETEXTUREPROC glActiveTexture;
-    PFNGLUNIFORM1IPROC glUniform1i;
-    PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
-    PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
-    PFNGLUNIFORM3FVPROC glUniform3fv;
-    PFNGLUNIFORM4FVPROC glUniform4fv;
-    PFNGLCLEARDEPTHFPROC glClearDepthf;
 
     HDC m_deviceContext;
     HGLRC m_renderingContext;
 
-    #define LOAD_GL_PROC_WIN(proc, proc_def) \
+    #define LOAD_GL_PROC_WIN(proc_def, proc) \
     proc = (proc_def) wglGetProcAddress(#proc); \
     if((proc) == nullptr) \
     { \
@@ -135,46 +43,290 @@ namespace Aurora
     
 
     static bool LoadExtensionList()
-    {
-        LOAD_GL_PROC_WIN(wglChoosePixelFormatARB, PFNWGLCHOOSEPIXELFORMATARBPROC)
-        LOAD_GL_PROC_WIN(wglCreateContextAttribsARB, PFNWGLCREATECONTEXTATTRIBSARBPROC)
-        LOAD_GL_PROC_WIN(wglSwapIntervalEXT, PFNWGLSWAPINTERVALEXTPROC)
-        LOAD_GL_PROC_WIN(glAttachShader, PFNGLATTACHSHADERPROC)
-        LOAD_GL_PROC_WIN(glBindBuffer, PFNGLBINDBUFFERPROC)
-        LOAD_GL_PROC_WIN(glBindVertexArray, PFNGLBINDVERTEXARRAYPROC)
-        LOAD_GL_PROC_WIN(glBufferData, PFNGLBUFFERDATAPROC)
-        LOAD_GL_PROC_WIN(glCompileShader, PFNGLCOMPILESHADERPROC)
-        LOAD_GL_PROC_WIN(glCreateProgram, PFNGLCREATEPROGRAMPROC)
-        LOAD_GL_PROC_WIN(glCreateShader, PFNGLCREATESHADERPROC)
-        LOAD_GL_PROC_WIN(glDeleteBuffers, PFNGLDELETEBUFFERSPROC)
-        LOAD_GL_PROC_WIN(glDeleteProgram, PFNGLDELETEPROGRAMPROC)
-        LOAD_GL_PROC_WIN(glDeleteShader, PFNGLDELETESHADERPROC)
-        LOAD_GL_PROC_WIN(glDeleteVertexArrays, PFNGLDELETEVERTEXARRAYSPROC)
-        LOAD_GL_PROC_WIN(glDetachShader, PFNGLDETACHSHADERPROC)
-        LOAD_GL_PROC_WIN(glEnableVertexAttribArray, PFNGLENABLEVERTEXATTRIBARRAYPROC)
-        LOAD_GL_PROC_WIN(glGenBuffers, PFNGLGENBUFFERSPROC)
-        LOAD_GL_PROC_WIN(glGenVertexArrays, PFNGLGENVERTEXARRAYSPROC)
-        LOAD_GL_PROC_WIN(glGetAttribLocation, PFNGLGETATTRIBLOCATIONPROC)
-        LOAD_GL_PROC_WIN(glGetProgramInfoLog, PFNGLGETPROGRAMINFOLOGPROC)
-        LOAD_GL_PROC_WIN(glGetProgramiv, PFNGLGETPROGRAMIVPROC)
-        LOAD_GL_PROC_WIN(glGetShaderInfoLog, PFNGLGETSHADERINFOLOGPROC)
-        LOAD_GL_PROC_WIN(glGetShaderiv, PFNGLGETSHADERIVPROC)
-        LOAD_GL_PROC_WIN(glLinkProgram, PFNGLLINKPROGRAMPROC)
-        LOAD_GL_PROC_WIN(glShaderSource, PFNGLSHADERSOURCEPROC)
-        LOAD_GL_PROC_WIN(glUseProgram, PFNGLUSEPROGRAMPROC)
-        LOAD_GL_PROC_WIN(glVertexAttribPointer, PFNGLVERTEXATTRIBPOINTERPROC)
-        LOAD_GL_PROC_WIN(glBindAttribLocation, PFNGLBINDATTRIBLOCATIONPROC)
-        LOAD_GL_PROC_WIN(glGetUniformLocation, PFNGLGETUNIFORMLOCATIONPROC)
-        LOAD_GL_PROC_WIN(glUniformMatrix4fv, PFNGLUNIFORMMATRIX4FVPROC)
-        LOAD_GL_PROC_WIN(glActiveTexture, PFNGLACTIVETEXTUREPROC)
-        LOAD_GL_PROC_WIN(glUniform1i, PFNGLUNIFORM1IPROC)
-        LOAD_GL_PROC_WIN(glGenerateMipmap, PFNGLGENERATEMIPMAPPROC)
-        LOAD_GL_PROC_WIN(glDisableVertexAttribArray, PFNGLDISABLEVERTEXATTRIBARRAYPROC)
-        LOAD_GL_PROC_WIN(glUniform3fv, PFNGLUNIFORM3FVPROC)
-        LOAD_GL_PROC_WIN(glUniform4fv, PFNGLUNIFORM4FVPROC)
-        LOAD_GL_PROC_WIN(glClearDepthf, PFNGLCLEARDEPTHFPROC)
+    {         
+         LOAD_GL_PROC_WIN(PFNWGLCHOOSEPIXELFORMATARBPROC, wglChoosePixelFormatARB)
+         LOAD_GL_PROC_WIN(PFNWGLCREATECONTEXTATTRIBSARBPROC, wglCreateContextAttribsARB)
+         LOAD_GL_PROC_WIN(PFNWGLSWAPINTERVALEXTPROC, wglSwapIntervalEXT)
 
-        // GLog->Info("glClearDepthf %p", glClearDepthf);
+         
+         LOAD_GL_PROC_WIN(PFNGLACTIVETEXTUREPROC, glActiveTexture)
+         LOAD_GL_PROC_WIN(PFNGLATTACHSHADERPROC, glAttachShader)
+         LOAD_GL_PROC_WIN(PFNGLBINDATTRIBLOCATIONPROC, glBindAttribLocation)
+         LOAD_GL_PROC_WIN(PFNGLBINDBUFFERPROC, glBindBuffer)
+         LOAD_GL_PROC_WIN(PFNGLBINDFRAMEBUFFERPROC, glBindFramebuffer)
+         LOAD_GL_PROC_WIN(PFNGLBINDRENDERBUFFERPROC, glBindRenderbuffer)
+         LOAD_GL_PROC_WIN(PFNGLBINDTEXTUREPROC, glBindTexture)
+         LOAD_GL_PROC_WIN(PFNGLBLENDCOLORPROC, glBlendColor)
+         LOAD_GL_PROC_WIN(PFNGLBLENDEQUATIONPROC, glBlendEquation)
+         LOAD_GL_PROC_WIN(PFNGLBLENDEQUATIONSEPARATEPROC, glBlendEquationSeparate)
+         LOAD_GL_PROC_WIN(PFNGLBLENDFUNCSEPARATEPROC, glBlendFuncSeparate)
+         LOAD_GL_PROC_WIN(PFNGLBUFFERDATAPROC, glBufferData)
+         LOAD_GL_PROC_WIN(PFNGLBUFFERSUBDATAPROC, glBufferSubData)
+         LOAD_GL_PROC_WIN(PFNGLCHECKFRAMEBUFFERSTATUSPROC, glCheckFramebufferStatus)
+         LOAD_GL_PROC_WIN(PFNGLCLEARDEPTHFPROC, glClearDepthf)
+         LOAD_GL_PROC_WIN(PFNGLCOMPILESHADERPROC, glCompileShader)
+         LOAD_GL_PROC_WIN(PFNGLCOMPRESSEDTEXIMAGE2DPROC, glCompressedTexImage2D)
+         LOAD_GL_PROC_WIN(PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC, glCompressedTexSubImage2D)
+         LOAD_GL_PROC_WIN(PFNGLCOPYTEXIMAGE2DPROC, glCopyTexImage2D)
+         LOAD_GL_PROC_WIN(PFNGLCOPYTEXSUBIMAGE2DPROC, glCopyTexSubImage2D)
+         LOAD_GL_PROC_WIN(PFNGLCREATEPROGRAMPROC, glCreateProgram)
+         LOAD_GL_PROC_WIN(PFNGLCREATESHADERPROC, glCreateShader)
+         LOAD_GL_PROC_WIN(PFNGLDELETEBUFFERSPROC, glDeleteBuffers)
+         LOAD_GL_PROC_WIN(PFNGLDELETEFRAMEBUFFERSPROC, glDeleteFramebuffers)
+         LOAD_GL_PROC_WIN(PFNGLDELETEPROGRAMPROC, glDeleteProgram)
+         LOAD_GL_PROC_WIN(PFNGLDELETERENDERBUFFERSPROC, glDeleteRenderbuffers)
+         LOAD_GL_PROC_WIN(PFNGLDELETESHADERPROC, glDeleteShader)
+         LOAD_GL_PROC_WIN(PFNGLDELETETEXTURESPROC, glDeleteTextures)
+         LOAD_GL_PROC_WIN(PFNGLDEPTHRANGEFPROC, glDepthRangef)
+         LOAD_GL_PROC_WIN(PFNGLDETACHSHADERPROC, glDetachShader)
+         LOAD_GL_PROC_WIN(PFNGLDISABLEVERTEXATTRIBARRAYPROC, glDisableVertexAttribArray)
+         LOAD_GL_PROC_WIN(PFNGLDRAWARRAYSPROC, glDrawArrays)
+         LOAD_GL_PROC_WIN(PFNGLDRAWELEMENTSPROC, glDrawElements)
+         LOAD_GL_PROC_WIN(PFNGLENABLEVERTEXATTRIBARRAYPROC, glEnableVertexAttribArray)
+         LOAD_GL_PROC_WIN(PFNGLFRAMEBUFFERRENDERBUFFERPROC, glFramebufferRenderbuffer)
+         LOAD_GL_PROC_WIN(PFNGLFRAMEBUFFERTEXTURE2DPROC, glFramebufferTexture2D)
+         LOAD_GL_PROC_WIN(PFNGLGENBUFFERSPROC, glGenBuffers)
+         LOAD_GL_PROC_WIN(PFNGLGENERATEMIPMAPPROC, glGenerateMipmap)
+         LOAD_GL_PROC_WIN(PFNGLGENFRAMEBUFFERSPROC, glGenFramebuffers)
+         LOAD_GL_PROC_WIN(PFNGLGENRENDERBUFFERSPROC, glGenRenderbuffers)
+         LOAD_GL_PROC_WIN(PFNGLGENTEXTURESPROC, glGenTextures)
+         LOAD_GL_PROC_WIN(PFNGLGETACTIVEATTRIBPROC, glGetActiveAttrib)
+         LOAD_GL_PROC_WIN(PFNGLGETACTIVEUNIFORMPROC, glGetActiveUniform)
+         LOAD_GL_PROC_WIN(PFNGLGETATTACHEDSHADERSPROC, glGetAttachedShaders)
+         LOAD_GL_PROC_WIN(PFNGLGETATTRIBLOCATIONPROC, glGetAttribLocation)
+         LOAD_GL_PROC_WIN(PFNGLGETBUFFERPARAMETERIVPROC, glGetBufferParameteriv)
+         LOAD_GL_PROC_WIN(PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC, glGetFramebufferAttachmentParameteriv)
+         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMIVPROC, glGetProgramiv)
+         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMINFOLOGPROC, glGetProgramInfoLog)
+         LOAD_GL_PROC_WIN(PFNGLGETRENDERBUFFERPARAMETERIVPROC, glGetRenderbufferParameteriv)
+         LOAD_GL_PROC_WIN(PFNGLGETSHADERIVPROC, glGetShaderiv)
+         LOAD_GL_PROC_WIN(PFNGLGETSHADERINFOLOGPROC, glGetShaderInfoLog)
+         LOAD_GL_PROC_WIN(PFNGLGETSHADERPRECISIONFORMATPROC, glGetShaderPrecisionFormat)
+         LOAD_GL_PROC_WIN(PFNGLGETSHADERSOURCEPROC, glGetShaderSource)
+         LOAD_GL_PROC_WIN(PFNGLGETUNIFORMFVPROC, glGetUniformfv)
+         LOAD_GL_PROC_WIN(PFNGLGETUNIFORMIVPROC, glGetUniformiv)
+         LOAD_GL_PROC_WIN(PFNGLGETUNIFORMLOCATIONPROC, glGetUniformLocation)
+         LOAD_GL_PROC_WIN(PFNGLGETVERTEXATTRIBFVPROC, glGetVertexAttribfv)
+         LOAD_GL_PROC_WIN(PFNGLGETVERTEXATTRIBIVPROC, glGetVertexAttribiv)
+         LOAD_GL_PROC_WIN(PFNGLGETVERTEXATTRIBPOINTERVPROC, glGetVertexAttribPointerv)
+         LOAD_GL_PROC_WIN(PFNGLISBUFFERPROC, glIsBuffer)
+         LOAD_GL_PROC_WIN(PFNGLISFRAMEBUFFERPROC, glIsFramebuffer)
+         LOAD_GL_PROC_WIN(PFNGLISPROGRAMPROC, glIsProgram)
+         LOAD_GL_PROC_WIN(PFNGLISRENDERBUFFERPROC, glIsRenderbuffer)
+         LOAD_GL_PROC_WIN(PFNGLISSHADERPROC, glIsShader)
+         LOAD_GL_PROC_WIN(PFNGLISTEXTUREPROC, glIsTexture)
+         LOAD_GL_PROC_WIN(PFNGLLINKPROGRAMPROC, glLinkProgram)
+         LOAD_GL_PROC_WIN(PFNGLPOLYGONOFFSETPROC, glPolygonOffset)
+         LOAD_GL_PROC_WIN(PFNGLRELEASESHADERCOMPILERPROC, glReleaseShaderCompiler)
+         LOAD_GL_PROC_WIN(PFNGLRENDERBUFFERSTORAGEPROC, glRenderbufferStorage)
+         LOAD_GL_PROC_WIN(PFNGLSAMPLECOVERAGEPROC, glSampleCoverage)
+         LOAD_GL_PROC_WIN(PFNGLSHADERBINARYPROC, glShaderBinary)
+         LOAD_GL_PROC_WIN(PFNGLSHADERSOURCEPROC, glShaderSource)
+         LOAD_GL_PROC_WIN(PFNGLSTENCILFUNCSEPARATEPROC, glStencilFuncSeparate)
+         LOAD_GL_PROC_WIN(PFNGLSTENCILMASKSEPARATEPROC, glStencilMaskSeparate)
+         LOAD_GL_PROC_WIN(PFNGLSTENCILOPSEPARATEPROC, glStencilOpSeparate)
+         LOAD_GL_PROC_WIN(PFNGLTEXSUBIMAGE2DPROC, glTexSubImage2D)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM1FPROC, glUniform1f)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM1FVPROC, glUniform1fv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM1IPROC, glUniform1i)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM1IVPROC, glUniform1iv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM2FPROC, glUniform2f)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM2FVPROC, glUniform2fv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM2IPROC, glUniform2i)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM2IVPROC, glUniform2iv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM3FPROC, glUniform3f)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM3FVPROC, glUniform3fv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM3IPROC, glUniform3i)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM3IVPROC, glUniform3iv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM4FPROC, glUniform4f)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM4FVPROC, glUniform4fv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM4IPROC, glUniform4i)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM4IVPROC, glUniform4iv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX2FVPROC, glUniformMatrix2fv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX3FVPROC, glUniformMatrix3fv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX4FVPROC, glUniformMatrix4fv)
+         LOAD_GL_PROC_WIN(PFNGLUSEPROGRAMPROC, glUseProgram)
+         LOAD_GL_PROC_WIN(PFNGLVALIDATEPROGRAMPROC, glValidateProgram)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB1FPROC, glVertexAttrib1f)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB1FVPROC, glVertexAttrib1fv)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB2FPROC, glVertexAttrib2f)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB2FVPROC, glVertexAttrib2fv)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB3FPROC, glVertexAttrib3f)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB3FVPROC, glVertexAttrib3fv)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB4FPROC, glVertexAttrib4f)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB4FVPROC, glVertexAttrib4fv)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBPOINTERPROC, glVertexAttribPointer)
+
+         LOAD_GL_PROC_WIN(PFNGLDRAWRANGEELEMENTSPROC, glDrawRangeElements)
+         LOAD_GL_PROC_WIN(PFNGLTEXIMAGE3DPROC, glTexImage3D)
+         LOAD_GL_PROC_WIN(PFNGLTEXSUBIMAGE3DPROC, glTexSubImage3D)
+         LOAD_GL_PROC_WIN(PFNGLCOPYTEXSUBIMAGE3DPROC, glCopyTexSubImage3D)
+         LOAD_GL_PROC_WIN(PFNGLCOMPRESSEDTEXIMAGE3DPROC, glCompressedTexImage3D)
+         LOAD_GL_PROC_WIN(PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC, glCompressedTexSubImage3D)
+         LOAD_GL_PROC_WIN(PFNGLGENQUERIESPROC, glGenQueries)
+         LOAD_GL_PROC_WIN(PFNGLDELETEQUERIESPROC, glDeleteQueries)
+         LOAD_GL_PROC_WIN(PFNGLISQUERYPROC, glIsQuery)
+         LOAD_GL_PROC_WIN(PFNGLBEGINQUERYPROC, glBeginQuery)
+         LOAD_GL_PROC_WIN(PFNGLENDQUERYPROC, glEndQuery)
+         LOAD_GL_PROC_WIN(PFNGLGETQUERYIVPROC, glGetQueryiv)
+         LOAD_GL_PROC_WIN(PFNGLGETQUERYOBJECTUIVPROC, glGetQueryObjectuiv)
+         LOAD_GL_PROC_WIN(PFNGLUNMAPBUFFERPROC, glUnmapBuffer)
+         LOAD_GL_PROC_WIN(PFNGLGETBUFFERPOINTERVPROC, glGetBufferPointerv)
+         LOAD_GL_PROC_WIN(PFNGLDRAWBUFFERSPROC, glDrawBuffers)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX2X3FVPROC, glUniformMatrix2x3fv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX3X2FVPROC, glUniformMatrix3x2fv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX2X4FVPROC, glUniformMatrix2x4fv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX4X2FVPROC, glUniformMatrix4x2fv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX3X4FVPROC, glUniformMatrix3x4fv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX4X3FVPROC, glUniformMatrix4x3fv)
+         LOAD_GL_PROC_WIN(PFNGLBLITFRAMEBUFFERPROC, glBlitFramebuffer)
+         LOAD_GL_PROC_WIN(PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC, glRenderbufferStorageMultisample)
+         LOAD_GL_PROC_WIN(PFNGLFRAMEBUFFERTEXTURELAYERPROC, glFramebufferTextureLayer)
+         LOAD_GL_PROC_WIN(PFNGLMAPBUFFERRANGEPROC, glMapBufferRange)
+         LOAD_GL_PROC_WIN(PFNGLFLUSHMAPPEDBUFFERRANGEPROC, glFlushMappedBufferRange)
+         LOAD_GL_PROC_WIN(PFNGLBINDVERTEXARRAYPROC, glBindVertexArray)
+         LOAD_GL_PROC_WIN(PFNGLDELETEVERTEXARRAYSPROC, glDeleteVertexArrays)
+         LOAD_GL_PROC_WIN(PFNGLGENVERTEXARRAYSPROC, glGenVertexArrays)
+         LOAD_GL_PROC_WIN(PFNGLISVERTEXARRAYPROC, glIsVertexArray)
+         LOAD_GL_PROC_WIN(PFNGLGETINTEGERI_VPROC, glGetIntegeri_v)
+         LOAD_GL_PROC_WIN(PFNGLBEGINTRANSFORMFEEDBACKPROC, glBeginTransformFeedback)
+         LOAD_GL_PROC_WIN(PFNGLENDTRANSFORMFEEDBACKPROC, glEndTransformFeedback)
+         LOAD_GL_PROC_WIN(PFNGLBINDBUFFERRANGEPROC, glBindBufferRange)
+         LOAD_GL_PROC_WIN(PFNGLBINDBUFFERBASEPROC, glBindBufferBase)
+         LOAD_GL_PROC_WIN(PFNGLTRANSFORMFEEDBACKVARYINGSPROC, glTransformFeedbackVaryings)
+         LOAD_GL_PROC_WIN(PFNGLGETTRANSFORMFEEDBACKVARYINGPROC, glGetTransformFeedbackVarying)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBIPOINTERPROC, glVertexAttribIPointer)
+         LOAD_GL_PROC_WIN(PFNGLGETVERTEXATTRIBIIVPROC, glGetVertexAttribIiv)
+         LOAD_GL_PROC_WIN(PFNGLGETVERTEXATTRIBIUIVPROC, glGetVertexAttribIuiv)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBI4IPROC, glVertexAttribI4i)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBI4UIPROC, glVertexAttribI4ui)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBI4IVPROC, glVertexAttribI4iv)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBI4UIVPROC, glVertexAttribI4uiv)
+         LOAD_GL_PROC_WIN(PFNGLGETUNIFORMUIVPROC, glGetUniformuiv)
+         LOAD_GL_PROC_WIN(PFNGLGETFRAGDATALOCATIONPROC, glGetFragDataLocation)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM1UIPROC, glUniform1ui)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM2UIPROC, glUniform2ui)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM3UIPROC, glUniform3ui)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM4UIPROC, glUniform4ui)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM1UIVPROC, glUniform1uiv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM2UIVPROC, glUniform2uiv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM3UIVPROC, glUniform3uiv)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORM4UIVPROC, glUniform4uiv)
+         LOAD_GL_PROC_WIN(PFNGLCLEARBUFFERIVPROC, glClearBufferiv)
+         LOAD_GL_PROC_WIN(PFNGLCLEARBUFFERUIVPROC, glClearBufferuiv)
+         LOAD_GL_PROC_WIN(PFNGLCLEARBUFFERFVPROC, glClearBufferfv)
+         LOAD_GL_PROC_WIN(PFNGLCLEARBUFFERFIPROC, glClearBufferfi)
+         LOAD_GL_PROC_WIN(PFNGLGETSTRINGIPROC, glGetStringi)
+         LOAD_GL_PROC_WIN(PFNGLCOPYBUFFERSUBDATAPROC, glCopyBufferSubData)
+         LOAD_GL_PROC_WIN(PFNGLGETUNIFORMINDICESPROC, glGetUniformIndices)
+         LOAD_GL_PROC_WIN(PFNGLGETACTIVEUNIFORMSIVPROC, glGetActiveUniformsiv)
+         LOAD_GL_PROC_WIN(PFNGLGETUNIFORMBLOCKINDEXPROC, glGetUniformBlockIndex)
+         LOAD_GL_PROC_WIN(PFNGLGETACTIVEUNIFORMBLOCKIVPROC, glGetActiveUniformBlockiv)
+         LOAD_GL_PROC_WIN(PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC, glGetActiveUniformBlockName)
+         LOAD_GL_PROC_WIN(PFNGLUNIFORMBLOCKBINDINGPROC, glUniformBlockBinding)
+         LOAD_GL_PROC_WIN(PFNGLDRAWARRAYSINSTANCEDPROC, glDrawArraysInstanced)
+         LOAD_GL_PROC_WIN(PFNGLDRAWELEMENTSINSTANCEDPROC, glDrawElementsInstanced)
+         LOAD_GL_PROC_WIN(PFNGLFENCESYNCPROC, glFenceSync)
+         LOAD_GL_PROC_WIN(PFNGLISSYNCPROC, glIsSync)
+         LOAD_GL_PROC_WIN(PFNGLDELETESYNCPROC, glDeleteSync)
+         LOAD_GL_PROC_WIN(PFNGLCLIENTWAITSYNCPROC, glClientWaitSync)
+         LOAD_GL_PROC_WIN(PFNGLWAITSYNCPROC, glWaitSync)
+         LOAD_GL_PROC_WIN(PFNGLGETINTEGER64VPROC, glGetInteger64v)
+         LOAD_GL_PROC_WIN(PFNGLGETSYNCIVPROC, glGetSynciv)
+         LOAD_GL_PROC_WIN(PFNGLGETINTEGER64I_VPROC, glGetInteger64i_v)
+         LOAD_GL_PROC_WIN(PFNGLGETBUFFERPARAMETERI64VPROC, glGetBufferParameteri64v)
+         LOAD_GL_PROC_WIN(PFNGLGENSAMPLERSPROC, glGenSamplers)
+         LOAD_GL_PROC_WIN(PFNGLDELETESAMPLERSPROC, glDeleteSamplers)
+         LOAD_GL_PROC_WIN(PFNGLISSAMPLERPROC, glIsSampler)
+         LOAD_GL_PROC_WIN(PFNGLBINDSAMPLERPROC, glBindSampler)
+         LOAD_GL_PROC_WIN(PFNGLSAMPLERPARAMETERIPROC, glSamplerParameteri)
+         LOAD_GL_PROC_WIN(PFNGLSAMPLERPARAMETERIVPROC, glSamplerParameteriv)
+         LOAD_GL_PROC_WIN(PFNGLSAMPLERPARAMETERFPROC, glSamplerParameterf)
+         LOAD_GL_PROC_WIN(PFNGLSAMPLERPARAMETERFVPROC, glSamplerParameterfv)
+         LOAD_GL_PROC_WIN(PFNGLGETSAMPLERPARAMETERIVPROC, glGetSamplerParameteriv)
+         LOAD_GL_PROC_WIN(PFNGLGETSAMPLERPARAMETERFVPROC, glGetSamplerParameterfv)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBDIVISORPROC, glVertexAttribDivisor)
+         LOAD_GL_PROC_WIN(PFNGLBINDTRANSFORMFEEDBACKPROC, glBindTransformFeedback)
+         LOAD_GL_PROC_WIN(PFNGLDELETETRANSFORMFEEDBACKSPROC, glDeleteTransformFeedbacks)
+         LOAD_GL_PROC_WIN(PFNGLGENTRANSFORMFEEDBACKSPROC, glGenTransformFeedbacks)
+         LOAD_GL_PROC_WIN(PFNGLISTRANSFORMFEEDBACKPROC, glIsTransformFeedback)
+         LOAD_GL_PROC_WIN(PFNGLPAUSETRANSFORMFEEDBACKPROC, glPauseTransformFeedback)
+         LOAD_GL_PROC_WIN(PFNGLRESUMETRANSFORMFEEDBACKPROC, glResumeTransformFeedback)
+         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMBINARYPROC, glGetProgramBinary)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMBINARYPROC, glProgramBinary)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMPARAMETERIPROC, glProgramParameteri)
+         LOAD_GL_PROC_WIN(PFNGLINVALIDATEFRAMEBUFFERPROC, glInvalidateFramebuffer)
+         LOAD_GL_PROC_WIN(PFNGLINVALIDATESUBFRAMEBUFFERPROC, glInvalidateSubFramebuffer)
+         LOAD_GL_PROC_WIN(PFNGLTEXSTORAGE2DPROC, glTexStorage2D)
+         LOAD_GL_PROC_WIN(PFNGLTEXSTORAGE3DPROC, glTexStorage3D)
+         LOAD_GL_PROC_WIN(PFNGLGETINTERNALFORMATIVPROC, glGetInternalformativ)
+
+         LOAD_GL_PROC_WIN(PFNGLDISPATCHCOMPUTEPROC, glDispatchCompute)
+         LOAD_GL_PROC_WIN(PFNGLDISPATCHCOMPUTEINDIRECTPROC, glDispatchComputeIndirect)
+         LOAD_GL_PROC_WIN(PFNGLDRAWARRAYSINDIRECTPROC, glDrawArraysIndirect)
+         LOAD_GL_PROC_WIN(PFNGLDRAWELEMENTSINDIRECTPROC, glDrawElementsIndirect)
+         LOAD_GL_PROC_WIN(PFNGLFRAMEBUFFERPARAMETERIPROC, glFramebufferParameteri)
+         LOAD_GL_PROC_WIN(PFNGLGETFRAMEBUFFERPARAMETERIVPROC, glGetFramebufferParameteriv)
+         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMINTERFACEIVPROC, glGetProgramInterfaceiv)
+         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMRESOURCEINDEXPROC, glGetProgramResourceIndex)
+         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMRESOURCENAMEPROC, glGetProgramResourceName)
+         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMRESOURCEIVPROC, glGetProgramResourceiv)
+         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMRESOURCELOCATIONPROC, glGetProgramResourceLocation)
+         LOAD_GL_PROC_WIN(PFNGLUSEPROGRAMSTAGESPROC, glUseProgramStages)
+         LOAD_GL_PROC_WIN(PFNGLACTIVESHADERPROGRAMPROC, glActiveShaderProgram)
+         LOAD_GL_PROC_WIN(PFNGLCREATESHADERPROGRAMVPROC, glCreateShaderProgramv)
+         LOAD_GL_PROC_WIN(PFNGLBINDPROGRAMPIPELINEPROC, glBindProgramPipeline)
+         LOAD_GL_PROC_WIN(PFNGLDELETEPROGRAMPIPELINESPROC, glDeleteProgramPipelines)
+         LOAD_GL_PROC_WIN(PFNGLGENPROGRAMPIPELINESPROC, glGenProgramPipelines)
+         LOAD_GL_PROC_WIN(PFNGLISPROGRAMPIPELINEPROC, glIsProgramPipeline)
+         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMPIPELINEIVPROC, glGetProgramPipelineiv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM1IPROC, glProgramUniform1i)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM2IPROC, glProgramUniform2i)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM3IPROC, glProgramUniform3i)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM4IPROC, glProgramUniform4i)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM1UIPROC, glProgramUniform1ui)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM2UIPROC, glProgramUniform2ui)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM3UIPROC, glProgramUniform3ui)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM4UIPROC, glProgramUniform4ui)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM1FPROC, glProgramUniform1f)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM2FPROC, glProgramUniform2f)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM3FPROC, glProgramUniform3f)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM4FPROC, glProgramUniform4f)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM1IVPROC, glProgramUniform1iv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM2IVPROC, glProgramUniform2iv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM3IVPROC, glProgramUniform3iv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM4IVPROC, glProgramUniform4iv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM1UIVPROC, glProgramUniform1uiv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM2UIVPROC, glProgramUniform2uiv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM3UIVPROC, glProgramUniform3uiv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM4UIVPROC, glProgramUniform4uiv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM1FVPROC, glProgramUniform1fv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM2FVPROC, glProgramUniform2fv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM3FVPROC, glProgramUniform3fv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM4FVPROC, glProgramUniform4fv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX2FVPROC, glProgramUniformMatrix2fv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX3FVPROC, glProgramUniformMatrix3fv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX4FVPROC, glProgramUniformMatrix4fv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX2X3FVPROC, glProgramUniformMatrix2x3fv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX3X2FVPROC, glProgramUniformMatrix3x2fv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX2X4FVPROC, glProgramUniformMatrix2x4fv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX4X2FVPROC, glProgramUniformMatrix4x2fv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX3X4FVPROC, glProgramUniformMatrix3x4fv)
+         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX4X3FVPROC, glProgramUniformMatrix4x3fv)
+         LOAD_GL_PROC_WIN(PFNGLVALIDATEPROGRAMPIPELINEPROC, glValidateProgramPipeline)
+         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMPIPELINEINFOLOGPROC, glGetProgramPipelineInfoLog)
+         LOAD_GL_PROC_WIN(PFNGLBINDIMAGETEXTUREPROC, glBindImageTexture)
+         LOAD_GL_PROC_WIN(PFNGLGETBOOLEANI_VPROC, glGetBooleani_v)
+         LOAD_GL_PROC_WIN(PFNGLMEMORYBARRIERPROC, glMemoryBarrier)
+         LOAD_GL_PROC_WIN(PFNGLMEMORYBARRIERBYREGIONPROC, glMemoryBarrierByRegion)
+         LOAD_GL_PROC_WIN(PFNGLTEXSTORAGE2DMULTISAMPLEPROC, glTexStorage2DMultisample)
+         LOAD_GL_PROC_WIN(PFNGLGETMULTISAMPLEFVPROC, glGetMultisamplefv)
+         LOAD_GL_PROC_WIN(PFNGLSAMPLEMASKIPROC, glSampleMaski)
+         LOAD_GL_PROC_WIN(PFNGLBINDVERTEXBUFFERPROC, glBindVertexBuffer)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBFORMATPROC, glVertexAttribFormat)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBIFORMATPROC, glVertexAttribIFormat)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBBINDINGPROC, glVertexAttribBinding)
+         LOAD_GL_PROC_WIN(PFNGLVERTEXBINDINGDIVISORPROC, glVertexBindingDivisor)
 
         return true;
     }
@@ -215,10 +367,7 @@ namespace Aurora
         if (error != 1)
         {
             return false;
-        }
-
-        const char*  GLVersion = (char*)glGetString(GL_VERSION);
-        GLog->Info("OpenGL Version : %s", GLVersion);        
+        }   
 
         // Initialize the OpenGL extensions needed for this application.  Note that a temporary rendering context was needed to do so.
         result = LoadExtensionList();
@@ -226,6 +375,9 @@ namespace Aurora
         {
             return false;
         }
+        
+        const char*  GLVersion = (char*)glGetString(GL_VERSION);
+        GLog->Info("OpenGL Version : %s", GLVersion);     
 
         // Release the temporary rendering context now that the extensions have been loaded.
         wglMakeCurrent(NULL, NULL);
@@ -513,6 +665,38 @@ namespace Aurora
         return NoError;
     }
 
+    
+    class CShaderCodeDataBase
+    {
+    public:
+        void Initialize()
+        {
+            const String ShaderPath = GPlatform->GetShaderFilePath();
+            auto ShaderFiles = GPlatform->ListFile(ShaderPath, "*.shader");
+
+            for(auto& fileName : ShaderFiles)
+            {
+                String fullPath = FileSystem::CombinePath(ShaderPath, fileName);
+                FilePtr file(GFileSys->OpenFile(fullPath));
+
+                String ShaderCode = file->ReadAsString();
+
+                mShaderCode.insert(make_pair(Util::StringToLower(fileName), ShaderCode));
+            }            
+        }
+
+        void CollectShaderCode(map<String, String*>& InOutShaderCode)
+        {
+            for(auto& code : mShaderCode)
+            {
+                InOutShaderCode.insert(make_pair(code.first, &code.second));
+            }
+        }
+
+        map<String, String> mShaderCode;
+        
+    };
+
 
     class GLRenderDevice : public IRenderDevice
     {
@@ -538,9 +722,14 @@ namespace Aurora
         void BindPixelShader(GPUShaderObject* shaderHandle) override;
         Handle CreateShaderTextureBinding(GPUShaderObject* shaderHandle, const ShaderTextureBinding& bindings) override;
         void BindTexture(Handle binding, Texture* texture) override;
+
+    private:
     };
 
 
+    CShaderCodeDataBase     ShaderCodeDataBase;
+
+    
     GLRenderDevice::~GLRenderDevice()
     {
     }
@@ -561,15 +750,222 @@ namespace Aurora
             return false;
         }
 
+        ShaderCodeDataBase.Initialize();
+        
         GRenderDevice = &GLRenderDevice;
         
         return true;
     }
 
 
+    //
+    // GLuint LoadShader()
+    // {
+    //     GLint state = 0;
+    //     char error[512];
+    //     string code;
+    //
+    //     GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+    //     LoadFile(code, "vs.glsl");
+    //     CompileShader(vs, code.c_str());
+    //
+    //     GLuint ps = glCreateShader(GL_FRAGMENT_SHADER);
+    //     LoadFile(code, "ps.glsl");
+    //     CompileShader(ps, code.c_str());
+    //
+    //     GLuint program = glCreateProgram();
+    //     glAttachShader(program, vs);
+    //     glAttachShader(program, ps);
+    //     glDeleteShader(vs);
+    //     glDeleteShader(ps);
+    //     glLinkProgram(program);
+    //     glGetProgramiv(program, GL_LINK_STATUS, &state);
+    //     if (state != GL_TRUE)
+    //     {
+    //         glGetProgramInfoLog(vs, 512, NULL, error);
+    //         cout << error << endl;
+    //         return GL_FALSE;
+    //     }
+    //
+    //
+    //     return program;
+    // }
+    //
+    // void APIENTRY DebugCallbackFunction(GLenum source,
+    //                                     GLenum type,
+    //                                     GLuint id,
+    //                                     GLenum severity,
+    //                                     GLsizei length,
+    //                                     const GLchar* message,
+    //                                     void* userParam)
+    // {
+    //     printf("Debug Message: SOURCE(0x%04X),"
+    //         "TYPE(0x%04X),"
+    //         "ID(0x%08X),"
+    //         "SEVERITY(0x%04X), \"%s\"\n",
+    //         source, type, id, severity, message);
+    // }
+
+
+
+    struct ShaderMarcoDefine
+    {
+        String Name;
+        String Vaue;        
+    };
+
+
+    class GLShaderCodeBuilder
+    {
+    public:
+        GLShaderCodeBuilder(const String& InBaseCode, const String& InName)
+            : mBaseCode(InBaseCode),
+            mName(InName)
+        {
+        }
+
+        const String IncludeIndentifier = "#include";
+
+        static String GetIncludeNameFromString(const String& line)
+        {
+            const size_t start = line.find_first_of("\"<");
+            const size_t end = line .find_last_of("\">");
+
+            if(start == String::npos || end == String::npos)
+            {
+                return "";
+            }
+
+            return Util::StringToLower(line.substr(start + 1, end - start - 1));
+        }
+
+        void IncludeCode(StringStream& InStream, const String& InCode)
+        {            
+            std::istringstream codeStream(InCode);
+            String line;
+
+            int NumLine = 0;
+            while (std::getline(codeStream, line))
+            {
+                // Look for the new shader include identifier
+                if (line.find(IncludeIndentifier) != String::npos)
+                {
+                    const String target = GetIncludeNameFromString(line);
+                    if(target.empty())
+                    {
+                        GLog->Warning("can not analysis include line \"%s\" in shader %s", line.c_str(), mName.c_str());
+                        continue;                        
+                    }
+
+                    const auto found = mIncludeTargets.find(target);
+                    if(found == mIncludeTargets.end())
+                    {
+                        GLog->Warning("can not find include \"%s\" in shader %s", target.c_str(), mName.c_str());
+                        continue; 
+                    }
+
+                    if(found->second)
+                    {
+                        InStream << "// include " << target << "\r";
+                        IncludeCode(InStream, *found->second);
+                        InStream << "\r" << "// end include " << target << "\r";
+
+                        // 一个文件只能include一次，否则可能会无限递归
+                        found->second = nullptr;                        
+                    }
+
+                }
+                else
+                {
+                    InStream << line;
+                }                
+            }
+        }
+
+        String Build()
+        {
+            StringStream stream;
+
+            stream << "#version 460" << endl;
+
+            for(auto& marco : mMarcos)
+            {
+                stream << "#define " << marco.first << " " << marco.second << "\r";
+            }
+
+            IncludeCode(stream, mBaseCode);
+
+            return stream.str();
+        }
+
+
+        const String& mBaseCode;
+        const String& mName;
+        Array<pair<string, string>> mMarcos;
+        std::map<String, String*> mIncludeTargets;        
+    };
+
+    void CollectGLProgramUniformInfomation(GLuint program, BaseShader* InShader)
+    {
+        int numUniform = 0;        
+        
+        glGetProgramInterfaceiv(program, GL_UNIFORM, GL_MAX_NUM_ACTIVE_VARIABLES, &numUniform);
+        GLog->Info("program active uniforms %d", numUniform);
+
+        int numUniformBlocks = 0;
+        glGetProgramInterfaceiv(program, GL_UNIFORM_BLOCK, GL_MAX_NUM_ACTIVE_VARIABLES, &numUniformBlocks);
+        GLog->Info("program active uniform blocks %d", numUniformBlocks);
+        
+    }
+
 
     GPUShaderObject* GLRenderDevice::CreateGPUShaderObject(const ShaderCode& code, BaseShader* InShader)
-    {
+    {        
+        GLShaderCodeBuilder CodeBuilder(code.text, InShader->mName);
+        CodeBuilder.mMarcos = code.defines;
+
+        ShaderCodeDataBase.CollectShaderCode(CodeBuilder.mIncludeTargets);
+
+        String buildCode = CodeBuilder.Build();
+
+        // GLog->Info(buildCode.c_str());
+
+        {            
+            GLuint glShader = glCreateShader(InShader->mType == BaseShader::VERTEX_SHADER ? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
+
+            const char* data = buildCode.c_str();
+            glShaderSource(glShader, 1, &data, NULL);
+            glCompileShader(glShader);
+            
+            GLint state = 0;
+            char errorMsg[512];
+            glGetShaderiv(glShader, GL_COMPILE_STATUS, &state);
+            if (state != GL_TRUE)
+            {
+                glGetShaderInfoLog(glShader, 512, NULL, errorMsg);
+                GLog->Error("compile shader failed %s", InShader->mName.c_str());
+                GLog->Error("%s", errorMsg);
+
+                return nullptr;
+            }
+
+            GLuint program = glCreateProgram();
+            glAttachShader(program, glShader);
+            // glDeleteShader(glShader);
+            glLinkProgram(program);
+            glGetProgramiv(program, GL_LINK_STATUS, &state);
+            if (state != GL_TRUE)
+            {
+                glGetProgramInfoLog(program, 512, NULL, errorMsg);
+                GLog->Error("gl link program  failed %s", InShader->mName.c_str());
+                GLog->Error("%s", errorMsg);
+
+                return nullptr;
+            }
+
+            CollectGLProgramUniformInfomation(program, InShader);
+        }
+        
         return nullptr;
     }
     

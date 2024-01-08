@@ -30,6 +30,11 @@ namespace Aurora
 
 		static string		ProcessPathName(const string& pathName);
 
+		static String& StringToLower(String& InString);
+		static String& StringToUpper(String& InString);
+
+		static int SplitString(const String& InString, char InSplitChar, Array<String>& OutResult);
+
 		static EEncoding	GetEncoding(const int8* str);
 	};
 

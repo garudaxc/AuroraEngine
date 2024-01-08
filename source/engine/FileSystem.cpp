@@ -1,4 +1,4 @@
-//#include "Platfrom.h"
+#include "Platform.h"
 #include "FileSystem.h"
 #include "zip/unzip.h"
 #include "Log.h"
@@ -195,6 +195,12 @@ namespace Aurora
 		buffer_ = new char[size_];
 		file->Read(buffer_, size_ - 1);
 		buffer_[size_ - 1] = '\0';
+	}
+	
+	String FileSystem::CombinePath(const String& InBasePath, const String& SubPath)
+	{
+		int Position = (int)InBasePath.find_last_not_of("\\/");
+		return  InBasePath.substr(0, Position + 1) + '/' + SubPath;		
 	}
 
 	char* StringBuffer::Ptr()
