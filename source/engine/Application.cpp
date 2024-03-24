@@ -8,17 +8,12 @@
 namespace Aurora
 {
 
-    vector<Application*>    GApplications;
+    Application*   GApplications;
 
 
     Application* Application::GetCurrentApplication()
     {
-        if(GApplications.size() > 0)
-        {
-            return GApplications[0];
-        }
-
-        return nullptr;        
+        return GApplications;
     }
 
     void Application::SwitchApplication()
@@ -28,7 +23,8 @@ namespace Aurora
     Application::Application(const string& Name)
     {
         mName = Name;
-        GApplications.push_back(this);
+        mNextApplication = GApplications;
+        GApplications = this;
     }
 
 

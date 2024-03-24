@@ -91,25 +91,35 @@ aux_source_directory(engine/OpenGL srcs)
 
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
-function(DefineAProject projectName projsrc)
+#########
+
+source_group_by_dir(srcs)
+source_group_by_dir(H_FILES)
+source_group_by_dir(PLATFORM_H_FILES)
+source_group_by_dir(SHADER_FILES)
+
+# target_link_libraries(engine winmm.lib)
+# set_target_properties(engine PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
+# set_target_properties(engine PROPERTIES PDB_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
+# set_target_properties(engine PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
+
+add_library(engine STATIC ${srcs} ${H_FILES} ${SHADER_FILES} ${PLATFORM_H_FILES})
+
+######
+
+function(DefineAProject projectName projsrc)	
 	
-	source_group_by_dir(srcs)
-	source_group_by_dir(H_FILES)
-	source_group_by_dir(PLATFORM_H_FILES)
-	source_group_by_dir(SHADER_FILES)
-	
-	add_executable(${ARGV0} WIN32 ${srcs} ${H_FILES} ${ARGV1} ${SHADER_FILES} ${PLATFORM_H_FILES})
-	target_link_libraries(${ARGV0} winmm.lib)
+	add_executable(${ARGV0} WIN32 ${ARGV1})
+	target_link_libraries(${ARGV0} winmm.lib engine)
 	set_target_properties(${ARGV0} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
 	set_target_properties(${ARGV0} PROPERTIES PDB_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
 	set_target_properties(${ARGV0} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Binaries)
 endfunction()
 
 
-DefineAProject(SampleDX11 sample/prelighting/main.cpp)
+DefineAProject(SampleDX11 sample/prelighting/SampleDX11.cpp)
+DefineAProject(OpenGLTest sample/OpenGLTest/NewOpenGLTest.cpp)
 # DefineAProject(SampleVulkan sample/vulkan/SampleVulkan.cpp)
-
-
 
 
 

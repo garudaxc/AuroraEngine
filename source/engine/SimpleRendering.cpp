@@ -56,9 +56,12 @@ namespace Aurora
 
 	void SimpleRendering::Initialize()
 	{
-		BaseShader glTestShader;
-		glTestShader.InitBase(BaseShader::VERTEX_SHADER, "../dev/data/shader/shader330.glsl");
+		// BaseShader HsbShader;
+		// HsbShader.InitBase(BaseShader::PIXEL_SHADER, "../dev/data/shader/hsb.shader");
+	
 		
+		BaseShader glTestShader;
+		glTestShader.InitBase(BaseShader::VERTEX_SHADER, "../dev/data/shader/shader330.vert");	
 
 		
 		bool Result = ViewShaderParameter.CreateDeviceObject();

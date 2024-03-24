@@ -1,4 +1,4 @@
-// GaEngine10.cpp : ¶¨ÒåÓ¦ÓÃ³ÌĞòµÄÈë¿Úµã¡£
+// GaEngine10.cpp : å®šä¹‰åº”ç”¨ç¨‹åºçš„å…¥å£ç‚¹ã€‚
 //
 #include <windows.h>
 #include <tchar.h>
@@ -38,7 +38,7 @@ using namespace std;
 
 
 
-// ²âÊÔÁ½Æ½ÃæµÄ½»½çÏà¶ÔÓÚÄ³Ò»¸ö·½ÏòÊÇ·ñÎª±ß½ç
+// æµ‹è¯•ä¸¤å¹³é¢çš„äº¤ç•Œç›¸å¯¹äºæŸä¸€ä¸ªæ–¹å‘æ˜¯å¦ä¸ºè¾¹ç•Œ
 bool TestEdge(const Plane& p0, const Plane& p1, const Vector3f& dir)
 {
 	float t0 = DotProduct(p0.n, dir);
@@ -164,7 +164,7 @@ void LineRenderer::DrawFrustum(Camera* pCamera, const Color& color, const Vector
 
 	Vector3f insidePoint = (nearPos + farPos) / 2.0f;
 
-	// Ç°Ò»¸öÃæË³×Å±ß£¬ºóÒ»¸öÃæÄæ×Å±ß
+	// å‰ä¸€ä¸ªé¢é¡ºç€è¾¹ï¼Œåä¸€ä¸ªé¢é€†ç€è¾¹
 	vector<pair<Frustum::PlaneID, Frustum::PlaneID>> planePair;
 	planePair.push_back(make_pair(Frustum::PID_FRONT, Frustum::PID_TOP));
 	planePair.push_back(make_pair(Frustum::PID_FRONT, Frustum::PID_RIGHT));
@@ -205,7 +205,7 @@ void LineRenderer::DrawFrustum(Camera* pCamera, const Color& color, const Vector
 			edgeIndex[numEdge * 2 + 1] = index[i * 2 + 1];
 			numEdge++;
 
-			// Èç¹ûÊÇµÚÒ»¸öÆ½Ãæ£¬±ßÊÇË³×ÅµÄ£¬Èç¹ûÊÇµÚ¶ş¸öÆ½Ãæ£¬±ßÊÇÄæ×ÅµÄ
+			// å¦‚æœæ˜¯ç¬¬ä¸€ä¸ªå¹³é¢ï¼Œè¾¹æ˜¯é¡ºç€çš„ï¼Œå¦‚æœæ˜¯ç¬¬äºŒä¸ªå¹³é¢ï¼Œè¾¹æ˜¯é€†ç€çš„
 			Vector3f edgeDir;
 			if (DotProduct(frustum.planes[twoPlane.first].n, dir) > 0.0f)
 			{

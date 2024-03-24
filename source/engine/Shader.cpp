@@ -10,6 +10,18 @@ namespace Aurora
     CShaderParameterBuffer* CViewShaderParameterBuffer::Instance = nullptr;
 
 
+    ShaderParameterBase* CShaderParameterContainer::FindParameter(const String& InName)
+    {
+        for (auto Parameter : mParameterBindings)
+        {
+            if(Parameter->mName == InName)
+            {
+                return Parameter;
+            }
+        }
+        return nullptr;
+    }
+    
     BaseShader::BaseShader()
     {
     }
@@ -23,7 +35,7 @@ namespace Aurora
         mType = type;
         pathname_ = pathname;
 
-        FilePtr file(GFileSys->OpenFile(pathname_));
+        FilePtr file(GFileSys->OpenFile(pathname_, false));
 
         ShaderCode code;
         code.text = file->ReadAsString();

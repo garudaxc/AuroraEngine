@@ -4,6 +4,7 @@
 namespace Aurora
 {
 
+	class RenderStateObject;
 
 	enum class BlendFactor : uint8
 	{
@@ -217,8 +218,8 @@ namespace Aurora
 
 		virtual		void	CreateDeviceObject()
 		{
-			if (StaticHandle_ == -1) {
-				handle_ = CreateBlendState(BlendEnable_, SrcBlend_, DestBlend_, BlendOp_, WriteMask_, AlphaToCoverageEnable_);
+			if (StaticHandle_ ==  nullptr) {
+				handle_ = GRenderDevice->CreateBlendState(BlendEnable_, SrcBlend_, DestBlend_, BlendOp_, WriteMask_, AlphaToCoverageEnable_);
 				StaticHandle_ = handle_;
 			} else {
 				handle_ = StaticHandle_;
@@ -227,8 +228,8 @@ namespace Aurora
 
 		void BindToDevice()
 		{
-			if (handle_ >= 0) {
-				BindBlendState(handle_, Color::WHITE);
+			if (handle_ != nullptr) {
+				GRenderDevice->BindBlendState(handle_, Color::WHITE);
 			}
 		}
 
@@ -243,8 +244,8 @@ namespace Aurora
 		bool AlphaToCoverageEnable_ = AlphaToCoverageEnable;
 					   
 
-		static Handle  StaticHandle_;
-		Handle handle_ = -1;
+		static RenderStateObject*  StaticHandle_;
+		RenderStateObject* handle_ = -1;
 	};
 
 	   
@@ -252,14 +253,8 @@ namespace Aurora
 	template< bool BlendEnable, BlendFactor SrcBlend,
 		BlendFactor DestBlend, BlendOp Op,
 		uint8 WriteMask, bool AlphaToCoverageEnable>
-		Handle BlendState<BlendEnable, SrcBlend, DestBlend, Op, WriteMask, AlphaToCoverageEnable>::StaticHandle_ = -1;
+		RenderStateObject* BlendState<BlendEnable, SrcBlend, DestBlend, Op, WriteMask, AlphaToCoverageEnable>::StaticHandle_ = nullptr;
 
-
-
-	Handle	CreateBlendState(bool BlendEnable, BlendFactor SrcBlend, BlendFactor DestBlend,
-		BlendOp  op, uint8 WriteMask, bool AlphaToCoverageEnable);
-
-	void BindBlendState(Handle handle, const Color& BlendFactor);
 
 
 
@@ -279,8 +274,8 @@ namespace Aurora
 
 		virtual		void	CreateDeviceObject()
 		{
-			if (StaticHandle_ == -1) {
-				handle_ = CreateRasterizerState(FrontCounterClockwise_, cullMode_,
+			if (StaticHandle_ == nullptr) {
+				handle_ = GRenderDevice->CreateRasterizerState(FrontCounterClockwise_, cullMode_,
 					fillMode_, DepthBias_, SlopeScaledDepthBias_, AntialiasedLineEnable_);
 				StaticHandle_ = handle_;
 			}
@@ -291,8 +286,8 @@ namespace Aurora
 
 		void BindToDevice()
 		{
-			if (handle_ >= 0) {
-				BindRasterizerState(handle_);
+			if (handle_ != nullptr) {
+				GRenderDevice->BindRasterizerState(handle_);
 			}
 		}
 
@@ -306,8 +301,8 @@ namespace Aurora
 		int DepthBias_	= DepthBias;
 
 
-		static Handle  StaticHandle_;
-		Handle handle_ = -1;
+		static RenderStateObject*  StaticHandle_;
+		RenderStateObject* handle_ = nullptr;
 
 	};
 
@@ -317,14 +312,10 @@ namespace Aurora
 	template <
 		bool FrontCounterClockwise, CullMode cullMode, FillMode fillMode, 
 		int DepthBias, int SlopeScaledDepthBias, bool AntialiasedLineEnable>
-		Handle RasterizerState<FrontCounterClockwise, cullMode, fillMode, 
-		DepthBias, SlopeScaledDepthBias, AntialiasedLineEnable>::StaticHandle_ = -1;
+		RenderStateObject* RasterizerState<FrontCounterClockwise, cullMode, fillMode, 
+		DepthBias, SlopeScaledDepthBias, AntialiasedLineEnable>::StaticHandle_ = nullptr;
 
 
-	Handle	CreateRasterizerState(bool FrontCounterClockwise, CullMode cullMode,
-		FillMode fillMode, int DepthBias, int SlopeScaledDepthBias, bool AntialiasedLineEnable);
-
-	void BindRasterizerState(Handle handle);
 
 
 

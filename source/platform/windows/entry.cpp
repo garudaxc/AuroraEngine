@@ -361,9 +361,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 {
     //GCommandSystem->AddCommand("MyCommand", MyCommand, "abck");
     //GCommandSystem->ExecuteCommand("MyCommand");
-
     
-
 
     int Result = Aurora::EngineMain(lpCmdLine);
 

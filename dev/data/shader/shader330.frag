@@ -1,39 +1,4 @@
-
-
-
-#ifdef VERTEX_SHADER
-
 #include "glInclude.shader"
-
-uniform DefaultBlock {
-
-mat4 mWorld;
-mat4 mView;
-mat4 mProj;
-};
-
-in vec4 vPosition;
-in vec3 vNormal;
-in vec2 vUV;
-
-out vec3 v_normal;
-out vec2 v_texcoord;
-void main() {
-
-	vec4 worldPos = mWorld * vPosition;
-	vec4 viewPos = mView * worldPos;
-	gl_Position = mProj * viewPos;
-
-	v_normal = mat3(mWorld) * vNormal;
-	v_texcoord = vUV;
-}
-
-
-#endif
-
-
-
-#ifdef FRAGMENT_SHADER
 
 uniform vec3 vLightDir = vec3(1, -1, 1);
 uniform vec3 vLightColor = vec3(1, 1, 1);
@@ -60,6 +25,3 @@ void main() {
 	//color = vec4(tex0, 1);
 	//color = vec4(tex * vLightColor * diffuse, 1);
 }
-
-
-#endif

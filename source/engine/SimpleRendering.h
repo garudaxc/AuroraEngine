@@ -6,19 +6,15 @@
 namespace Aurora
 {
 
-	class SceneView;
+    class SceneView;
 
-	class SimpleRendering
-	{
-	public:
-
-		void			Initialize();
-		void			RenderSceneView(SceneView* view);
-
-	};
-
-
-	extern SimpleRendering GSimpleRendering;
+    class SimpleRendering
+    {
+    public:
+        void Initialize();
+        void RenderSceneView(SceneView* view);
+    };
+    
+    extern SimpleRendering GSimpleRendering;
 
 }
-

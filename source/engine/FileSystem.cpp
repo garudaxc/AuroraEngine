@@ -10,11 +10,11 @@ namespace Aurora
 
 	string File::ReadAsString()
 	{
-		if (Size() == 0) {
+		if (Size() == 0 || mBinary) {
 			return string();
 		}
 
-		string s(Size(), '\0');
+		string s(Size() + 1, '\0');
 		Read(&s[0], Size());
 
 		return s;
@@ -23,63 +23,61 @@ namespace Aurora
 	class FileLocal : public File
 	{
 	public:
-		FileLocal(FILE* pf, const string& pathname);
-		~FileLocal();
+		FileLocal(FILE* pf, const string& pathname, bool Binary);
+		virtual ~FileLocal();
 
-		virtual size_t	Size() const;
-		virtual bool	Read(void* data, int size);
-		virtual void	Seek(size_t pos);
-		virtual void	Close();
+		size_t	Size() const override;
+		bool	Read(void* data, int size) override;
+		void	Seek(size_t pos) override;
+		void	Close() override;
 
-		virtual const string& Pathname() const;
+		const string& Pathname() const override;
 
 	private:
-		FILE*	pf_;
-		size_t	size_;
-		string	pathname_;
+		FILE*	mPtr;
+		size_t	mSize;
+		string	mPathName;
 	};
 
-	FileLocal::FileLocal(FILE* pf, const string& pathname) : pf_(pf), pathname_(pathname)
+	FileLocal::FileLocal(FILE* pf, const string& pathname, bool Binary) :File(Binary), mPtr(pf), mPathName(pathname)
 	{
 		fseek(pf, 0, SEEK_END);
-		size_ = ftell(pf);
+		mSize = ftell(pf);
 		fseek(pf, 0, SEEK_SET);
 	}
 
 	FileLocal::~FileLocal()
 	{
-		if (pf_ != nullptr){
-			fclose(pf_);
-			pf_ = nullptr;
+		if (mPtr != nullptr){
+			fclose(mPtr);
+			mPtr = nullptr;
 		}
 	}
 
 	const string& FileLocal::Pathname() const
 	{
-		return pathname_;
+		return mPathName;
 	}
 
 	size_t	FileLocal::Size() const
 	{
-		return size_;
+		return mSize;
 	}
 
 	bool FileLocal::Read(void* data, int size)
 	{
-		if (pf_ == nullptr){
+		if (mPtr == nullptr){
 			return false;
 		}
 
-		if (fread(data, size, 1, pf_) != 1){
-			return false;
-		}
-
+		int ReadSize = fread(data, 1, size, mPtr);
+		
 		return true;
 	}
 
 	void FileLocal::Seek(size_t pos)
 	{
-		fseek(pf_, pos, SEEK_SET);
+		fseek(mPtr, pos, SEEK_SET);
 	}
 
 	void FileLocal::Close()
@@ -93,19 +91,19 @@ namespace Aurora
 	{
 	public:
 		FileInMemory(size_t size, const string& pathname);
-		~FileInMemory();
+		virtual ~FileInMemory();
 
 		virtual size_t	Size() const
 		{
 			return size_;
 		}
 
-		virtual bool	Read(void* data, int size);
-		virtual void	Seek(size_t pos);
-		virtual void	Close();
-		virtual const string& Pathname() const;
+		bool	Read(void* data, int size) override;
+		void	Seek(size_t pos) override;
+		void	Close() override;
+		const string& Pathname() const override;
 
-		void*		GetBuffer()
+		void* GetBuffer()
 		{
 			return buffer_;
 		}
@@ -118,7 +116,10 @@ namespace Aurora
 	};
 
 	FileInMemory::FileInMemory(size_t size, const string& pathname) :
-		size_(size),pathname_(pathname), currPos_(0)
+		File(true),
+		size_(size),
+		currPos_(0),
+		pathname_(pathname)
 	{
 		buffer_ = malloc(size);
 	}
@@ -171,7 +172,7 @@ namespace Aurora
 
 	StringBuffer::StringBuffer(const string& pathName)
 	{
-		FilePtr file(GFileSys->OpenFile(pathName));
+		FilePtr file(GFileSys->OpenFile(pathName, false));
 		ReadFile(file.get());
 	}
 
@@ -227,7 +228,7 @@ namespace Aurora
 
 		virtual bool AddPakFile(const string& pathname);
 
-		virtual File* OpenFile(const string& pathname);
+		virtual File* OpenFile(const string& Pathname, bool Binary = true);
 
 		virtual bool FileExist(const string& pathname);
 
@@ -325,14 +326,14 @@ namespace Aurora
 		}
 	}
 
-	File* FileSystemLocal::OpenFile(const string& pathname)
+	File* FileSystemLocal::OpenFile(const string& Pathname, bool Binary)
 	{
 		string name, fullname;
-		NormalizeName(fullname, name, pathname);
+		NormalizeName(fullname, name, Pathname);
 
-		FILE* pf = fopen(fullname.c_str(), "rb");
+		FILE* pf = fopen(fullname.c_str(), Binary ? "rb" : "r");
 		if (pf != nullptr){
-			File* file = new FileLocal(pf, pathname);
+			File* file = new FileLocal(pf, Pathname, Binary);
 			return file;
 		}
 
@@ -350,19 +351,19 @@ namespace Aurora
 			char filename[256];
 			if (unzGetCurrentFileInfo(pakFile, &fileInfo,
 				filename, sizeof(filename), nullptr, 0, nullptr, 0) != UNZ_OK) {
-				GLog->Error("get %s file info in pak error!", pathname.c_str());
+				GLog->Error("get %s file info in pak error!", Pathname.c_str());
 				return nullptr;
 			}
 
 			if (unzOpenCurrentFile(pakFile) != UNZ_OK) {
-				GLog->Error("open file %s in pak error!", pathname.c_str());
+				GLog->Error("open file %s in pak error!", Pathname.c_str());
 				return nullptr;
 			}
 
-			FileInMemory* file = new FileInMemory(fileInfo.uncompressed_size, pathname);
+			FileInMemory* file = new FileInMemory(fileInfo.uncompressed_size, Pathname);
 			int r = unzReadCurrentFile(pakFile, file->GetBuffer(), fileInfo.uncompressed_size);
 			if (r != fileInfo.uncompressed_size) {
-				GLog->Error("read file %s in pak error!", pathname.c_str());
+				GLog->Error("read file %s in pak error!", Pathname.c_str());
 			}
 
 			unzCloseCurrentFile(pakFile);
@@ -370,7 +371,7 @@ namespace Aurora
 			return file;
 		}
 
-		GLog->Error("FileSystem::OpenFile failed! %s", pathname.c_str());
+		GLog->Error("FileSystem::OpenFile failed! %s", Pathname.c_str());
 
 		return nullptr;
 	}

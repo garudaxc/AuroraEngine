@@ -10,6 +10,11 @@ namespace Aurora
 	class File
 	{
 	public:
+		explicit File(bool  Binary):mBinary(Binary)
+		{
+			
+		}
+		
 		virtual size_t	Size() const = 0;
 		virtual bool	Read(void* data, int size) = 0;
 		virtual void	Seek(size_t pos) = 0;
@@ -17,7 +22,6 @@ namespace Aurora
 		virtual const string& Pathname() const = 0;
 
 		string			ReadAsString();
-
 		
 		template<class type>
 		bool	Read(type &c) {
@@ -30,6 +34,8 @@ namespace Aurora
 			bool r = Read(array, sizeof(type)* count);
 			return r;
 		}
+
+		bool mBinary = true;
 	};
 
 	class StringBuffer
@@ -67,7 +73,7 @@ namespace Aurora
 		virtual void	SetRootPath(const string& path, bool addPak) = 0;
 		virtual bool	AddPakFile(const string& pathname) = 0;
 
-		virtual File*	OpenFile(const string& pathname) = 0;
+		virtual File*	OpenFile(const string& Pathname, bool Binary = true) = 0;
 		virtual bool	FileExist(const string& pathname) = 0;
 	};
 

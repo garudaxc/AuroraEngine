@@ -4,6 +4,7 @@
 #include "Types.h"
 #include "CGeometry.h"
 #include "Texture.h"
+#include "RenderState.h"
 
 namespace Aurora
 {
@@ -112,6 +113,12 @@ namespace Aurora
         
     };
 
+    class RenderStateObject
+    {
+    public:
+        
+    };
+
     
     struct ShaderCode
     {
@@ -184,6 +191,18 @@ namespace Aurora
         virtual GPUShaderParameterBuffer*   CreateShaderParameterBuffer(CShaderParameterBuffer* InBuffer) { return nullptr; }
 
         virtual void UpdateGPUShaderParameterBuffer(GPUShaderParameterBuffer* InBuffer, const Array<int8>& InData) {};
+
+        
+        virtual RenderStateObject*	CreateBlendState(bool BlendEnable, BlendFactor SrcBlend, BlendFactor DestBlend,
+            BlendOp  op, uint8 WriteMask, bool AlphaToCoverageEnable)   { return nullptr; }
+
+        virtual void BindBlendState(RenderStateObject* handle, const Color& BlendFactor) {}
+
+
+        virtual RenderStateObject*	CreateRasterizerState(bool FrontCounterClockwise, CullMode cullMode,
+            FillMode fillMode, int DepthBias, int SlopeScaledDepthBias, bool AntialiasedLineEnable)     { return nullptr; }
+
+        virtual void BindRasterizerState(RenderStateObject* handle)     {}
     };
 
 

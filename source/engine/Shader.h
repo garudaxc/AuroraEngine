@@ -26,7 +26,6 @@ namespace Aurora
         CShaderParameterContainer() = default;
         virtual ~CShaderParameterContainer() = default; 
 
-
         void AddParameterBinding(ShaderParameterBase* InParameter)
         {            
             mParameterBindings.push_back(InParameter);
@@ -36,6 +35,9 @@ namespace Aurora
         {
             Util::MemCopy(InData, mBufferMemory.data() + InOffset, InSize);
         }
+
+        ShaderParameterBase* FindParameter(const String& InName);
+        
         
         vector<ShaderParameterBase*>    mParameterBindings;
         vector<int8>    mBufferMemory;
@@ -85,14 +87,14 @@ namespace Aurora
     class CShaderParameterBuffer : public CShaderParameterContainer
     {
     public:
-        CShaderParameterBuffer(const string& InName):mName(InName) {}
+        explicit CShaderParameterBuffer(const String& InName):mName(InName) {}
         ~CShaderParameterBuffer() override = default;
         
         bool CreateDeviceObject();
 
         void Commit() const;
 
-        string mName;
+        String mName;
     };
 
     
@@ -133,7 +135,7 @@ namespace Aurora
 
         uint16  mOffset = 0;
         uint16  mSizeInByte = 0;
-        string mName;
+        String mName;
         CShaderParameterContainer* mContainer = nullptr;        
     };
 

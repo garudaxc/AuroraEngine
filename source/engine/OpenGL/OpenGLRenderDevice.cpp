@@ -1,335 +1,23 @@
+#include <complex>
 #include <windows.h>
-#include <gl\gl.h>
-
 #include "FileSystem.h"
 #include "Shader.h"
 #include "Log.h"
 #include "Renderer.h"
 #include "PlatformWin.h"
-#include "GLFunctions.h"
+#include "glad.h"
+#include "glad_wgl.h"
+
+#include <strsafe.h>
 
 
 #pragma comment(lib, "opengl32.lib")
 
 namespace Aurora
 {
-#define WGL_DRAW_TO_WINDOW_ARB         0x2001
-#define WGL_ACCELERATION_ARB           0x2003
-#define WGL_SWAP_METHOD_ARB            0x2007
-#define WGL_SUPPORT_OPENGL_ARB         0x2010
-#define WGL_DOUBLE_BUFFER_ARB          0x2011
-#define WGL_PIXEL_TYPE_ARB             0x2013
-#define WGL_COLOR_BITS_ARB             0x2014
-#define WGL_DEPTH_BITS_ARB             0x2022
-#define WGL_STENCIL_BITS_ARB           0x2023
-#define WGL_FULL_ACCELERATION_ARB      0x2027
-#define WGL_SWAP_EXCHANGE_ARB          0x2028
-#define WGL_TYPE_RGBA_ARB              0x202B
-#define WGL_CONTEXT_MAJOR_VERSION_ARB  0x2091
-#define WGL_CONTEXT_MINOR_VERSION_ARB  0x2092
-
-    
 
     HDC m_deviceContext;
     HGLRC m_renderingContext;
-
-    #define LOAD_GL_PROC_WIN(proc_def, proc) \
-    proc = (proc_def) wglGetProcAddress(#proc); \
-    if((proc) == nullptr) \
-    { \
-        GLog->Error("wglGetProcAddress %s failed!", #proc); \
-        return false; \
-    }
-    
-
-    static bool LoadExtensionList()
-    {         
-         LOAD_GL_PROC_WIN(PFNWGLCHOOSEPIXELFORMATARBPROC, wglChoosePixelFormatARB)
-         LOAD_GL_PROC_WIN(PFNWGLCREATECONTEXTATTRIBSARBPROC, wglCreateContextAttribsARB)
-         LOAD_GL_PROC_WIN(PFNWGLSWAPINTERVALEXTPROC, wglSwapIntervalEXT)
-
-         
-         LOAD_GL_PROC_WIN(PFNGLACTIVETEXTUREPROC, glActiveTexture)
-         LOAD_GL_PROC_WIN(PFNGLATTACHSHADERPROC, glAttachShader)
-         LOAD_GL_PROC_WIN(PFNGLBINDATTRIBLOCATIONPROC, glBindAttribLocation)
-         LOAD_GL_PROC_WIN(PFNGLBINDBUFFERPROC, glBindBuffer)
-         LOAD_GL_PROC_WIN(PFNGLBINDFRAMEBUFFERPROC, glBindFramebuffer)
-         LOAD_GL_PROC_WIN(PFNGLBINDRENDERBUFFERPROC, glBindRenderbuffer)
-         LOAD_GL_PROC_WIN(PFNGLBINDTEXTUREPROC, glBindTexture)
-         LOAD_GL_PROC_WIN(PFNGLBLENDCOLORPROC, glBlendColor)
-         LOAD_GL_PROC_WIN(PFNGLBLENDEQUATIONPROC, glBlendEquation)
-         LOAD_GL_PROC_WIN(PFNGLBLENDEQUATIONSEPARATEPROC, glBlendEquationSeparate)
-         LOAD_GL_PROC_WIN(PFNGLBLENDFUNCSEPARATEPROC, glBlendFuncSeparate)
-         LOAD_GL_PROC_WIN(PFNGLBUFFERDATAPROC, glBufferData)
-         LOAD_GL_PROC_WIN(PFNGLBUFFERSUBDATAPROC, glBufferSubData)
-         LOAD_GL_PROC_WIN(PFNGLCHECKFRAMEBUFFERSTATUSPROC, glCheckFramebufferStatus)
-         LOAD_GL_PROC_WIN(PFNGLCLEARDEPTHFPROC, glClearDepthf)
-         LOAD_GL_PROC_WIN(PFNGLCOMPILESHADERPROC, glCompileShader)
-         LOAD_GL_PROC_WIN(PFNGLCOMPRESSEDTEXIMAGE2DPROC, glCompressedTexImage2D)
-         LOAD_GL_PROC_WIN(PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC, glCompressedTexSubImage2D)
-         LOAD_GL_PROC_WIN(PFNGLCOPYTEXIMAGE2DPROC, glCopyTexImage2D)
-         LOAD_GL_PROC_WIN(PFNGLCOPYTEXSUBIMAGE2DPROC, glCopyTexSubImage2D)
-         LOAD_GL_PROC_WIN(PFNGLCREATEPROGRAMPROC, glCreateProgram)
-         LOAD_GL_PROC_WIN(PFNGLCREATESHADERPROC, glCreateShader)
-         LOAD_GL_PROC_WIN(PFNGLDELETEBUFFERSPROC, glDeleteBuffers)
-         LOAD_GL_PROC_WIN(PFNGLDELETEFRAMEBUFFERSPROC, glDeleteFramebuffers)
-         LOAD_GL_PROC_WIN(PFNGLDELETEPROGRAMPROC, glDeleteProgram)
-         LOAD_GL_PROC_WIN(PFNGLDELETERENDERBUFFERSPROC, glDeleteRenderbuffers)
-         LOAD_GL_PROC_WIN(PFNGLDELETESHADERPROC, glDeleteShader)
-         LOAD_GL_PROC_WIN(PFNGLDELETETEXTURESPROC, glDeleteTextures)
-         LOAD_GL_PROC_WIN(PFNGLDEPTHRANGEFPROC, glDepthRangef)
-         LOAD_GL_PROC_WIN(PFNGLDETACHSHADERPROC, glDetachShader)
-         LOAD_GL_PROC_WIN(PFNGLDISABLEVERTEXATTRIBARRAYPROC, glDisableVertexAttribArray)
-         LOAD_GL_PROC_WIN(PFNGLDRAWARRAYSPROC, glDrawArrays)
-         LOAD_GL_PROC_WIN(PFNGLDRAWELEMENTSPROC, glDrawElements)
-         LOAD_GL_PROC_WIN(PFNGLENABLEVERTEXATTRIBARRAYPROC, glEnableVertexAttribArray)
-         LOAD_GL_PROC_WIN(PFNGLFRAMEBUFFERRENDERBUFFERPROC, glFramebufferRenderbuffer)
-         LOAD_GL_PROC_WIN(PFNGLFRAMEBUFFERTEXTURE2DPROC, glFramebufferTexture2D)
-         LOAD_GL_PROC_WIN(PFNGLGENBUFFERSPROC, glGenBuffers)
-         LOAD_GL_PROC_WIN(PFNGLGENERATEMIPMAPPROC, glGenerateMipmap)
-         LOAD_GL_PROC_WIN(PFNGLGENFRAMEBUFFERSPROC, glGenFramebuffers)
-         LOAD_GL_PROC_WIN(PFNGLGENRENDERBUFFERSPROC, glGenRenderbuffers)
-         LOAD_GL_PROC_WIN(PFNGLGENTEXTURESPROC, glGenTextures)
-         LOAD_GL_PROC_WIN(PFNGLGETACTIVEATTRIBPROC, glGetActiveAttrib)
-         LOAD_GL_PROC_WIN(PFNGLGETACTIVEUNIFORMPROC, glGetActiveUniform)
-         LOAD_GL_PROC_WIN(PFNGLGETATTACHEDSHADERSPROC, glGetAttachedShaders)
-         LOAD_GL_PROC_WIN(PFNGLGETATTRIBLOCATIONPROC, glGetAttribLocation)
-         LOAD_GL_PROC_WIN(PFNGLGETBUFFERPARAMETERIVPROC, glGetBufferParameteriv)
-         LOAD_GL_PROC_WIN(PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC, glGetFramebufferAttachmentParameteriv)
-         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMIVPROC, glGetProgramiv)
-         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMINFOLOGPROC, glGetProgramInfoLog)
-         LOAD_GL_PROC_WIN(PFNGLGETRENDERBUFFERPARAMETERIVPROC, glGetRenderbufferParameteriv)
-         LOAD_GL_PROC_WIN(PFNGLGETSHADERIVPROC, glGetShaderiv)
-         LOAD_GL_PROC_WIN(PFNGLGETSHADERINFOLOGPROC, glGetShaderInfoLog)
-         LOAD_GL_PROC_WIN(PFNGLGETSHADERPRECISIONFORMATPROC, glGetShaderPrecisionFormat)
-         LOAD_GL_PROC_WIN(PFNGLGETSHADERSOURCEPROC, glGetShaderSource)
-         LOAD_GL_PROC_WIN(PFNGLGETUNIFORMFVPROC, glGetUniformfv)
-         LOAD_GL_PROC_WIN(PFNGLGETUNIFORMIVPROC, glGetUniformiv)
-         LOAD_GL_PROC_WIN(PFNGLGETUNIFORMLOCATIONPROC, glGetUniformLocation)
-         LOAD_GL_PROC_WIN(PFNGLGETVERTEXATTRIBFVPROC, glGetVertexAttribfv)
-         LOAD_GL_PROC_WIN(PFNGLGETVERTEXATTRIBIVPROC, glGetVertexAttribiv)
-         LOAD_GL_PROC_WIN(PFNGLGETVERTEXATTRIBPOINTERVPROC, glGetVertexAttribPointerv)
-         LOAD_GL_PROC_WIN(PFNGLISBUFFERPROC, glIsBuffer)
-         LOAD_GL_PROC_WIN(PFNGLISFRAMEBUFFERPROC, glIsFramebuffer)
-         LOAD_GL_PROC_WIN(PFNGLISPROGRAMPROC, glIsProgram)
-         LOAD_GL_PROC_WIN(PFNGLISRENDERBUFFERPROC, glIsRenderbuffer)
-         LOAD_GL_PROC_WIN(PFNGLISSHADERPROC, glIsShader)
-         LOAD_GL_PROC_WIN(PFNGLISTEXTUREPROC, glIsTexture)
-         LOAD_GL_PROC_WIN(PFNGLLINKPROGRAMPROC, glLinkProgram)
-         LOAD_GL_PROC_WIN(PFNGLPOLYGONOFFSETPROC, glPolygonOffset)
-         LOAD_GL_PROC_WIN(PFNGLRELEASESHADERCOMPILERPROC, glReleaseShaderCompiler)
-         LOAD_GL_PROC_WIN(PFNGLRENDERBUFFERSTORAGEPROC, glRenderbufferStorage)
-         LOAD_GL_PROC_WIN(PFNGLSAMPLECOVERAGEPROC, glSampleCoverage)
-         LOAD_GL_PROC_WIN(PFNGLSHADERBINARYPROC, glShaderBinary)
-         LOAD_GL_PROC_WIN(PFNGLSHADERSOURCEPROC, glShaderSource)
-         LOAD_GL_PROC_WIN(PFNGLSTENCILFUNCSEPARATEPROC, glStencilFuncSeparate)
-         LOAD_GL_PROC_WIN(PFNGLSTENCILMASKSEPARATEPROC, glStencilMaskSeparate)
-         LOAD_GL_PROC_WIN(PFNGLSTENCILOPSEPARATEPROC, glStencilOpSeparate)
-         LOAD_GL_PROC_WIN(PFNGLTEXSUBIMAGE2DPROC, glTexSubImage2D)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM1FPROC, glUniform1f)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM1FVPROC, glUniform1fv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM1IPROC, glUniform1i)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM1IVPROC, glUniform1iv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM2FPROC, glUniform2f)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM2FVPROC, glUniform2fv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM2IPROC, glUniform2i)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM2IVPROC, glUniform2iv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM3FPROC, glUniform3f)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM3FVPROC, glUniform3fv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM3IPROC, glUniform3i)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM3IVPROC, glUniform3iv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM4FPROC, glUniform4f)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM4FVPROC, glUniform4fv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM4IPROC, glUniform4i)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM4IVPROC, glUniform4iv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX2FVPROC, glUniformMatrix2fv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX3FVPROC, glUniformMatrix3fv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX4FVPROC, glUniformMatrix4fv)
-         LOAD_GL_PROC_WIN(PFNGLUSEPROGRAMPROC, glUseProgram)
-         LOAD_GL_PROC_WIN(PFNGLVALIDATEPROGRAMPROC, glValidateProgram)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB1FPROC, glVertexAttrib1f)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB1FVPROC, glVertexAttrib1fv)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB2FPROC, glVertexAttrib2f)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB2FVPROC, glVertexAttrib2fv)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB3FPROC, glVertexAttrib3f)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB3FVPROC, glVertexAttrib3fv)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB4FPROC, glVertexAttrib4f)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIB4FVPROC, glVertexAttrib4fv)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBPOINTERPROC, glVertexAttribPointer)
-
-         LOAD_GL_PROC_WIN(PFNGLDRAWRANGEELEMENTSPROC, glDrawRangeElements)
-         LOAD_GL_PROC_WIN(PFNGLTEXIMAGE3DPROC, glTexImage3D)
-         LOAD_GL_PROC_WIN(PFNGLTEXSUBIMAGE3DPROC, glTexSubImage3D)
-         LOAD_GL_PROC_WIN(PFNGLCOPYTEXSUBIMAGE3DPROC, glCopyTexSubImage3D)
-         LOAD_GL_PROC_WIN(PFNGLCOMPRESSEDTEXIMAGE3DPROC, glCompressedTexImage3D)
-         LOAD_GL_PROC_WIN(PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC, glCompressedTexSubImage3D)
-         LOAD_GL_PROC_WIN(PFNGLGENQUERIESPROC, glGenQueries)
-         LOAD_GL_PROC_WIN(PFNGLDELETEQUERIESPROC, glDeleteQueries)
-         LOAD_GL_PROC_WIN(PFNGLISQUERYPROC, glIsQuery)
-         LOAD_GL_PROC_WIN(PFNGLBEGINQUERYPROC, glBeginQuery)
-         LOAD_GL_PROC_WIN(PFNGLENDQUERYPROC, glEndQuery)
-         LOAD_GL_PROC_WIN(PFNGLGETQUERYIVPROC, glGetQueryiv)
-         LOAD_GL_PROC_WIN(PFNGLGETQUERYOBJECTUIVPROC, glGetQueryObjectuiv)
-         LOAD_GL_PROC_WIN(PFNGLUNMAPBUFFERPROC, glUnmapBuffer)
-         LOAD_GL_PROC_WIN(PFNGLGETBUFFERPOINTERVPROC, glGetBufferPointerv)
-         LOAD_GL_PROC_WIN(PFNGLDRAWBUFFERSPROC, glDrawBuffers)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX2X3FVPROC, glUniformMatrix2x3fv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX3X2FVPROC, glUniformMatrix3x2fv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX2X4FVPROC, glUniformMatrix2x4fv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX4X2FVPROC, glUniformMatrix4x2fv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX3X4FVPROC, glUniformMatrix3x4fv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORMMATRIX4X3FVPROC, glUniformMatrix4x3fv)
-         LOAD_GL_PROC_WIN(PFNGLBLITFRAMEBUFFERPROC, glBlitFramebuffer)
-         LOAD_GL_PROC_WIN(PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC, glRenderbufferStorageMultisample)
-         LOAD_GL_PROC_WIN(PFNGLFRAMEBUFFERTEXTURELAYERPROC, glFramebufferTextureLayer)
-         LOAD_GL_PROC_WIN(PFNGLMAPBUFFERRANGEPROC, glMapBufferRange)
-         LOAD_GL_PROC_WIN(PFNGLFLUSHMAPPEDBUFFERRANGEPROC, glFlushMappedBufferRange)
-         LOAD_GL_PROC_WIN(PFNGLBINDVERTEXARRAYPROC, glBindVertexArray)
-         LOAD_GL_PROC_WIN(PFNGLDELETEVERTEXARRAYSPROC, glDeleteVertexArrays)
-         LOAD_GL_PROC_WIN(PFNGLGENVERTEXARRAYSPROC, glGenVertexArrays)
-         LOAD_GL_PROC_WIN(PFNGLISVERTEXARRAYPROC, glIsVertexArray)
-         LOAD_GL_PROC_WIN(PFNGLGETINTEGERI_VPROC, glGetIntegeri_v)
-         LOAD_GL_PROC_WIN(PFNGLBEGINTRANSFORMFEEDBACKPROC, glBeginTransformFeedback)
-         LOAD_GL_PROC_WIN(PFNGLENDTRANSFORMFEEDBACKPROC, glEndTransformFeedback)
-         LOAD_GL_PROC_WIN(PFNGLBINDBUFFERRANGEPROC, glBindBufferRange)
-         LOAD_GL_PROC_WIN(PFNGLBINDBUFFERBASEPROC, glBindBufferBase)
-         LOAD_GL_PROC_WIN(PFNGLTRANSFORMFEEDBACKVARYINGSPROC, glTransformFeedbackVaryings)
-         LOAD_GL_PROC_WIN(PFNGLGETTRANSFORMFEEDBACKVARYINGPROC, glGetTransformFeedbackVarying)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBIPOINTERPROC, glVertexAttribIPointer)
-         LOAD_GL_PROC_WIN(PFNGLGETVERTEXATTRIBIIVPROC, glGetVertexAttribIiv)
-         LOAD_GL_PROC_WIN(PFNGLGETVERTEXATTRIBIUIVPROC, glGetVertexAttribIuiv)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBI4IPROC, glVertexAttribI4i)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBI4UIPROC, glVertexAttribI4ui)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBI4IVPROC, glVertexAttribI4iv)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBI4UIVPROC, glVertexAttribI4uiv)
-         LOAD_GL_PROC_WIN(PFNGLGETUNIFORMUIVPROC, glGetUniformuiv)
-         LOAD_GL_PROC_WIN(PFNGLGETFRAGDATALOCATIONPROC, glGetFragDataLocation)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM1UIPROC, glUniform1ui)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM2UIPROC, glUniform2ui)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM3UIPROC, glUniform3ui)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM4UIPROC, glUniform4ui)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM1UIVPROC, glUniform1uiv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM2UIVPROC, glUniform2uiv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM3UIVPROC, glUniform3uiv)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORM4UIVPROC, glUniform4uiv)
-         LOAD_GL_PROC_WIN(PFNGLCLEARBUFFERIVPROC, glClearBufferiv)
-         LOAD_GL_PROC_WIN(PFNGLCLEARBUFFERUIVPROC, glClearBufferuiv)
-         LOAD_GL_PROC_WIN(PFNGLCLEARBUFFERFVPROC, glClearBufferfv)
-         LOAD_GL_PROC_WIN(PFNGLCLEARBUFFERFIPROC, glClearBufferfi)
-         LOAD_GL_PROC_WIN(PFNGLGETSTRINGIPROC, glGetStringi)
-         LOAD_GL_PROC_WIN(PFNGLCOPYBUFFERSUBDATAPROC, glCopyBufferSubData)
-         LOAD_GL_PROC_WIN(PFNGLGETUNIFORMINDICESPROC, glGetUniformIndices)
-         LOAD_GL_PROC_WIN(PFNGLGETACTIVEUNIFORMSIVPROC, glGetActiveUniformsiv)
-         LOAD_GL_PROC_WIN(PFNGLGETUNIFORMBLOCKINDEXPROC, glGetUniformBlockIndex)
-         LOAD_GL_PROC_WIN(PFNGLGETACTIVEUNIFORMBLOCKIVPROC, glGetActiveUniformBlockiv)
-         LOAD_GL_PROC_WIN(PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC, glGetActiveUniformBlockName)
-         LOAD_GL_PROC_WIN(PFNGLUNIFORMBLOCKBINDINGPROC, glUniformBlockBinding)
-         LOAD_GL_PROC_WIN(PFNGLDRAWARRAYSINSTANCEDPROC, glDrawArraysInstanced)
-         LOAD_GL_PROC_WIN(PFNGLDRAWELEMENTSINSTANCEDPROC, glDrawElementsInstanced)
-         LOAD_GL_PROC_WIN(PFNGLFENCESYNCPROC, glFenceSync)
-         LOAD_GL_PROC_WIN(PFNGLISSYNCPROC, glIsSync)
-         LOAD_GL_PROC_WIN(PFNGLDELETESYNCPROC, glDeleteSync)
-         LOAD_GL_PROC_WIN(PFNGLCLIENTWAITSYNCPROC, glClientWaitSync)
-         LOAD_GL_PROC_WIN(PFNGLWAITSYNCPROC, glWaitSync)
-         LOAD_GL_PROC_WIN(PFNGLGETINTEGER64VPROC, glGetInteger64v)
-         LOAD_GL_PROC_WIN(PFNGLGETSYNCIVPROC, glGetSynciv)
-         LOAD_GL_PROC_WIN(PFNGLGETINTEGER64I_VPROC, glGetInteger64i_v)
-         LOAD_GL_PROC_WIN(PFNGLGETBUFFERPARAMETERI64VPROC, glGetBufferParameteri64v)
-         LOAD_GL_PROC_WIN(PFNGLGENSAMPLERSPROC, glGenSamplers)
-         LOAD_GL_PROC_WIN(PFNGLDELETESAMPLERSPROC, glDeleteSamplers)
-         LOAD_GL_PROC_WIN(PFNGLISSAMPLERPROC, glIsSampler)
-         LOAD_GL_PROC_WIN(PFNGLBINDSAMPLERPROC, glBindSampler)
-         LOAD_GL_PROC_WIN(PFNGLSAMPLERPARAMETERIPROC, glSamplerParameteri)
-         LOAD_GL_PROC_WIN(PFNGLSAMPLERPARAMETERIVPROC, glSamplerParameteriv)
-         LOAD_GL_PROC_WIN(PFNGLSAMPLERPARAMETERFPROC, glSamplerParameterf)
-         LOAD_GL_PROC_WIN(PFNGLSAMPLERPARAMETERFVPROC, glSamplerParameterfv)
-         LOAD_GL_PROC_WIN(PFNGLGETSAMPLERPARAMETERIVPROC, glGetSamplerParameteriv)
-         LOAD_GL_PROC_WIN(PFNGLGETSAMPLERPARAMETERFVPROC, glGetSamplerParameterfv)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBDIVISORPROC, glVertexAttribDivisor)
-         LOAD_GL_PROC_WIN(PFNGLBINDTRANSFORMFEEDBACKPROC, glBindTransformFeedback)
-         LOAD_GL_PROC_WIN(PFNGLDELETETRANSFORMFEEDBACKSPROC, glDeleteTransformFeedbacks)
-         LOAD_GL_PROC_WIN(PFNGLGENTRANSFORMFEEDBACKSPROC, glGenTransformFeedbacks)
-         LOAD_GL_PROC_WIN(PFNGLISTRANSFORMFEEDBACKPROC, glIsTransformFeedback)
-         LOAD_GL_PROC_WIN(PFNGLPAUSETRANSFORMFEEDBACKPROC, glPauseTransformFeedback)
-         LOAD_GL_PROC_WIN(PFNGLRESUMETRANSFORMFEEDBACKPROC, glResumeTransformFeedback)
-         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMBINARYPROC, glGetProgramBinary)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMBINARYPROC, glProgramBinary)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMPARAMETERIPROC, glProgramParameteri)
-         LOAD_GL_PROC_WIN(PFNGLINVALIDATEFRAMEBUFFERPROC, glInvalidateFramebuffer)
-         LOAD_GL_PROC_WIN(PFNGLINVALIDATESUBFRAMEBUFFERPROC, glInvalidateSubFramebuffer)
-         LOAD_GL_PROC_WIN(PFNGLTEXSTORAGE2DPROC, glTexStorage2D)
-         LOAD_GL_PROC_WIN(PFNGLTEXSTORAGE3DPROC, glTexStorage3D)
-         LOAD_GL_PROC_WIN(PFNGLGETINTERNALFORMATIVPROC, glGetInternalformativ)
-
-         LOAD_GL_PROC_WIN(PFNGLDISPATCHCOMPUTEPROC, glDispatchCompute)
-         LOAD_GL_PROC_WIN(PFNGLDISPATCHCOMPUTEINDIRECTPROC, glDispatchComputeIndirect)
-         LOAD_GL_PROC_WIN(PFNGLDRAWARRAYSINDIRECTPROC, glDrawArraysIndirect)
-         LOAD_GL_PROC_WIN(PFNGLDRAWELEMENTSINDIRECTPROC, glDrawElementsIndirect)
-         LOAD_GL_PROC_WIN(PFNGLFRAMEBUFFERPARAMETERIPROC, glFramebufferParameteri)
-         LOAD_GL_PROC_WIN(PFNGLGETFRAMEBUFFERPARAMETERIVPROC, glGetFramebufferParameteriv)
-         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMINTERFACEIVPROC, glGetProgramInterfaceiv)
-         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMRESOURCEINDEXPROC, glGetProgramResourceIndex)
-         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMRESOURCENAMEPROC, glGetProgramResourceName)
-         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMRESOURCEIVPROC, glGetProgramResourceiv)
-         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMRESOURCELOCATIONPROC, glGetProgramResourceLocation)
-         LOAD_GL_PROC_WIN(PFNGLUSEPROGRAMSTAGESPROC, glUseProgramStages)
-         LOAD_GL_PROC_WIN(PFNGLACTIVESHADERPROGRAMPROC, glActiveShaderProgram)
-         LOAD_GL_PROC_WIN(PFNGLCREATESHADERPROGRAMVPROC, glCreateShaderProgramv)
-         LOAD_GL_PROC_WIN(PFNGLBINDPROGRAMPIPELINEPROC, glBindProgramPipeline)
-         LOAD_GL_PROC_WIN(PFNGLDELETEPROGRAMPIPELINESPROC, glDeleteProgramPipelines)
-         LOAD_GL_PROC_WIN(PFNGLGENPROGRAMPIPELINESPROC, glGenProgramPipelines)
-         LOAD_GL_PROC_WIN(PFNGLISPROGRAMPIPELINEPROC, glIsProgramPipeline)
-         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMPIPELINEIVPROC, glGetProgramPipelineiv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM1IPROC, glProgramUniform1i)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM2IPROC, glProgramUniform2i)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM3IPROC, glProgramUniform3i)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM4IPROC, glProgramUniform4i)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM1UIPROC, glProgramUniform1ui)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM2UIPROC, glProgramUniform2ui)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM3UIPROC, glProgramUniform3ui)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM4UIPROC, glProgramUniform4ui)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM1FPROC, glProgramUniform1f)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM2FPROC, glProgramUniform2f)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM3FPROC, glProgramUniform3f)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM4FPROC, glProgramUniform4f)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM1IVPROC, glProgramUniform1iv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM2IVPROC, glProgramUniform2iv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM3IVPROC, glProgramUniform3iv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM4IVPROC, glProgramUniform4iv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM1UIVPROC, glProgramUniform1uiv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM2UIVPROC, glProgramUniform2uiv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM3UIVPROC, glProgramUniform3uiv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM4UIVPROC, glProgramUniform4uiv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM1FVPROC, glProgramUniform1fv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM2FVPROC, glProgramUniform2fv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM3FVPROC, glProgramUniform3fv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORM4FVPROC, glProgramUniform4fv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX2FVPROC, glProgramUniformMatrix2fv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX3FVPROC, glProgramUniformMatrix3fv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX4FVPROC, glProgramUniformMatrix4fv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX2X3FVPROC, glProgramUniformMatrix2x3fv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX3X2FVPROC, glProgramUniformMatrix3x2fv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX2X4FVPROC, glProgramUniformMatrix2x4fv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX4X2FVPROC, glProgramUniformMatrix4x2fv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX3X4FVPROC, glProgramUniformMatrix3x4fv)
-         LOAD_GL_PROC_WIN(PFNGLPROGRAMUNIFORMMATRIX4X3FVPROC, glProgramUniformMatrix4x3fv)
-         LOAD_GL_PROC_WIN(PFNGLVALIDATEPROGRAMPIPELINEPROC, glValidateProgramPipeline)
-         LOAD_GL_PROC_WIN(PFNGLGETPROGRAMPIPELINEINFOLOGPROC, glGetProgramPipelineInfoLog)
-         LOAD_GL_PROC_WIN(PFNGLBINDIMAGETEXTUREPROC, glBindImageTexture)
-         LOAD_GL_PROC_WIN(PFNGLGETBOOLEANI_VPROC, glGetBooleani_v)
-         LOAD_GL_PROC_WIN(PFNGLMEMORYBARRIERPROC, glMemoryBarrier)
-         LOAD_GL_PROC_WIN(PFNGLMEMORYBARRIERBYREGIONPROC, glMemoryBarrierByRegion)
-         LOAD_GL_PROC_WIN(PFNGLTEXSTORAGE2DMULTISAMPLEPROC, glTexStorage2DMultisample)
-         LOAD_GL_PROC_WIN(PFNGLGETMULTISAMPLEFVPROC, glGetMultisamplefv)
-         LOAD_GL_PROC_WIN(PFNGLSAMPLEMASKIPROC, glSampleMaski)
-         LOAD_GL_PROC_WIN(PFNGLBINDVERTEXBUFFERPROC, glBindVertexBuffer)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBFORMATPROC, glVertexAttribFormat)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBIFORMATPROC, glVertexAttribIFormat)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXATTRIBBINDINGPROC, glVertexAttribBinding)
-         LOAD_GL_PROC_WIN(PFNGLVERTEXBINDINGDIVISORPROC, glVertexBindingDivisor)
-
-        return true;
-    }
 
 
     bool InitializeGLExtensions(HWND hwnd)
@@ -338,8 +26,6 @@ namespace Aurora
         PIXELFORMATDESCRIPTOR pixelFormat;
         int error;
         HGLRC renderContext;
-        bool result;
-
 
         // Get the device context for this window.
         deviceContext = GetDC(hwnd);
@@ -367,14 +53,26 @@ namespace Aurora
         if (error != 1)
         {
             return false;
-        }   
+        }
+
+        HDC HDC = GetDC(hwnd);
 
         // Initialize the OpenGL extensions needed for this application.  Note that a temporary rendering context was needed to do so.
-        result = LoadExtensionList();
+        int result = gladLoadWGL(HDC);
+
         if (!result)
         {
+            GLog->Error("Load Wgl failed!");
             return false;
-        }
+        }        
+
+        result = gladLoadGL();
+        
+        if (!result)
+        {
+            GLog->Error("Load GL error!");
+            return false;
+        }        
         
         const char*  GLVersion = (char*)glGetString(GL_VERSION);
         GLog->Info("OpenGL Version : %s", GLVersion);     
@@ -390,9 +88,6 @@ namespace Aurora
 
         return true;
     }
-
-#include <windows.h>
-#include <strsafe.h>
 
     void ErrorMessage(LPTSTR lpszFunction)
     {
@@ -475,7 +170,7 @@ namespace Aurora
         attributeList[0] = WGL_CONTEXT_MAJOR_VERSION_ARB;
         attributeList[1] = 4;
         attributeList[2] = WGL_CONTEXT_MINOR_VERSION_ARB;
-        attributeList[3] = 0;
+        attributeList[3] = 6;
 
         // Null terminate the attribute list.
         attributeList[4] = 0;
@@ -677,7 +372,7 @@ namespace Aurora
             for(auto& fileName : ShaderFiles)
             {
                 String fullPath = FileSystem::CombinePath(ShaderPath, fileName);
-                FilePtr file(GFileSys->OpenFile(fullPath));
+                FilePtr file(GFileSys->OpenFile(fullPath, false));
 
                 String ShaderCode = file->ReadAsString();
 
@@ -723,6 +418,11 @@ namespace Aurora
         Handle CreateShaderTextureBinding(GPUShaderObject* shaderHandle, const ShaderTextureBinding& bindings) override;
         void BindTexture(Handle binding, Texture* texture) override;
 
+        RenderStateObject* CreateBlendState(bool BlendEnable, BlendFactor SrcBlend, BlendFactor DestBlend, BlendOp op, uint8 WriteMask, bool AlphaToCoverageEnable) override;
+        void BindBlendState(RenderStateObject* handle, const Color& BlendFactor) override;
+        RenderStateObject* CreateRasterizerState(bool FrontCounterClockwise, CullMode cullMode, FillMode fillMode, int DepthBias, int SlopeScaledDepthBias, bool AntialiasedLineEnable) override;
+        void BindRasterizerState(RenderStateObject* handle) override;
+
     private:
     };
 
@@ -756,55 +456,6 @@ namespace Aurora
         
         return true;
     }
-
-
-    //
-    // GLuint LoadShader()
-    // {
-    //     GLint state = 0;
-    //     char error[512];
-    //     string code;
-    //
-    //     GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-    //     LoadFile(code, "vs.glsl");
-    //     CompileShader(vs, code.c_str());
-    //
-    //     GLuint ps = glCreateShader(GL_FRAGMENT_SHADER);
-    //     LoadFile(code, "ps.glsl");
-    //     CompileShader(ps, code.c_str());
-    //
-    //     GLuint program = glCreateProgram();
-    //     glAttachShader(program, vs);
-    //     glAttachShader(program, ps);
-    //     glDeleteShader(vs);
-    //     glDeleteShader(ps);
-    //     glLinkProgram(program);
-    //     glGetProgramiv(program, GL_LINK_STATUS, &state);
-    //     if (state != GL_TRUE)
-    //     {
-    //         glGetProgramInfoLog(vs, 512, NULL, error);
-    //         cout << error << endl;
-    //         return GL_FALSE;
-    //     }
-    //
-    //
-    //     return program;
-    // }
-    //
-    // void APIENTRY DebugCallbackFunction(GLenum source,
-    //                                     GLenum type,
-    //                                     GLuint id,
-    //                                     GLenum severity,
-    //                                     GLsizei length,
-    //                                     const GLchar* message,
-    //                                     void* userParam)
-    // {
-    //     printf("Debug Message: SOURCE(0x%04X),"
-    //         "TYPE(0x%04X),"
-    //         "ID(0x%08X),"
-    //         "SEVERITY(0x%04X), \"%s\"\n",
-    //         source, type, id, severity, message);
-    // }
 
 
 
@@ -877,7 +528,7 @@ namespace Aurora
                 }
                 else
                 {
-                    InStream << line;
+                    InStream << line << "\n";
                 }                
             }
         }
@@ -886,14 +537,14 @@ namespace Aurora
         {
             StringStream stream;
 
-            stream << "#version 460" << endl;
+            stream << "#version 460\n";
 
-            for(auto& marco : mMarcos)
-            {
-                stream << "#define " << marco.first << " " << marco.second << "\r";
-            }
+            // for(auto& marco : mMarcos)
+            // {
+            //     stream << "#define " << marco.first << " " << marco.second << "\r";
+            // }
 
-            IncludeCode(stream, mBaseCode);
+            IncludeCode(stream, mBaseCode);           
 
             return stream.str();
         }
@@ -905,30 +556,161 @@ namespace Aurora
         std::map<String, String*> mIncludeTargets;        
     };
 
-    void CollectGLProgramUniformInfomation(GLuint program, BaseShader* InShader)
-    {
-        int numUniform = 0;        
+    void GLSLUniformInfoTest(GLuint InProgram)
+    {        
+        glUseProgram(InProgram);
+
+        int numUniform = 0;
+
+        glGetProgramiv(InProgram, GL_ACTIVE_UNIFORMS, &numUniform);
+        printf("active uniforms %d\n", numUniform);
+
+        {
+            for (int Index = 0; Index < numUniform; Index++)
+            {
+                char Name[256];
+                int Size;
+                GLenum type;
+            
+                glGetActiveUniform(InProgram, Index, sizeof(Name), NULL, &Size, &type, Name);
+                printf("\t uniform %d %s size %d\n", Index, Name, Size);
+            }        
+        }
+    
+        glGetProgramiv(InProgram, GL_ACTIVE_ATTRIBUTES, &numUniform);
+        printf("GL_ACTIVE_ATTRIBUTES %d\n", numUniform);
+    
+        glGetProgramiv(InProgram, GL_ACTIVE_UNIFORM_BLOCKS, &numUniform);
+        printf("GL_ACTIVE_UNIFORM_BLOCKS %d\n", numUniform);
+
+        {
+            for (int Index = 0; Index < numUniform; Index++)
+            {
+                char Name[256];
+                int Size;
+                GLenum type;
+            
+                glGetActiveUniformBlockName(InProgram, Index, sizeof(Name), NULL, Name);
+                printf("\t uniform block %d %s\n", Index, Name);
+
+                int DataSize, SubUniforms;
+                glGetActiveUniformBlockiv(InProgram, Index, GL_UNIFORM_BLOCK_DATA_SIZE, &DataSize);
+                glGetActiveUniformBlockiv(InProgram, Index, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &SubUniforms);
+
+                printf("\t\tdata size %d, sub-uniforms %d\n", DataSize, SubUniforms);
+            }
         
-        glGetProgramInterfaceiv(program, GL_UNIFORM, GL_MAX_NUM_ACTIVE_VARIABLES, &numUniform);
-        GLog->Info("program active uniforms %d", numUniform);
+        }
+        
+        glGetProgramInterfaceiv(InProgram, GL_UNIFORM, GL_MAX_NUM_ACTIVE_VARIABLES, &numUniform);
+        printf("program active uniforms %d\n", numUniform);
 
         int numUniformBlocks = 0;
-        glGetProgramInterfaceiv(program, GL_UNIFORM_BLOCK, GL_MAX_NUM_ACTIVE_VARIABLES, &numUniformBlocks);
-        GLog->Info("program active uniform blocks %d", numUniformBlocks);
+        glGetProgramInterfaceiv(InProgram, GL_UNIFORM_BLOCK, GL_MAX_NUM_ACTIVE_VARIABLES, &numUniformBlocks);
+        printf("program active uniform blocks %d\n", numUniformBlocks);
+
+        int numInput = 0;
+        glGetProgramInterfaceiv(InProgram, GL_PROGRAM_INPUT, GL_MAX_NUM_ACTIVE_VARIABLES, &numInput);
+        printf("program active program input %d\n", numInput);     
+
+        
+        
+        
+        GLint numBlocks = 0;
+        glGetProgramInterfaceiv(InProgram, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES, &numBlocks);
+        const GLenum blockProperties[1] = {GL_NUM_ACTIVE_VARIABLES};
+        const GLenum activeUnifProp[1] = {GL_ACTIVE_VARIABLES};
+        const GLenum unifProperties[3] ={GL_NAME_LENGTH, GL_TYPE, GL_LOCATION};
+
+        for(int blockIx = 0; blockIx < numBlocks; ++blockIx)
+        {
+            GLint numActiveUnifs = 0;
+            glGetProgramResourceiv(InProgram, GL_UNIFORM_BLOCK, blockIx, 1, blockProperties, 1, NULL, &numActiveUnifs);
+
+            if(!numActiveUnifs)
+                continue;
+
+            std::vector<GLint> blockUnifs(numActiveUnifs);
+            glGetProgramResourceiv(InProgram, GL_UNIFORM_BLOCK, blockIx, 1, activeUnifProp, numActiveUnifs, NULL, &blockUnifs[0]);
+
+            for(int unifIx = 0; unifIx < numActiveUnifs; ++unifIx)
+            {
+                GLint values[3];
+                glGetProgramResourceiv(InProgram, GL_UNIFORM, blockUnifs[unifIx], 3, unifProperties, 3, NULL, values);
+
+                // Get the name. Must use a std::vector rather than a std::string for C++03 standards issues.
+                // C++11 would let you use a std::string directly.
+                std::vector<char> nameData(values[0]);
+                glGetProgramResourceName(InProgram, GL_UNIFORM, blockUnifs[unifIx], nameData.size(), NULL, &nameData[0]);
+                std::string name(nameData.begin(), nameData.end() - 1);
+
+                GLog->Info("GLSLUniformInfoTest name %s", name.c_str());
+            }
+        }
+    }
+
+    void CollectGLProgramUniformInfomation(GLuint program, BaseShader* InShader)
+    {
+        // glUseProgram(program);
+
+        {
+            int numUniform = 0;
+
+            glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &numUniform);
+            GLog->Info("active uniforms %d\n", numUniform);
+
+            {
+                int Offset = 0;
+                for (int Index = 0; Index < numUniform; Index++)
+                {
+                    char Name[256];
+                    int Size;
+                    GLenum type;
+
+                    glGetActiveUniform(program, Index, sizeof(Name), NULL, &Size, &type, Name);
+                    GLog->Info("\t uniform %d %s size %d\n", Index, Name, Size);
+
+                    auto ParameterBinding = InShader->FindParameter(String(Name));
+                    if(ParameterBinding)
+                    {
+                        ParameterBinding->mSizeInByte = (uint16)Size;
+                        ParameterBinding->mOffset = Offset;
+                        Offset += Size;
+                    }
+                    else
+                    {
+                        GLog->Warning("Can't find parameter %s in %s", Name, InShader->pathname_.c_str());                        
+                    }
+                }
+            }
+
+        }
+        
+        int numUniform = 0;
+
         
     }
 
+    class GPUShaderObjectOGL : public GPUShaderObject
+    {
+    public:
+        GLuint program = 0;
+    };
+    
 
     GPUShaderObject* GLRenderDevice::CreateGPUShaderObject(const ShaderCode& code, BaseShader* InShader)
-    {        
+    {
+        
         GLShaderCodeBuilder CodeBuilder(code.text, InShader->mName);
         CodeBuilder.mMarcos = code.defines;
 
         ShaderCodeDataBase.CollectShaderCode(CodeBuilder.mIncludeTargets);
 
         String buildCode = CodeBuilder.Build();
+        GLog->Info("shader code:");
+        GLog->Info("%s", buildCode.c_str());
 
-        // GLog->Info(buildCode.c_str());
+        GLog->Info("compile shader %s", code.name.c_str());
 
         {            
             GLuint glShader = glCreateShader(InShader->mType == BaseShader::VERTEX_SHADER ? GL_VERTEX_SHADER : GL_FRAGMENT_SHADER);
@@ -950,8 +732,8 @@ namespace Aurora
             }
 
             GLuint program = glCreateProgram();
+            // glProgramParameteri(program, GL_PROGRAM_SEPARABLE, GL_TRUE);
             glAttachShader(program, glShader);
-            // glDeleteShader(glShader);
             glLinkProgram(program);
             glGetProgramiv(program, GL_LINK_STATUS, &state);
             if (state != GL_TRUE)
@@ -962,11 +744,19 @@ namespace Aurora
 
                 return nullptr;
             }
+            // GLSLUniformInfoTest(program);
 
             CollectGLProgramUniformInfomation(program, InShader);
+            
+            auto ShaderObject = new GPUShaderObjectOGL();
+            ShaderObject->program = program;
+
+            glDetachShader(program, glShader);
+            // glDeleteShader(glShader);
+            
+            return ShaderObject;
         }
-        
-        return nullptr;
+
     }
     
     Texture* GLRenderDevice::CreateTexture(File* file)
@@ -989,11 +779,12 @@ namespace Aurora
         glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
 
         glClearDepthf(fDepth);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);        
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
     
     void GLRenderDevice::Present()
     {
+        glFlush();
     }
 
     class CGPUGeometryBufferGL : public CGPUGeometryBuffer
@@ -1063,7 +854,7 @@ namespace Aurora
     
     GPUShaderParameterBuffer* GLRenderDevice::CreateShaderParameterBuffer(CShaderParameterBuffer* InBuffer)
     {
-        return IRenderDevice::CreateShaderParameterBuffer(InBuffer);
+        return new GPUShaderParameterBuffer();
     }
     
     void GLRenderDevice::UpdateGPUShaderParameterBuffer(GPUShaderParameterBuffer* InBuffer, const Array<int8>& InData)
@@ -1100,6 +891,14 @@ namespace Aurora
     
     void GLRenderDevice::ExecuteOperator(const RenderOperator& op)
     {
+        auto GeometryBuffer = static_cast<CGPUGeometryBufferGL*>(op.GeometryBuffer);
+        
+        glBindVertexArray(GeometryBuffer->mVertexBuffer);
+	    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, GeometryBuffer->mIndexBuffer);        
+        
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        
+        // glBindVertexArray(0);
     }
     
     
@@ -1120,6 +919,26 @@ namespace Aurora
     {
     }
     
+    RenderStateObject* GLRenderDevice::CreateBlendState(bool BlendEnable, BlendFactor SrcBlend, BlendFactor DestBlend, BlendOp op, uint8 WriteMask, bool AlphaToCoverageEnable)
+    {
+        return new RenderStateObject();
+    }
+
+    
+    void GLRenderDevice::BindBlendState(RenderStateObject* handle, const Color& BlendFactor)
+    {
+    }
+
+    
+    RenderStateObject* GLRenderDevice::CreateRasterizerState(bool FrontCounterClockwise, CullMode cullMode, FillMode fillMode, int DepthBias, int SlopeScaledDepthBias, bool AntialiasedLineEnable)
+    {
+        return new RenderStateObject;
+    }
+    
+    void GLRenderDevice::BindRasterizerState(RenderStateObject* handle)
+    {
+    }
+
     struct VertexLayoutInfo
     {
         

@@ -46,6 +46,8 @@ namespace Aurora
         long TimeStart;
         long TimeEnd;
 
+        Application*    mNextApplication = nullptr;
+
     private:
     };
 }
