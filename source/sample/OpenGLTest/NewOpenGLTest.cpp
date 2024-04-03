@@ -28,6 +28,8 @@ Entity* CreateSimpleEntity()
 }
 
 
+
+
 class OpenGLTest : public Application, public KeyEventListener, public MouseEventListener
 {
 public:
@@ -54,13 +56,14 @@ public:
     Camera camera_;
 
     CScreen*    mMainScreen = nullptr;
-    BaseShader glTestShader;
+    ModelShaderVS mModelShaderVS;
 };
 
 
 bool OpenGLTest::OnInitApp()
 {
     mMainScreen = CPlatform::MainScreen;
+    mModelShaderVS.InitBase(BaseShader::VERTEX_SHADER, "../dev/data/shader/shader330.vert");
     
     cameraControl_.Transform_.LootAt(Vector3f(0.f, -2.0f, 1.0f), Vector3f(0.0f, 0.0f, 0.0f), Vector3f::UNIT_Z);
 
@@ -74,7 +77,6 @@ bool OpenGLTest::OnInitApp()
 
     m_pEntity = CreateSimpleEntity();
     
-    glTestShader.InitBase(BaseShader::VERTEX_SHADER, "../dev/data/shader/shader330.glsl");
 
     return true;
     

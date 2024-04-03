@@ -380,14 +380,6 @@ namespace Aurora
             }            
         }
 
-        void CollectShaderCode(map<String, String*>& InOutShaderCode)
-        {
-            for(auto& code : mShaderCode)
-            {
-                InOutShaderCode.insert(make_pair(code.first, &code.second));
-            }
-        }
-
         map<String, String> mShaderCode;
         
     };
@@ -533,8 +525,13 @@ namespace Aurora
             }
         }
 
-        String Build()
-        {
+        String Build(const CShaderCodeDataBase* IncludeManager, const BaseShader* Shader)
+        {            
+            for(auto& code : IncludeManager->mShaderCode)
+            {
+                mIncludeTargets.insert(make_pair(code.first, &code.second));
+            }
+
             StringStream stream;
 
             stream << "#version 460\n";
@@ -544,7 +541,7 @@ namespace Aurora
             //     stream << "#define " << marco.first << " " << marco.second << "\r";
             // }
 
-            IncludeCode(stream, mBaseCode);           
+            IncludeCode(stream, mBaseCode);
 
             return stream.str();
         }
@@ -553,7 +550,7 @@ namespace Aurora
         const String& mBaseCode;
         const String& mName;
         Array<pair<string, string>> mMarcos;
-        std::map<String, String*> mIncludeTargets;        
+        std::map<const String, const String*> mIncludeTargets;
     };
 
     void GLSLUniformInfoTest(GLuint InProgram)
@@ -704,9 +701,7 @@ namespace Aurora
         GLShaderCodeBuilder CodeBuilder(code.text, InShader->mName);
         CodeBuilder.mMarcos = code.defines;
 
-        ShaderCodeDataBase.CollectShaderCode(CodeBuilder.mIncludeTargets);
-
-        String buildCode = CodeBuilder.Build();
+        String buildCode = CodeBuilder.Build(&ShaderCodeDataBase, InShader);
         GLog->Info("shader code:");
         GLog->Info("%s", buildCode.c_str());
 

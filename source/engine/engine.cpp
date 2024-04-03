@@ -55,7 +55,6 @@ namespace Aurora
 
 	}
 
-
 	bool IRenderDevice::Initialized()
 	{
 		return  GRenderDevice != nullptr;
