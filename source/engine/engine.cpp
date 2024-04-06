@@ -60,7 +60,7 @@ namespace Aurora
 		return  GRenderDevice != nullptr;
 	}
 
-
+	
 	void Engine::Init(CScreen* InScreen)
 	{
 		Config::Initialize();

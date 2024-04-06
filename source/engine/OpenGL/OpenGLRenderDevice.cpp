@@ -646,45 +646,76 @@ namespace Aurora
         }
     }
 
+    static int UniformDataSize(GLenum InUniformType)
+    {
+        switch (InUniformType)
+        {
+        case GL_FLOAT_VEC2:
+        case GL_INT_VEC2:
+            return 2 * sizeof(float);         
+        case GL_FLOAT_VEC3:
+        case GL_INT_VEC3:
+            return 3 * sizeof(float);
+        case GL_FLOAT_VEC4:
+        case GL_INT_VEC4:
+            return 4 * sizeof(float);
+        case GL_FLOAT_MAT2:
+            return 2 * 2 * sizeof(float);            
+        case GL_FLOAT_MAT3:
+            return 3 * 3 * sizeof(float);
+        case GL_FLOAT_MAT4:
+            return 4 * 4 * sizeof(float);
+            
+        case GL_FLOAT_MAT2x3:
+        case GL_FLOAT_MAT3x2:
+            return 2 * 3 * sizeof(float);
+        case GL_FLOAT_MAT2x4:
+        case GL_FLOAT_MAT4x2:
+            return 2 * 4 * sizeof(float);
+        case GL_FLOAT_MAT3x4:
+        case GL_FLOAT_MAT4x3:
+            return 3 * 4 * sizeof(float);
+
+            default:
+                assert(0);
+        }
+
+        return -1;
+    }
+
     void CollectGLProgramUniformInfomation(GLuint program, BaseShader* InShader)
     {
-        // glUseProgram(program);
-
-        {
-            int numUniform = 0;
-
-            glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &numUniform);
-            GLog->Info("active uniforms %d\n", numUniform);
-
-            {
-                int Offset = 0;
-                for (int Index = 0; Index < numUniform; Index++)
-                {
-                    char Name[256];
-                    int Size;
-                    GLenum type;
-
-                    glGetActiveUniform(program, Index, sizeof(Name), NULL, &Size, &type, Name);
-                    GLog->Info("\t uniform %d %s size %d\n", Index, Name, Size);
-
-                    auto ParameterBinding = InShader->FindParameter(String(Name));
-                    if(ParameterBinding)
-                    {
-                        ParameterBinding->mSizeInByte = (uint16)Size;
-                        ParameterBinding->mOffset = Offset;
-                        Offset += Size;
-                    }
-                    else
-                    {
-                        GLog->Warning("Can't find parameter %s in %s", Name, InShader->pathname_.c_str());                        
-                    }
-                }
-            }
-
-        }
-        
         int numUniform = 0;
 
+        glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &numUniform);
+        GLog->Info("active uniforms %d\n", numUniform);
+
+        {
+            uint16 Offset = 0;
+            for (int Index = 0; Index < numUniform; Index++)
+            {
+                char Name[256];
+                int Size;
+                GLenum type;
+
+                glGetActiveUniform(program, Index, sizeof(Name), NULL, &Size, &type, Name);
+                GLog->Info("\t uniform %d %s size %d\n", Index, Name, Size);
+
+                auto ParameterBinding = InShader->FindParameter(String(Name));
+                if (ParameterBinding)
+                {
+                    ParameterBinding->mSizeInByte = (uint16)UniformDataSize(type);
+                    ParameterBinding->mOffset = Offset;
+                    Offset += Size;
+                }
+                else
+                {
+                    GLog->Warning("Can't find parameter %s in %s", Name, InShader->pathname_.c_str());
+                }
+
+                InShader->mBufferMemory.resize(Offset);
+            }
+        }
         
     }
 
@@ -747,7 +778,7 @@ namespace Aurora
             ShaderObject->program = program;
 
             glDetachShader(program, glShader);
-            // glDeleteShader(glShader);
+            glDeleteShader(glShader);
             
             return ShaderObject;
         }

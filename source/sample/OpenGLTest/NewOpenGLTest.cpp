@@ -28,8 +28,6 @@ Entity* CreateSimpleEntity()
 }
 
 
-
-
 class OpenGLTest : public Application, public KeyEventListener, public MouseEventListener
 {
 public:
@@ -57,6 +55,7 @@ public:
 
     CScreen*    mMainScreen = nullptr;
     ModelShaderVS mModelShaderVS;
+    ModelShaderPS mModelShaderPS;
 };
 
 
@@ -64,6 +63,7 @@ bool OpenGLTest::OnInitApp()
 {
     mMainScreen = CPlatform::MainScreen;
     mModelShaderVS.InitBase(BaseShader::VERTEX_SHADER, "../dev/data/shader/shader330.vert");
+    mModelShaderPS.InitBase(BaseShader::PIXEL_SHADER, "../dev/data/shader/shader330.frag");
     
     cameraControl_.Transform_.LootAt(Vector3f(0.f, -2.0f, 1.0f), Vector3f(0.0f, 0.0f, 0.0f), Vector3f::UNIT_Z);
 
@@ -75,11 +75,9 @@ bool OpenGLTest::OnInitApp()
     GEventDisPatcher->AddMouseEventListener(&m_CamController);
     GEventDisPatcher->AddMouseEventListener(&cameraControl_);
 
-    m_pEntity = CreateSimpleEntity();
-    
+    m_pEntity = CreateSimpleEntity();    
 
-    return true;
-    
+    return true;    
 }
 
 class Visitor : public RenderableVisitor
@@ -132,7 +130,7 @@ void OpenGLTest::OnRender()
     
         // modelvs_.matWorld = pEntity->mWorld;
         // modelvs_.matWorld.TransposeSelf();
-
+        //
         // modelvs_.mWorldMatrix = pEntity->mWorld;
         //
         // modelvs_.CommitShaderParameter();
